@@ -29,6 +29,9 @@
   const int SYNC_PIN = 1;
 
 #endif
+#ifdef BRAINS_SEP
+
+#endif
 
 const int AMP_ENABLE = 31;
 // Keypad matrix definitions are in Buttons.h

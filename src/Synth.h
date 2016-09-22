@@ -1,7 +1,7 @@
 #ifndef Synth_h
 #define Synth_h
 
-#include <Wire.h>
+// #include <Wire.h>
 
 /*
   Begin <Audio.h>
