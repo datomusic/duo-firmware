@@ -93,7 +93,7 @@ void audio_init() {
   mixer1.gain(1, 0.5); // OSC2
 
   // Filter
-  filter1.resonance(2.8); // range 0.7-5.0
+  filter1.resonance(0.7); // range 0.7-5.0
   filter1.frequency(400);
   filter1.octaveControl(4);
 

@@ -12,11 +12,24 @@
 
 // KINGBRIGHT  KPHF-1612QBDSURKZGC scaling values
 #define CORRECTION_KINGBRIGHT 0xE050FF
+// #define CORRECTION_KINGBRIGHT 0x902840
+
+
+#ifdef BRAINS_FEB
+  #define LED_DT 12
+  #define LED_CLK 11
+  #define COLOR_ORDER BRG
+  #define LED_TYPE WS2803
+#endif
+#ifdef BRAINS_AUG
+  #define LED_DT 32
+  #define LED_CLK 30
+  #define COLOR_ORDER BRG
+  #define LED_TYPE WS2803
+#endif
+
 #define NUM_LEDS 12
-#define LED_DT 12
-#define LED_CLK 11
-#define COLOR_ORDER BRG
-#define LED_TYPE WS2803
+
 
 const int led_order[NUM_LEDS] = {
   9,6,7,8,4,5,0,1

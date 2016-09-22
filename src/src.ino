@@ -11,14 +11,16 @@ TODO:
 #include <Keypad.h>
 #include "midinotes.h"
 #include <MIDI.h>
+//#define BRAINS_FEB
+#define BRAINS_AUG
 // #define NO_POTS
-#include "Buttons.h"
 #include "pinmap.h"
+#include "Buttons.h"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
 const int SYNC_LENGTH_MSEC = 1;
-const int MIN_TEMPO_MSEC = 750; // Tempo is actually an interval in ms
+const int MIN_TEMPO_MSEC = 666; // Tempo is actually an interval in ms
 
 // Sequencer settings
 const int NUM_STEPS = 8;
@@ -76,9 +78,9 @@ float midi_note_to_frequency(int x) ;
 int detune(int note, int amount);
 void handle_input_until(unsigned long until);
 void handle_keys();
+void handle_midi();
 int tempo_interval_msec();
 void midi_init();
-
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -93,11 +95,11 @@ void setup() {
 
   led_init();
   keys_init();
-  delay(200);
-
   pins_init();
 
   previous_note_on_time = millis();
+
+  digitalWrite(AMP_ENABLE, HIGH);
 }
 
 void loop() {
@@ -174,12 +176,15 @@ void loop() {
   // TODO: leds only need to be updated when necessary
   update_leds();
   handle_keys();
+  handle_midi();
   read_pots();
 }
 
 void read_pots() {
 
-  #ifndef NO_POTS
+  #ifdef NO_POTS
+    return;
+  #endif
   AudioNoInterrupts();
 
   detune_amount = analogRead(OSC_DETUNE_POT);
@@ -218,7 +223,7 @@ void read_pots() {
   }
 
   AudioInterrupts(); 
-  #endif
+
 
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
 
@@ -259,7 +264,6 @@ void note_on(byte midi_note, byte velocity, boolean enabled) {
     AudioInterrupts(); 
 
     MIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
-    
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
@@ -385,7 +389,14 @@ void handle_keys() {
   }
 }
 
+void handle_midi() {
+  MIDI.read();
+}
+
 int tempo_interval_msec() {
+  #ifdef NO_POTS
+    return 300;
+  #endif
   int potvalue = 1023-analogRead(TEMPO_POT);
   if(potvalue < 10) {
     return 0;
