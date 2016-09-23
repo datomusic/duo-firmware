@@ -1,4 +1,3 @@
-
 #ifdef BRAINS_FEB
   const int FILTER_RES_POT = A2;
   const int AMP_ENV_POT = A1;
@@ -27,15 +26,10 @@
   const int NOISE_PIN = 25;
 
   const int SYNC_PIN = 1;
-
-#endif
-#ifdef BRAINS_SEP
-
 #endif
 
 const int AMP_ENABLE = 31;
 // Keypad matrix definitions are in Buttons.h
-
 
 void pins_init() {
   pinMode(BITC_PIN, INPUT_PULLUP);

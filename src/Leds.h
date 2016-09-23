@@ -19,13 +19,13 @@
   #define LED_DT 12
   #define LED_CLK 11
   #define COLOR_ORDER BRG
-  #define LED_TYPE WS2803
+  #define LED_TYPE WS2801
 #endif
 #ifdef BRAINS_AUG
   #define LED_DT 32
   #define LED_CLK 30
   #define COLOR_ORDER BRG
-  #define LED_TYPE WS2803
+  #define LED_TYPE WS2801
 #endif
 
 #define NUM_LEDS 12

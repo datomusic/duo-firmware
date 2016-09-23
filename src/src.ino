@@ -152,9 +152,9 @@ void loop() {
 
           current_step = random_step;
         }
-      
-        step_velocity[current_step] += velocity_fade_amount;
-        step_velocity[current_step] = constrain(step_velocity[current_step], VELOCITY_MIN, VELOCITY_MAX);
+        step_velocity[current_step] = 100;
+        // step_velocity[current_step] += velocity_fade_amount;
+        // step_velocity[current_step] = constrain(step_velocity[current_step], VELOCITY_MIN, VELOCITY_MAX);
 
         note_on(SCALE[step_note[current_step]]+transpose, step_velocity[current_step], step_enable[current_step]);
         digitalWrite(SYNC_PIN, HIGH);
@@ -228,13 +228,15 @@ void read_pots() {
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
 
   fade_pot_value = analogRead(FADE_POT);
-  if(fade_pot_value < 333) {
-    velocity_fade_amount = 27;
-  } else if (fade_pot_value > 690) {
-    velocity_fade_amount = -32;
-  } else {
-    velocity_fade_amount = -1;
-  }
+  // if(fade_pot_value < 333) {
+  //   velocity_fade_amount = 27;
+  // } else if (fade_pot_value > 690) {
+  //   velocity_fade_amount = -32;
+  // } else {
+  //   velocity_fade_amount = -1;
+  // }
+  mixer2.gain(0, map(fade_pot_value,0,1023,1000,0)/1000.);
+  mixer2.gain(1, map(fade_pot_value,0,1023,0,700)/1000.);
 }
 
 void midi_note_on(byte channel, byte note, byte velocity) {
@@ -275,11 +277,14 @@ void note_on(byte midi_note, byte velocity, boolean enabled) {
 void note_off() {
 
   if (note_is_playing) {
-    envelope1.noteOff();
-    envelope2.noteOff();
-    MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
+    if(!step_enable[current_step]) {
+      leds(current_step) = CRGB::Black;
+    } else {
+      envelope1.noteOff();
+      envelope2.noteOff();
+      MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
+    }
     note_is_playing = 0;
-    if(!step_enable[current_step]) { leds(current_step) = CRGB::Black; }
   } 
   digitalWrite(LED_PIN, LOW);
 }
