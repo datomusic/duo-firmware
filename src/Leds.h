@@ -13,7 +13,7 @@
 // KINGBRIGHT  KPHF-1612QBDSURKZGC scaling values
 #define CORRECTION_KINGBRIGHT 0xE050FF
 // #define CORRECTION_KINGBRIGHT 0x902840
-
+#define LED_WHITE CRGB(190,255,190);
 
 #ifdef BRAINS_FEB
   #define LED_DT 12
@@ -89,8 +89,9 @@ void update_leds() {
       leds(current_step) = CRGB::Black;
     }}
   }
-
+  AudioNoInterrupts();
   FastLED.show();
+  AudioInterrupts();
 }
 
 #endif

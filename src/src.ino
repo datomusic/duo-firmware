@@ -13,7 +13,7 @@ TODO:
 #include <MIDI.h>
 //#define BRAINS_FEB
 #define BRAINS_AUG
-// #define NO_POTS
+#define NO_POTS
 #include "pinmap.h"
 #include "Buttons.h"
 
@@ -24,11 +24,7 @@ const int MIN_TEMPO_MSEC = 666; // Tempo is actually an interval in ms
 
 // Sequencer settings
 const int NUM_STEPS = 8;
-int velocity_fade_amount = 1;
-const int INITIAL_VELOCITY = 100;
-const int VELOCITY_THRESHOLD = 50;
-const int VELOCITY_MIN = 32;
-const int VELOCITY_MAX = 127;
+
 unsigned char current_step = 0;
 unsigned char target_step = 0;
 unsigned int tempo = 0;
@@ -48,25 +44,21 @@ bool sequencer_is_running = true;
 const int SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
 const float SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
 const char DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
+#define INITIAL_VELOCITY 100
 
 // Variable declarations
 int detune_amount = 0;
 int osc1_frequency = 0;
 byte osc1_midi_note = 0;
-int resonance;
-int filter_env_pot_value;
-int amp_env_release;
 int note_is_playing = 0;
 boolean note_is_triggered = false;
 boolean note_is_played = false;
 boolean double_speed = false;
 int transpose = 0;
-char bitcrusher_button0_pressed = 0;
-char bitcrusher_button1_pressed = 0;
 boolean next_step_is_random = false;
 int num_notes_held = 0;
 int tempo_interval;
-int fade_pot_value;
+int volume_pot_value;
 boolean random_flag = 0;
 
 void read_pots();
@@ -97,6 +89,8 @@ void setup() {
   keys_init();
   pins_init();
 
+  Serial.begin(57600);
+
   previous_note_on_time = millis();
 
   digitalWrite(AMP_ENABLE, HIGH);
@@ -104,9 +98,10 @@ void setup() {
 
 void loop() {
 
+  // Check if speed pot is turned all the way down
   if(tempo_interval_msec() == 0) {
     if(sequencer_is_running) {
-      // Serial.print("stopped");
+      // Stop the sequencer
       sequencer_is_running = false;
       note_off();
     }
@@ -117,6 +112,8 @@ void loop() {
     } else {
       tempo_interval = (tempo_interval_msec()/2);
     }
+
+    // Make sure the gate length is never longer than one step
     if(gate_length_msec > tempo_interval) {
       gate_length_msec = tempo_interval;
     }
@@ -178,13 +175,30 @@ void loop() {
   handle_keys();
   handle_midi();
   read_pots();
+
+  Serial.print("CPU: ");
+  Serial.print(AudioProcessorUsageMax());
+  Serial.print(" RAM: ");
+  Serial.print(AudioMemoryUsage());
+  Serial.println();
+  AudioMemoryUsageMaxReset(); 
+  AudioProcessorUsageMaxReset();
 }
 
 void read_pots() {
 
+  // If the DUO brains are running without pots attached, do nothing
   #ifdef NO_POTS
     return;
   #endif
+
+  // Read out the pots/switches
+  gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
+  int volume_pot_value = analogRead(FADE_POT);
+  int resonance = analogRead(FILTER_RES_POT);
+  int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
+
+  // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
 
   detune_amount = analogRead(OSC_DETUNE_POT);
@@ -202,12 +216,9 @@ void read_pots() {
     mixer1.gain(1, 0.5); // OSC2
   }
   filter1.frequency(map(analogRead(FILTER_FREQ_POT),0,1023,60,300));
-  
-  resonance = analogRead(FILTER_RES_POT);
   // TODO: do exponential filter pot behaviour
   filter1.resonance(map(resonance,0,1023,70,500)/100.0);
 
-  amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
   envelope1.release(amp_env_release);
 
   if(digitalRead(BITC_PIN)) {
@@ -222,21 +233,10 @@ void read_pots() {
     noise1.amplitude(0.3);
   }
 
+  mixer2.gain(0, map(volume_pot_value,0,1023,1000,0)/1000.);
+  mixer2.gain(1, map(volume_pot_value,0,1023,700,0)/1000.);
+
   AudioInterrupts(); 
-
-
-  gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
-
-  fade_pot_value = analogRead(FADE_POT);
-  // if(fade_pot_value < 333) {
-  //   velocity_fade_amount = 27;
-  // } else if (fade_pot_value > 690) {
-  //   velocity_fade_amount = -32;
-  // } else {
-  //   velocity_fade_amount = -1;
-  // }
-  mixer2.gain(0, map(fade_pot_value,0,1023,1000,0)/1000.);
-  mixer2.gain(1, map(fade_pot_value,0,1023,0,700)/1000.);
 }
 
 void midi_note_on(byte channel, byte note, byte velocity) {
@@ -270,7 +270,7 @@ void note_on(byte midi_note, byte velocity, boolean enabled) {
     envelope2.noteOn();
   } else {
     // Set LED to white but don't play a note
-    leds(current_step) = CRGB(190,255,190);
+    leds(current_step) = LED_WHITE;
   }
 }
 
@@ -347,10 +347,6 @@ void handle_keys() {
                 } else if (k == SEQ_RANDOM) {
                   next_step_is_random = true;
                   random_flag = true;
-                } else if (k == BITC_0) {
-                  bitcrusher_button0_pressed = 1;
-                } else if (k == BITC_1) {
-                  bitcrusher_button1_pressed = 1;
                 } else if (k == OSC1_SAW) {
                   waveform1.begin(WAVEFORM_SAWTOOTH);
                 } else if (k == OSC1_PULSE) {
@@ -380,11 +376,7 @@ void handle_keys() {
                   if(transpose>12){transpose = 12;}
                 } else if (k == SEQ_RANDOM) {
                   next_step_is_random = false;
-                } else if (k == BITC_0) {
-                  bitcrusher_button0_pressed = 0;
-                } else if (k == BITC_1) {
-                  bitcrusher_button1_pressed = 0;
-                }
+                } 
                 break;
             case IDLE:
                 break;

@@ -22,8 +22,8 @@
   const int TEMPO_POT = A11;
   const int FADE_POT = A7; 
 
-  const int BITC_PIN = 24;
-  const int NOISE_PIN = 25;
+  const int BITC_PIN = 25;
+  const int NOISE_PIN = 24;
 
   const int SYNC_PIN = 1;
 #endif

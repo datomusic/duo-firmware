@@ -81,7 +81,6 @@ AudioConnection          patchCord10(mixer2, dac1);
 void audio_init();
 
 void audio_init() {
-  AudioMemory(20); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
   waveform1.begin(0.3, 220, WAVEFORM_SAWTOOTH);
