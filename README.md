@@ -1,53 +1,37 @@
-Teensy 3.X Project Template
-===========================
+#Dato DUO
+The Dato DUO is a musical instrument that is designed to be played by two people.
 
-Purpose
--------
+##Firmware/software
+The electronic heart of the Dato DUO is the NXP Kinetis K20 microcontroller, the same as used in the [Teensy 3.2](https://www.pjrc.com/teensy/). Audio is generated using the [Audio Library](https://github.com/PaulStoffregen/Audio).
 
-An easy starting point for a Teensy 3.X project which might not fit inside the
-arduino build environment.
+###Installing
+For beginners, we recommend using the Arduino IDE for modifying and uploading the firmware. Advanced users can use the supplied makefile, but following the steps below is necessary in both cases.
 
+1. Download and install the Arduino IDE from [Arduino.cc](https://www.arduino.cc/en/Main/Software)
 
-Reasons to Use
---------------
+2. Download and install Teensyduino from [PJRC.com](https://www.pjrc.com/teensy/teensyduino.html). In the install wizard, enable the Audio, FastLED and Keypad libraries
+![Teensyduino installer with Audio library checked](/img/teensyduino-installer-audio-library.png?raw=true)
 
-- You need to modify the teensy core
-- You don't love Java IDE's
-- You love Make
-- Because
+3. Clone this repository.
 
+###Connecting and uploading
+Connect the Dato DUO to your computer using a micro USB cable.
 
-Setup
------
+Arduino IDE:
+- Pick the correct board by choosing `Tools` -> `Boards` -> `Teensy 3.2 / 3.1`
+- Set the clock speed to 72 MHz from `Tools` -> `CPU Speed` -> `72 MHz optimized`
+- Open the .ino file in the firmware/src folder
+- Press upload and wait until compilation finishes. After this, Teensyduino will automatically upload the code to your Dato DUO.
 
-Install the Teensy udev rule: `sudo cp tools/49-teensy.rules /etc/udev/rules.d/`
+Makefile method:
+```
+make clean; make upload
+```
 
-Then unplug your Teensy and plug it back in.
+##Hardware
+Circuit schematics will be added to this repository once the final hardware is available.
 
-
-Using
------
-
-1. Put your code in `src/main.cpp`
-2. Put any libraries you need in `libraries`
-3. Set the TEENSY variable in `Makefile` according to your teensy version
-4. Build your code ```make```
-5. Upload your code ```make upload```
-
-
-Make Targets
-------------
-
-- `make` alias for `make hex`
-- `make build` compiles everything and produces a .elf
-- `make hex` converts the elf to an intel hex file
-- `make post_compile` opens the launcher with the correct file
-- `make upload` uploads the hex file to a teensy board
-- `make reboot` reboots the teensy
-
-
-Where everything came from
---------------------------
+##Where everything came from
 
 - The `teensy3` sub-folder is taken from [The Teensy 3 Cores](https://github.com/PaulStoffregen/cores/tree/master/teensy3)
 - The `tools` sub-folder is taken from [Teensyduino](http://www.pjrc.com/teensy/td_download.html)

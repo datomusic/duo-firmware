@@ -1,11 +1,16 @@
 /*
-DATO sequencer feb 2016 pcb
-stand alone synth test with fixed synth parameters
-runs on Teensy 3.1
-LED colour correction is optimised for Kingbright LEDs
+  DATO DUO firmware
+  (c) 2016, David Menting <david@dato.mu>
 
-TODO:
-- reduce dependencies. FastLED and Keypad want Arduino.h
+  Hardware:
+  - Runs on a Teensy 3.1/3.2 or on the DUO brains with Kinetis K20DX256
+  - Output goes to the K20's 12 bit DAC output
+  - A button matrix is connected to the pins specified in pinmap.h
+  - LED drivers connected as specified in Leds.h
+  
+  The main loop() defines the sequencer behaviour. Parameters are updated
+  in read_pots() and keys are handled in handle_keys().
+
 */
 #include "Arduino.h"
 #include <Keypad.h>
@@ -73,6 +78,8 @@ void handle_keys();
 void handle_midi();
 int tempo_interval_msec();
 void midi_init();
+float fscale( float originalMin, float originalMax, float newBegin, float
+newEnd, float inputValue, float curve);
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -149,9 +156,7 @@ void loop() {
 
           current_step = random_step;
         }
-        step_velocity[current_step] = 100;
-        // step_velocity[current_step] += velocity_fade_amount;
-        // step_velocity[current_step] = constrain(step_velocity[current_step], VELOCITY_MIN, VELOCITY_MAX);
+        step_velocity[current_step] = INITIAL_VELOCITY;
 
         note_on(SCALE[step_note[current_step]]+transpose, step_velocity[current_step], step_enable[current_step]);
         digitalWrite(SYNC_PIN, HIGH);
@@ -176,13 +181,13 @@ void loop() {
   handle_midi();
   read_pots();
 
-  Serial.print("CPU: ");
-  Serial.print(AudioProcessorUsageMax());
-  Serial.print(" RAM: ");
-  Serial.print(AudioMemoryUsage());
-  Serial.println();
-  AudioMemoryUsageMaxReset(); 
-  AudioProcessorUsageMaxReset();
+//  Serial.print("CPU: ");
+//  Serial.print(AudioProcessorUsageMax());
+//  Serial.print(" RAM: ");
+//  Serial.print(AudioMemoryUsageMax());
+//  Serial.println();
+//  AudioMemoryUsageMaxReset(); 
+//  AudioProcessorUsageMaxReset();
 }
 
 void read_pots() {
@@ -197,6 +202,7 @@ void read_pots() {
   int volume_pot_value = analogRead(FADE_POT);
   int resonance = analogRead(FILTER_RES_POT);
   int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
+  int filter_pot_value = analogRead(FILTER_FREQ_POT);
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
@@ -215,7 +221,9 @@ void read_pots() {
     mixer1.gain(0, 0.5); // OSC1
     mixer1.gain(1, 0.5); // OSC2
   }
-  filter1.frequency(map(analogRead(FILTER_FREQ_POT),0,1023,60,300));
+  filter1.frequency(map(filter_pot_value,0,1023,60,300));
+  //filter1.frequency(fscale(0.,1023.,60.,300.,filter_pot_value,0));
+
   // TODO: do exponential filter pot behaviour
   filter1.resonance(map(resonance,0,1023,70,500)/100.0);
 
@@ -406,4 +414,76 @@ void midi_init() {
   MIDI.begin(MIDI_CHANNEL);
   MIDI.setHandleNoteOn(midi_note_on);
   MIDI.setHandleNoteOff(midi_note_off);
+}
+/* fscale
+ Floating Point Autoscale Function V0.1
+ Paul Badger 2007
+ Modified from code by Greg Shakar
+
+ This function will scale one set of floating point numbers (range) to another set of floating point numbers (range)
+ It has a "curve" parameter so that it can be made to favor either the end of the output. (Logarithmic mapping)
+
+ It takes 6 parameters
+
+ originalMin - the minimum value of the original range - this MUST be less than origninalMax
+ originalMax - the maximum value of the original range - this MUST be greater than orginalMin
+
+ newBegin - the end of the new range which maps to orginalMin - it can be smaller, or larger, than newEnd, to facilitate inverting the ranges
+ newEnd - the end of the new range which maps to originalMax  - it can be larger, or smaller, than newBegin, to facilitate inverting the ranges
+
+ inputValue - the variable for input that will mapped to the given ranges, this variable is constrained to originaMin <= inputValue <= originalMax
+ curve - curve is the curve which can be made to favor either end of the output scale in the mapping. Parameters are from -10 to 10 with 0 being
+          a linear mapping (which basically takes curve out of the equation)
+
+ */
+float fscale( float originalMin, float originalMax, float newBegin, float newEnd, float inputValue, float curve){
+  float OriginalRange = 0;
+  float NewRange = 0;
+  float zeroRefCurVal = 0;
+  float normalizedCurVal = 0;
+  float rangedValue = 0;
+  boolean invFlag = 0;
+
+  // condition curve parameter
+  // limit range
+  if (curve > 10) curve = 10;
+  if (curve < -10) curve = -10;
+
+  curve = (curve * -.1) ; // - invert and scale - this seems more intuitive - postive numbers give more weight to high end on output 
+  curve = pow(10, curve); // convert linear scale into lograthimic exponent for other pow function
+
+  // Check for out of range inputValues
+  if (inputValue < originalMin) {
+    inputValue = originalMin;
+  }
+  if (inputValue > originalMax) {
+    inputValue = originalMax;
+  }
+
+  // Zero Refference the values
+  OriginalRange = originalMax - originalMin;
+
+  if (newEnd > newBegin){ 
+    NewRange = newEnd - newBegin;
+  }
+  else
+  {
+    NewRange = newBegin - newEnd; 
+    invFlag = 1;
+  }
+
+  zeroRefCurVal = inputValue - originalMin;
+  normalizedCurVal  =  zeroRefCurVal / OriginalRange;   // normalize to 0 - 1 float
+
+  // Check for originalMin > originalMax  - the math for all other cases i.e. negative numbers seems to work out fine 
+  if (originalMin > originalMax ) {
+    return 0;
+  }
+
+  if (invFlag == 0){
+    rangedValue =  (pow(normalizedCurVal, curve) * NewRange) + newBegin;
+  } else {   
+    rangedValue =  newBegin - (pow(normalizedCurVal, curve) * NewRange); 
+  }
+  return rangedValue;
 }
