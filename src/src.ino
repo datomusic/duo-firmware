@@ -463,11 +463,10 @@ float fscale( float originalMin, float originalMax, float newBegin, float newEnd
   // Zero Refference the values
   OriginalRange = originalMax - originalMin;
 
-  if (newEnd > newBegin){ 
+  if (newEnd > newBegin) { 
     NewRange = newEnd - newBegin;
   }
-  else
-  {
+  else {
     NewRange = newBegin - newEnd; 
     invFlag = 1;
   }
