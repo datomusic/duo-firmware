@@ -20,27 +20,30 @@
   #define LED_CLK 11
   #define COLOR_ORDER BRG
   #define LED_TYPE WS2801
+  #define NUM_LEDS 12
+  const int led_order[NUM_LEDS] = {9,6,7,8,4,5,0,1};
 #endif
 #ifdef BRAINS_AUG
   #define LED_DT 32
   #define LED_CLK 30
   #define COLOR_ORDER BRG
   #define LED_TYPE WS2801
+  #define NUM_LEDS 12
+  const int led_order[NUM_LEDS] = {9,6,7,8,4,5,0,1};
 #endif
-
-#define NUM_LEDS 12
-
-
-const int led_order[NUM_LEDS] = {
-  9,6,7,8,4,5,0,1
-};
+#ifdef BRAINS_SEP
+  #define LED_DT 5
+  #define COLOR_ORDER BRG
+  #define LED_TYPE SK6812
+  #define NUM_LEDS 19
+  const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
+#endif
 
 #define leds(A) physical_leds[led_order[A]]
 
 CRGB physical_leds[NUM_LEDS];
 
 const int LED_BRIGHTNESS = 255;
-const int LED_PIN = 13;
 
 const CRGB COLOURS[] = {
   0xFF0000,
@@ -61,11 +64,17 @@ void update_leds();
 void led_init() {
   pinMode(LED_PIN, OUTPUT);
 
-  FastLED.addLeds<LED_TYPE, LED_DT, LED_CLK, COLOR_ORDER>(physical_leds, NUM_LEDS);
+  // FastLED.addLeds<LED_TYPE, LED_DT, LED_CLK, COLOR_ORDER>(physical_leds, NUM_LEDS);
+
+  FastLED.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(physical_leds, NUM_LEDS);
+  
   FastLED.setBrightness(LED_BRIGHTNESS); 
  
   FastLED.setCorrection(CORRECTION_KINGBRIGHT);
   FastLED.clear();
+  for(int i = 0; i < 10; i++) {
+    physical_leds[i+9] = COLOURS[i];
+  }
   FastLED.show();
 }
 

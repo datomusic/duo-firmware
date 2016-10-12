@@ -5,3 +5,6 @@ build/
 stino.settings
 tools/
 libraries/
+.project
+.cproject
+.settings/

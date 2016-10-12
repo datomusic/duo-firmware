@@ -17,8 +17,8 @@
 #include "midinotes.h"
 #include <MIDI.h>
 //#define BRAINS_FEB
-#define BRAINS_AUG
-#define NO_POTS
+#define BRAINS_SEP
+// #define NO_POTS
 #include "pinmap.h"
 #include "Buttons.h"
 
@@ -78,6 +78,8 @@ void handle_keys();
 void handle_midi();
 int tempo_interval_msec();
 void midi_init();
+void sequencer_start();
+void sequencer_stop();
 float fscale( float originalMin, float originalMax, float newBegin, float
 newEnd, float inputValue, float curve);
 
@@ -88,6 +90,8 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #include "Leds.h"
 
 void setup() {
+
+  Serial.begin(57600);
   audio_init();
 
   midi_init();
@@ -96,8 +100,7 @@ void setup() {
   keys_init();
   pins_init();
 
-  Serial.begin(57600);
-
+  Serial.println("Dato DUO firmware build 5");
   previous_note_on_time = millis();
 
   digitalWrite(AMP_ENABLE, HIGH);
@@ -106,14 +109,7 @@ void setup() {
 void loop() {
 
   // Check if speed pot is turned all the way down
-  if(tempo_interval_msec() == 0) {
-    if(sequencer_is_running) {
-      // Stop the sequencer
-      sequencer_is_running = false;
-      note_off();
-    }
-  } else {
-
+  if(sequencer_is_running) {
     if(!double_speed) {
       tempo_interval = tempo_interval_msec();
     } else {
@@ -126,12 +122,6 @@ void loop() {
     }
 
     note_on_time = previous_note_on_time + tempo_interval;
-
-    if(!sequencer_is_running) {
-      sequencer_is_running = true;
-      note_on_time = millis();
-      note_off_time = note_on_time + gate_length_msec;
-    }
 
     if(millis() >= note_on_time)  {
       if(note_is_triggered) {
@@ -181,13 +171,13 @@ void loop() {
   handle_midi();
   read_pots();
 
-//  Serial.print("CPU: ");
-//  Serial.print(AudioProcessorUsageMax());
-//  Serial.print(" RAM: ");
-//  Serial.print(AudioMemoryUsageMax());
-//  Serial.println();
-//  AudioMemoryUsageMaxReset(); 
-//  AudioProcessorUsageMaxReset();
+  Serial.print("CPU: ");
+  Serial.print(AudioProcessorUsageMax());
+  Serial.print(" RAM: ");
+  Serial.print(AudioMemoryUsageMax());
+  Serial.println();
+  AudioMemoryUsageMaxReset(); 
+  AudioProcessorUsageMaxReset();
 }
 
 void read_pots() {
@@ -203,11 +193,15 @@ void read_pots() {
   int resonance = analogRead(FILTER_RES_POT);
   int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
   int filter_pot_value = analogRead(FILTER_FREQ_POT);
+  detune_amount = analogRead(OSC_DETUNE_POT);
+
+  analogWrite(FILTER_LED, filter_pot_value>>2);
+  analogWrite(OSC_LED, detune_amount>>2);
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
 
-  detune_amount = analogRead(OSC_DETUNE_POT);
+
   if(detune_amount > 511) {
     // Do PWM stuff
     waveform2.frequency(detune(osc1_midi_note,1000));
@@ -225,7 +219,7 @@ void read_pots() {
   //filter1.frequency(fscale(0.,1023.,60.,300.,filter_pot_value,0));
 
   // TODO: do exponential filter pot behaviour
-  filter1.resonance(map(resonance,0,1023,70,500)/100.0);
+  filter1.resonance(map(resonance,0,1023,500,70)/100.0); // 0.7-5.0 range
 
   envelope1.release(amp_env_release);
 
@@ -241,8 +235,8 @@ void read_pots() {
     noise1.amplitude(0.3);
   }
 
-  mixer2.gain(0, map(volume_pot_value,0,1023,1000,0)/1000.);
-  mixer2.gain(1, map(volume_pot_value,0,1023,700,0)/1000.);
+  mixer2.gain(0, map(volume_pot_value,0,1023,1000,10)/1000.);
+  mixer2.gain(1, map(volume_pot_value,0,1023,700,70)/1000.);
 
   AudioInterrupts(); 
 }
@@ -355,16 +349,12 @@ void handle_keys() {
                 } else if (k == SEQ_RANDOM) {
                   next_step_is_random = true;
                   random_flag = true;
-                } else if (k == OSC1_SAW) {
-                  waveform1.begin(WAVEFORM_SAWTOOTH);
-                } else if (k == OSC1_PULSE) {
-                  waveform1.begin(WAVEFORM_SQUARE);
-                } else if (k == MIC_1) {
-                  waveform1.begin(WAVEFORM_SINE);
-                } else if (k == MIC_2) {
-                  waveform2.begin(WAVEFORM_SINE);
-                } else if (k == OSC2_PULSE) {
-                  waveform2.begin(WAVEFORM_SQUARE);
+                } else if (k == SEQ_START) {
+                  if(sequencer_is_running) {
+                    sequencer_stop();
+                  } else {
+                    sequencer_start();
+                  }
                 }
                 break;
             case HOLD:
@@ -414,6 +404,17 @@ void midi_init() {
   MIDI.begin(MIDI_CHANNEL);
   MIDI.setHandleNoteOn(midi_note_on);
   MIDI.setHandleNoteOff(midi_note_off);
+}
+
+void sequencer_start() {
+  sequencer_is_running = true;
+  physical_leds[0] = CRGB::Black;
+}
+
+void sequencer_stop() {
+  sequencer_is_running = false;
+  physical_leds[0] = CRGB::White;
+  note_off();
 }
 /* fscale
  Floating Point Autoscale Function V0.1
