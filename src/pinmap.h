@@ -76,7 +76,6 @@ PTE1          26
   const int OSC_LED = 32;
   const int FILTER_LED = 25;
   const int ENV_LED = 15;
-  const int LED_PIN = 15;
 
   const int TEMPO_POT = A16; // PTC9
   const int GATE_POT = A18; // PTC10
@@ -109,7 +108,6 @@ PTE1          26
   // SW4 PTD5 20
 #endif
 
-
 // Keypad matrix definitions are in Buttons.h
 
 void pins_init() {
@@ -121,9 +119,4 @@ void pins_init() {
   pinMode(OSC_LED, OUTPUT);
   pinMode(FILTER_LED, OUTPUT);
   pinMode(ENV_LED, OUTPUT);
-
-  digitalWrite(OSC_LED, HIGH);
-  digitalWrite(FILTER_LED, HIGH);
-  digitalWrite(ENV_LED, HIGH);
-
 }

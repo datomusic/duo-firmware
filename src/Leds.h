@@ -43,7 +43,7 @@
 
 CRGB physical_leds[NUM_LEDS];
 
-const int LED_BRIGHTNESS = 255;
+const int LED_BRIGHTNESS = 64;
 
 const CRGB COLOURS[] = {
   0xFF0000,
@@ -62,8 +62,6 @@ void led_init();
 void update_leds();
 
 void led_init() {
-  pinMode(LED_PIN, OUTPUT);
-
   // FastLED.addLeds<LED_TYPE, LED_DT, LED_CLK, COLOR_ORDER>(physical_leds, NUM_LEDS);
 
   FastLED.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(physical_leds, NUM_LEDS);

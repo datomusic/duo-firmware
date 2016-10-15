@@ -127,6 +127,9 @@ reboot:
 
 upload: post_compile reboot
 
+flash: $(TARGET).elf
+	@openocd -f $(CURDIR)/openocd/openocd.cfg -c "program $< reset exit"
+
 $(BUILDDIR)/%.o: %.c
 	@echo "[CC]\t$<"
 	@mkdir -p "$(dir $@)"

@@ -1,6 +1,6 @@
 [submodule "libraries/Keypad"]
 	path = libraries/Keypad
-	url = git://github.com/Chris--A/Keypad
+	url = git://github.com/datomusic/Keypad
 [submodule "libraries/FastLED"]
 	path = libraries/FastLED
 	url = git://github.com/FastLED/FastLED
