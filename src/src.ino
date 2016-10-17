@@ -146,19 +146,19 @@ void handle_keys() {
                     num_notes_held++;
                     note_on(SCALE[k-KEYB_0]+transpose, INITIAL_VELOCITY, true);
                   }
-                } else if (k <= STEP_7 && k >= STEP_0) {
-                  step_enable[k-STEP_0] = 1-step_enable[k-STEP_0];
-                  if(!step_enable[k-STEP_0]) { leds(k-STEP_0) = CRGB::Black; }
-                  step_velocity[k-STEP_0] = INITIAL_VELOCITY;
-                } else if (k == DBL_SPEED) {
+                } else if (k <= STEP_8 && k >= STEP_1) {
+                  step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
+                  if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
+                  step_velocity[k-STEP_1] = INITIAL_VELOCITY;
+                } else if (k == BTN_SEQ2) {
                   double_speed = true;
-                } else if (k == OCT_DOWN) {
+                } else if (k == BTN_DOWN) {
                   transpose--;
                   if(transpose<-12){transpose = -24;}
-                } else if (k == OCT_UP) {
+                } else if (k == BTN_UP) {
                   transpose++;
                   if(transpose>12){transpose = 24;}
-                } else if (k == SEQ_RANDOM) {
+                } else if (k == BTN_SEQ1) {
                   next_step_is_random = true;
                   random_flag = true;
                 } else if (k == SEQ_START) {
@@ -176,15 +176,15 @@ void handle_keys() {
                   MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
                   num_notes_held--;
                   if(num_notes_held <= 0) note_off();
-                } else if (k == DBL_SPEED) {
+                } else if (k == BTN_SEQ2) {
                   double_speed = false;
-                } else if (k == OCT_DOWN) {
+                } else if (k == BTN_DOWN) {
                   if(transpose<-12){transpose = -12;}
                   if(transpose>12){transpose = 12;}
-                } else if (k == OCT_UP) {
+                } else if (k == BTN_UP) {
                   if(transpose<-12){transpose = -12;}
                   if(transpose>12){transpose = 12;}
-                } else if (k == SEQ_RANDOM) {
+                } else if (k == BTN_SEQ1) {
                   next_step_is_random = false;
                 } 
                 break;
