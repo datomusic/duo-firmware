@@ -20,7 +20,6 @@ const byte COLS = 5;
 #endif
 // Enumeration of the keys that are present
 enum BUTTONS {
-  DUMMY_KEY,
   KEYB_0,  KEYB_1,  KEYB_2,  KEYB_3,  KEYB_4,  KEYB_5,  KEYB_6,  KEYB_7,  KEYB_8,  KEYB_9,
   STEP_0,  STEP_1,  STEP_2,  STEP_3,  STEP_4,  STEP_5,  STEP_6,  STEP_7,
   OCT_DOWN, OCT_UP,
@@ -30,19 +29,12 @@ enum BUTTONS {
 
 // // Key matrix hookup
 char keys[ROWS][COLS] = {
-  { DUMMY_KEY, STEP_7, DUMMY_KEY, STEP_0, DUMMY_KEY },
-  { STEP_6,    STEP_5, SEQ_START, STEP_1, STEP_2 },
-  { OCT_DOWN,  STEP_4, DUMMY_KEY, STEP_3, OCT_UP },
-  { KEYB_0,    KEYB_1, KEYB_2,    KEYB_3, KEYB_4 },
-  { KEYB_5,    KEYB_6, KEYB_7,    KEYB_8, KEYB_9 }
+{ SEQ_RANDOM,STEP_7, NO_KEY,    STEP_0, DBL_SPEED },
+{ STEP_6,    STEP_5, SEQ_START, STEP_1, STEP_2 },
+{ OCT_DOWN,  STEP_4, NO_KEY,    STEP_3, OCT_UP },
+{ KEYB_0,    KEYB_1, KEYB_2,    KEYB_3, KEYB_4 },
+{ KEYB_5,    KEYB_6, KEYB_7,    KEYB_8, KEYB_9 }
 };
-// char keys[ROWS][COLS] = {
-//   { DUMMY_KEY, STEP_6, OCT_DOWN, KEYB_0, KEYB_5 },
-//   { STEP_7, STEP_5, STEP_4, KEYB_1, KEYB_6 },
-//   { DUMMY_KEY, SEQ_START, DUMMY_KEY, KEYB_2, KEYB_7 },
-//   { STEP_0, STEP_1, STEP_3, KEYB_3, KEYB_8 },
-//   { DUMMY_KEY, STEP_2, OCT_UP, KEYB_4, KEYB_9 }
-// };
 
 Keypad keypad = Keypad( makeKeymap(keys), row_pins, col_pins, ROWS, COLS );
 

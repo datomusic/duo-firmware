@@ -38,40 +38,17 @@ PTE1          26
 
 */
 
-#ifdef BRAINS_FEB
-  const int FILTER_RES_POT = A2;
-  const int AMP_ENV_POT = A1;
-  const int FILTER_FREQ_POT = A3;
-  const int OSC_DETUNE_POT = A4;
-  const int GATE_POT = A7;
-  const int TEMPO_POT = A8;
-  const int FADE_POT = A9; 
-
-  const int BITC_PIN = 14;
-  const int NOISE_PIN = 19;
-
-  const int SYNC_PIN = 1;
-
-  const int LED_PIN = 13;
-
-#endif
-#ifdef BRAINS_AUG
-  const int FILTER_RES_POT = A12;
-  const int AMP_ENV_POT = A13;
-  const int FILTER_FREQ_POT = A17;
-  const int OSC_DETUNE_POT = A6;
-  const int GATE_POT = A10;
-  const int TEMPO_POT = A11;
-  const int FADE_POT = A7; 
-
-  const int BITC_PIN = 25;
-  const int NOISE_PIN = 24;
-
-  const int SYNC_PIN = 1;
-
-  const int LED_PIN = 13;
-#endif
 #ifdef BRAINS_SEP
+  #define BTN_SYN3 24
+  #define BTN_SYN4 20
+
+  // POT4 PTC1 RES A8
+  // POT5 PTC2 OSC A9
+  // POT6 ADC0_DM3 OSC_DETUNE A13
+  // POT7 ADC0_DP3 FILTER A12
+  // POT8 ADC0_DM0 AMP
+  // POT9 ADC0_DP0 ENV
+
   // LED1 32 LED2 25 LED3 15
   const int OSC_LED = 32;
   const int FILTER_LED = 25;
@@ -89,6 +66,7 @@ PTE1          26
 
   const int FILTER_RES_POT = A8;
   const int OSC_DETUNE_POT = A9;  
+  const int OSC_PW_POT = A13;
 
   const int AMP_ENV_POT = A10;
 
@@ -96,10 +74,10 @@ PTE1          26
 
   const int FADE_POT = A11; 
 
-  const int BITC_PIN = 24; // Lower left button
-  const int NOISE_PIN = 20; // Lower right button
+  const int BITC_PIN = BTN_SYN3; // Lower left button
+  const int NOISE_PIN = BTN_SYN4; // Lower right button
 
-  const int SYNC_PIN = 4; // PTA13
+  const int SYNC_OUT_PIN = 4; // PTA13
   const int AMP_ENABLE = 31; // PTE0
 
   // SW1 PTA12 3
@@ -113,7 +91,7 @@ PTE1          26
 void pins_init() {
   pinMode(BITC_PIN, INPUT_PULLUP);
   pinMode(NOISE_PIN, INPUT_PULLUP);
-  pinMode(SYNC_PIN, OUTPUT);
+  pinMode(SYNC_OUT_PIN, OUTPUT);
   pinMode(AMP_ENABLE, OUTPUT);
 
   pinMode(OSC_LED, OUTPUT);
