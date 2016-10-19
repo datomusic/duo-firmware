@@ -8,3 +8,9 @@
 	path = teensy3
 	url = https://github.com/datomusic/teensy3
 	branch = teensy3-only
+[submodule "libraries/Audio"]
+	path = libraries/Audio
+	url = git://github.com/datomusic/Audio
+[submodule "libraries/MIDI"]
+	path = libraries/MIDI
+	url = git://github.com/FortySevenEffects/arduino_midi_library
