@@ -40,6 +40,7 @@
 //
 #include <effect_bitcrusher.h>
 #include <effect_fade.h>
+#include <effect_chorus.h>
 #include <effect_envelope.h>
 #include <effect_multiply.h>
 #include <filter_variable.h>
@@ -49,33 +50,42 @@
 #include <synth_waveform.h>
 #include <synth_dc.h>
 #include <synth_whitenoise.h>
-#include <synth_pinknoise.h>
-
-// End <Audio.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform2;      //xy=82,289
-AudioSynthWaveform       waveform1;      //xy=83,236
-AudioSynthWaveformDc     dc1;            //xy=92,341
-AudioEffectEnvelope      envelope2;      //xy=231,341
-AudioMixer4              mixer1;         //xy=259,275
-AudioFilterStateVariable filter1;        //xy=407,283
-AudioEffectEnvelope      envelope1;      //xy=562,270
-AudioSynthNoiseWhite     noise1;         //xy=707,313
-AudioEffectBitcrusher    bitcrusher1;    //xy=721,269
-AudioMixer4              mixer2;         //xy=868,289
-AudioOutputAnalog        dac1;           //xy=996,289
+AudioSynthWaveform       waveform2;      //xy=330,1395
+AudioSynthWaveform       waveform1;      //xy=331,1342
+AudioSynthWaveformDc     dc1;            //xy=348.33334732055664,1523.6666831970215
+AudioMixer4              mixer1;         //xy=507,1381
+AudioEffectEnvelope      envelope2;      //xy=517.3333511352539,1510.333351135254
+AudioFilterStateVariable filter1;        //xy=655,1389
+AudioEffectEnvelope      envelope1;      //xy=816.6666412353516,1354.333387374878
+AudioEffectBitcrusher    bitcrusher1;    //xy=1022.3333110809326,1363.3333487510681
+AudioEffectChorus        chorus1;        //xy=1203.3333797454834,1363.3332653045654
+AudioSynthNoiseWhite     noise1; //xy=1229.999885559082,1470.6668491363525
+AudioMixer4              mixer2;         //xy=1387.666597366333,1374.9999341964722
+AudioOutputAnalog        dac1;           //xy=1552.666648864746,1393.3332290649414
 AudioConnection          patchCord1(waveform2, 0, mixer1, 1);
 AudioConnection          patchCord2(waveform1, 0, mixer1, 0);
 AudioConnection          patchCord3(dc1, envelope2);
-AudioConnection          patchCord4(envelope2, 0, filter1, 1);
-AudioConnection          patchCord5(mixer1, 0, filter1, 0);
+AudioConnection          patchCord4(mixer1, 0, filter1, 0);
+AudioConnection          patchCord5(envelope2, 0, filter1, 1);
 AudioConnection          patchCord6(filter1, 0, envelope1, 0);
 AudioConnection          patchCord7(envelope1, bitcrusher1);
-AudioConnection          patchCord8(noise1, 0, mixer2, 1);
-AudioConnection          patchCord9(bitcrusher1, 0, mixer2, 0);
-AudioConnection          patchCord10(mixer2, dac1);
+AudioConnection          patchCord8(bitcrusher1, chorus1);
+AudioConnection          patchCord9(chorus1, 0, mixer2, 0);
+AudioConnection          patchCord10(noise1, 0, mixer2, 1);
+AudioConnection          patchCord11(mixer2, dac1);
 // GUItool: end automatically generated code
+
+
+
+
+
+
+#define CHORUS_DELAY_LENGTH (120*AUDIO_BLOCK_SAMPLES)
+// Allocate the delay lines for left and right channels
+short c_delay_line[CHORUS_DELAY_LENGTH];
+
 
 
 void audio_init();
@@ -83,11 +93,16 @@ void audio_init();
 void audio_init() {
   AudioMemory(20); // 260 bytes per block, 2.9ms per block
 
+  chorus1.begin(c_delay_line, CHORUS_DELAY_LENGTH, 2);
+  // Serial.println("chorus delay  ");
+  // Serial.println(c_delay_line);
+
+  // chorus1.voices(0);
   // Oscillators
   waveform1.begin(0.3, 220, WAVEFORM_SAWTOOTH);
   waveform2.pulseWidth(0.5);
   waveform2.begin(0.2, 110, WAVEFORM_PULSE);
-  
+
   // Mixer mixes the oscillators
   mixer1.gain(0, 0.5); // OSC1
   mixer1.gain(1, 0.5); // OSC2

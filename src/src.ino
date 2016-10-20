@@ -7,7 +7,7 @@
   - Output goes to the K20's 12 bit DAC output
   - A button matrix is connected to the pins specified in pinmap.h
   - LED drivers connected as specified in Leds.h
-  
+
   The main loop() defines the sequencer behaviour. Parameters are updated
   in read_pots() and keys are handled in handle_keys().
 
@@ -48,7 +48,7 @@ bool sequencer_is_running = true;
 // Musical settings
 //const int BLACK_KEYS[] = {22,25,27,30,32,34,37,39,42,44,46,49,51,54,56,58,61,63,66,68,73,75,78,80};
 const int SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
-const float SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
+const float SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 };
 const char DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
 #define INITIAL_VELOCITY 100
 
@@ -130,19 +130,19 @@ void handle_keys() {
       if ( keypad.key[i].stateChanged ) {
         char k = keypad.key[i].kchar;
         switch (keypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
-            case PRESSED:   
+            case PRESSED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   if(sequencer_is_running) {
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
-                    step_velocity[target_step] = INITIAL_VELOCITY; 
+                    step_velocity[target_step] = INITIAL_VELOCITY;
                   } else {
                     current_step++;
                     if (current_step >= NUM_STEPS) current_step = 0;
                     target_step=current_step;
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
-                    step_velocity[target_step] = INITIAL_VELOCITY; 
+                    step_velocity[target_step] = INITIAL_VELOCITY;
                     num_notes_held++;
                     note_on(SCALE[k-KEYB_0]+transpose, INITIAL_VELOCITY, true);
                   }
@@ -186,7 +186,7 @@ void handle_keys() {
                   if(transpose>12){transpose = 12;}
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = false;
-                } 
+                }
                 break;
             case IDLE:
                 break;
@@ -235,21 +235,39 @@ void read_pots() {
   envelope1.release(amp_env_release);
 
   if(digitalRead(BITC_PIN)) {
-    bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
+    // bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
   } else {
-    bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
+    // bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
-  
+
   if(digitalRead(NOISE_PIN)) {
+    // delay1.delay(0,400);
     noise1.amplitude(0.0);
   } else {
+    // delay1.delay(0,0);
     noise1.amplitude(0.3);
+  }
+
+
+  if(digitalRead(ULEFT_PIN)) {
+    chorus1.voices(0);
+  } else {
+    int val = map(tempo_interval, 20, 666, 2, 4);
+    chorus1.voices(val);
+  }
+  if(digitalRead(URIGHT_PIN)) {
+    // Serial.println("IN! Right");
+    // chorus1.voices(0);
+  } else {
+    Serial.println("RIGHT DOWN");
+    int val = map(tempo_interval, 20, 666, 4, 2);
+    chorus1.voices(val);
   }
 
   mixer2.gain(0, map(volume_pot_value,0,1023,1000,10)/1000.);
   mixer2.gain(1, map(volume_pot_value,0,1023,700,70)/1000.);
 
-  AudioInterrupts(); 
+  AudioInterrupts();
 }
 
 void midi_note_on(byte channel, byte note, byte velocity) {
@@ -274,7 +292,7 @@ void note_on(byte midi_note, byte velocity, boolean enabled) {
     // Detune OSC2
     waveform2.frequency(detune(osc1_midi_note,detune_amount));
 
-    AudioInterrupts(); 
+    AudioInterrupts();
 
     MIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
     envelope1.noteOn();
@@ -296,7 +314,7 @@ void note_off() {
       MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
     }
     note_is_playing = 0;
-  } 
+  }
 }
 
 float midi_note_to_frequency(int x) {
@@ -320,7 +338,7 @@ int tempo_interval_msec() {
   #endif
   int potvalue = analogRead(TEMPO_POT);
   return map(potvalue,10,1023,40,MIN_TEMPO_MSEC);
-  
+
 }
 
 void midi_init() {

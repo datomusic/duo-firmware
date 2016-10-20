@@ -34,11 +34,13 @@ PTD5          20
 PTD6          21
 PTD7           5
 PTE0          31
-PTE1          26
+PTE1          26 sdsd
 
 */
 
 #ifdef BRAINS_SEP
+  #define BTN_SYN1 9
+  #define BTN_SYN2 3
   #define BTN_SYN3 24
   #define BTN_SYN4 20
 
@@ -65,17 +67,20 @@ PTE1          26
   // POT9 ADC0_DP0 ENV
 
   const int FILTER_RES_POT = A8;
-  const int OSC_DETUNE_POT = A9;  
+  const int OSC_DETUNE_POT = A9;
   const int OSC_PW_POT = A13;
 
   const int AMP_ENV_POT = A10;
 
   const int FILTER_FREQ_POT = A12;
 
-  const int FADE_POT = A11; 
+  const int FADE_POT = A11;
 
   const int BITC_PIN = BTN_SYN3; // Lower left button
   const int NOISE_PIN = BTN_SYN4; // Lower right button
+
+  const int ULEFT_PIN = BTN_SYN1; // Upper left button
+  const int URIGHT_PIN = BTN_SYN2; // Upper right button
 
   const int SYNC_OUT_PIN = 4; // PTA13
   const int AMP_ENABLE = 31; // PTE0
@@ -89,7 +94,10 @@ PTE1          26
 // Keypad matrix definitions are in Buttons.h
 
 void pins_init() {
-  pinMode(BITC_PIN, INPUT_PULLUP);
+
+
+  pinMode(ULEFT_PIN, INPUT_PULLUP);
+  pinMode(URIGHT_PIN, INPUT_PULLUP);
   pinMode(NOISE_PIN, INPUT_PULLUP);
   pinMode(SYNC_OUT_PIN, OUTPUT);
   pinMode(AMP_ENABLE, OUTPUT);
