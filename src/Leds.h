@@ -86,6 +86,7 @@ void led_init() {
   FastLED.clear();
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = PCOLOURS[i];
+    physical_leds[i+9].nscale8(50);
   }
   FastLED.show();
 }
