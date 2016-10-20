@@ -58,9 +58,9 @@ AudioSynthWaveformDc     dc1;            //xy=348.33334732055664,1523.6666831970
 AudioMixer4              mixer1;         //xy=507,1381
 AudioEffectEnvelope      envelope2;      //xy=517.3333511352539,1510.333351135254
 AudioFilterStateVariable filter1;        //xy=655,1389
-AudioEffectEnvelope      envelope1;      //xy=816.6666412353516,1354.333387374878
-AudioEffectBitcrusher    bitcrusher1;    //xy=1022.3333110809326,1363.3333487510681
-AudioEffectChorus        chorus1;        //xy=1203.3333797454834,1363.3332653045654
+AudioEffectEnvelope      envelope1;      //xy=839.9999351501465,1374.333264350891
+AudioEffectChorus        chorus1;        //xy=1031.666603088379,1364.9998512268066
+AudioEffectBitcrusher    bitcrusher1;    //xy=1216.6665954589844,1358.3332653045654
 AudioSynthNoiseWhite     noise1; //xy=1229.999885559082,1470.6668491363525
 AudioMixer4              mixer2;         //xy=1387.666597366333,1374.9999341964722
 AudioOutputAnalog        dac1;           //xy=1552.666648864746,1393.3332290649414
@@ -70,15 +70,12 @@ AudioConnection          patchCord3(dc1, envelope2);
 AudioConnection          patchCord4(mixer1, 0, filter1, 0);
 AudioConnection          patchCord5(envelope2, 0, filter1, 1);
 AudioConnection          patchCord6(filter1, 0, envelope1, 0);
-AudioConnection          patchCord7(envelope1, bitcrusher1);
-AudioConnection          patchCord8(bitcrusher1, chorus1);
-AudioConnection          patchCord9(chorus1, 0, mixer2, 0);
+AudioConnection          patchCord7(envelope1, chorus1);
+AudioConnection          patchCord8(chorus1, bitcrusher1);
+AudioConnection          patchCord9(bitcrusher1, 0, mixer2, 0);
 AudioConnection          patchCord10(noise1, 0, mixer2, 1);
 AudioConnection          patchCord11(mixer2, dac1);
 // GUItool: end automatically generated code
-
-
-
 
 
 

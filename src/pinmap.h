@@ -95,7 +95,7 @@ PTE1          26 sdsd
 
 void pins_init() {
 
-
+  pinMode(BITC_PIN, INPUT_PULLUP);
   pinMode(ULEFT_PIN, INPUT_PULLUP);
   pinMode(URIGHT_PIN, INPUT_PULLUP);
   pinMode(NOISE_PIN, INPUT_PULLUP);

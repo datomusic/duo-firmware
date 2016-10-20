@@ -235,9 +235,10 @@ void read_pots() {
   envelope1.release(amp_env_release);
 
   if(digitalRead(BITC_PIN)) {
-    // bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
+    bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
   } else {
-    // bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
+    Serial.println("HAELLO");
+    bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
 
   if(digitalRead(NOISE_PIN)) {

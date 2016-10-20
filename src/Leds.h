@@ -46,7 +46,7 @@ CRGB physical_leds[NUM_LEDS];
 const int LED_BRIGHTNESS = 128;
 
 const CRGB PCOLOURS[] = {
-  0x000000,
+  0xFF0000,
   0xFF2200,
   0xFF8800,
   0xEEFF00,
