@@ -50,7 +50,7 @@ bool sequencer_is_running = true;
 const int SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
 const float SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 };
 const char DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
-#define INITIAL_VELOCITY 100
+int target_velocity = 100;
 
 // Variable declarations
 int detune_amount = 0;
@@ -135,21 +135,21 @@ void handle_keys() {
                   if(sequencer_is_running) {
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
-                    step_velocity[target_step] = INITIAL_VELOCITY;
+                    step_velocity[target_step] = target_velocity;
                   } else {
                     current_step++;
                     if (current_step >= NUM_STEPS) current_step = 0;
                     target_step=current_step;
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
-                    step_velocity[target_step] = INITIAL_VELOCITY;
+                    step_velocity[target_step] = target_velocity;
                     num_notes_held++;
-                    note_on(SCALE[k-KEYB_0]+transpose, INITIAL_VELOCITY, true);
+                    note_on(SCALE[k-KEYB_0]+transpose, target_velocity, true);
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
-                  step_velocity[k-STEP_1] = INITIAL_VELOCITY;
+                  step_velocity[k-STEP_1] = target_velocity;
                 } else if (k == BTN_SEQ2) {
                   double_speed = true;
                 } else if (k == BTN_DOWN) {
@@ -257,12 +257,9 @@ void read_pots() {
     chorus1.voices(val);
   }
   if(digitalRead(URIGHT_PIN)) {
-    // Serial.println("IN! Right");
-    // chorus1.voices(0);
+    target_velocity = 100;
   } else {
-    Serial.println("RIGHT DOWN");
-    int val = map(tempo_interval, 20, 666, 4, 2);
-    chorus1.voices(val);
+    target_velocity = 127;
   }
 
   mixer2.gain(0, map(volume_pot_value,0,1023,1000,10)/1000.);
@@ -396,7 +393,7 @@ void sequencer() {
 
         current_step = random_step;
       }
-      step_velocity[current_step] = INITIAL_VELOCITY;
+      step_velocity[current_step] = target_velocity;
 
       note_on(SCALE[step_note[current_step]]+transpose, step_velocity[current_step], step_enable[current_step]);
       digitalWrite(SYNC_OUT_PIN, HIGH);
