@@ -43,7 +43,20 @@
 
 CRGB physical_leds[NUM_LEDS];
 
-const int LED_BRIGHTNESS = 64;
+const int LED_BRIGHTNESS = 128;
+
+const CRGB PCOLOURS[] = {
+  0xFF0000,
+  0xFF2200,
+  0xFF8800,
+  0xEEFF00,
+  0x00FF00,
+  0x00FF33,
+  0x00FFCC,
+  0x0000FF,
+  0x6600FF,
+  0x990099
+};
 
 const CRGB COLOURS[] = {
   0xFF0000,
@@ -58,6 +71,7 @@ const CRGB COLOURS[] = {
   0x990099
 };
 
+
 void led_init();
 void update_leds();
 
@@ -65,13 +79,14 @@ void led_init() {
   // FastLED.addLeds<LED_TYPE, LED_DT, LED_CLK, COLOR_ORDER>(physical_leds, NUM_LEDS);
 
   FastLED.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(physical_leds, NUM_LEDS);
-  
-  FastLED.setBrightness(LED_BRIGHTNESS); 
- 
+
+  FastLED.setBrightness(LED_BRIGHTNESS);
+
   FastLED.setCorrection(CORRECTION_KINGBRIGHT);
   FastLED.clear();
   for(int i = 0; i < 10; i++) {
-    physical_leds[i+9] = COLOURS[i];
+    physical_leds[i+9] = PCOLOURS[i];
+    physical_leds[i+9].nscale8(50);
   }
   FastLED.show();
 }
@@ -88,7 +103,7 @@ void update_leds() {
         leds(l).nscale8_video(step_velocity[l]+20);
       }
     }
-     
+
     if(note_is_playing) {
       leds(current_step) = CRGB(190,255,190);
     } else {
