@@ -39,6 +39,8 @@ PTE1          26
 */
 
 #ifdef BRAINS_SEP
+  #define BTN_SYN1 3 //PTA12
+  #define BTN_SYN2 9
   #define BTN_SYN3 24
   #define BTN_SYN4 20
 

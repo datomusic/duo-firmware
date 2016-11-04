@@ -30,7 +30,7 @@ enum BUTTONS {
 // // Key matrix hookup
 char keys[ROWS][COLS] = {
 { BTN_SEQ1,  STEP_8, NO_KEY,    STEP_1, BTN_SEQ2 },
-{ STEP_6,    STEP_6, SEQ_START, STEP_2, STEP_3 },
+{ STEP_7,    STEP_6, SEQ_START, STEP_2, STEP_3 },
 { BTN_DOWN,  STEP_5, NO_KEY,    STEP_4, BTN_UP },
 { KEYB_0,    KEYB_1, KEYB_2,    KEYB_3, KEYB_4 },
 { KEYB_5,    KEYB_6, KEYB_7,    KEYB_8, KEYB_9 }
