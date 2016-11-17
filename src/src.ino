@@ -18,8 +18,8 @@
 #include <MIDI.h>
 
 #define BRAINS_SEP
-// #define NO_POTS
-// #define NO_AUDIO
+//#define NO_POTS
+//#define NO_AUDIO
 #include "pinmap.h"
 #include "Buttons.h"
 
@@ -43,7 +43,7 @@ unsigned long note_off_time;
 // Define the array of leds
 
 char set_key = 9;
-bool sequencer_is_running = true;
+bool sequencer_is_running = false;
 
 // Musical settings
 //const int BLACK_KEYS[] = {22,25,27,30,32,34,37,39,42,44,46,49,51,54,56,58,61,63,66,68,73,75,78,80};
@@ -65,6 +65,7 @@ boolean next_step_is_random = false;
 int num_notes_held = 0;
 int tempo_interval;
 boolean random_flag = 0;
+boolean power = 1;
 
 void read_pots();
 void midi_note_on(byte channel, byte note, byte velocity);
@@ -81,6 +82,8 @@ void midi_init();
 void sequencer_start();
 void sequencer_stop();
 void sequencer();
+void off();
+void on();
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -101,12 +104,15 @@ void setup() {
 
   Serial.println("Dato DUO firmware");
   previous_note_on_time = millis();
+  Serial.println(touchRead(17));
 
   #ifdef NO_AUDIO
   digitalWrite(AMP_ENABLE, LOW);
   #else
   digitalWrite(AMP_ENABLE, HIGH);
   #endif
+
+  sequencer_stop();
 }
 
 void loop() {
@@ -114,11 +120,12 @@ void loop() {
   if(sequencer_is_running) {
     sequencer();
   }
-
-  update_leds();
   handle_keys();
-  handle_midi();
-  read_pots();
+  if(power) {
+    update_leds();
+    handle_midi();
+    read_pots();
+  }
 
 }
 
@@ -165,11 +172,15 @@ void handle_keys() {
                   if(sequencer_is_running) {
                     sequencer_stop();
                   } else {
+                    on();
                     sequencer_start();
                   }
                 }
                 break;
             case HOLD:
+                if (k == SEQ_START) {
+                  off();
+                }
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
@@ -213,11 +224,11 @@ void read_pots() {
   int resonance = analogRead(FILTER_RES_POT);
   int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
   int filter_pot_value = analogRead(FILTER_FREQ_POT);
-  detune_amount = analogRead(OSC_DETUNE_POT);
+  detune_amount = 1023-analogRead(OSC_DETUNE_POT);
   int pulse_pot_value = analogRead(OSC_PW_POT);
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
-  analogWrite(OSC_LED, detune_amount>>2);
+  analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
@@ -336,7 +347,7 @@ void sequencer_start() {
 
 void sequencer_stop() {
   sequencer_is_running = false;
-  physical_leds[0] = CRGB::White;
+  physical_leds[0] = LED_WHITE;
   note_off();
 }
 
@@ -394,4 +405,27 @@ void sequencer() {
     if (target_step >= NUM_STEPS) target_step = 0;
     note_off_time = millis() + tempo_interval - gate_length_msec; // Set note off time to sometime in the future
   }
+}
+
+
+void off() { // TODO: this is super crude and doesn't work, but it shows the effect
+  sequencer_stop();
+  digitalWrite(AMP_ENABLE, LOW);
+
+  for(int i = 32; i >= 0; i--) {
+    FastLED.setBrightness(i);
+    FastLED.show();
+    analogWrite(ENV_LED,i);
+    analogWrite(FILTER_LED,i);
+    analogWrite(OSC_LED,i);
+    delay(20);
+  }
+
+  power = false;
+}
+
+void on() {
+  led_init();
+  digitalWrite(AMP_ENABLE, HIGH);
+  power = true;
 }

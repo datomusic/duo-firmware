@@ -42,4 +42,5 @@ void keys_init();
 
 void keys_init() {
     keypad.setDebounceTime(15);
+    keypad.setHoldTime(2000);
 }

@@ -11,9 +11,9 @@
 #include <FastLED.h>
 
 // KINGBRIGHT  KPHF-1612QBDSURKZGC scaling values
-#define CORRECTION_KINGBRIGHT 0xE050FF
+#define CORRECTION_SK6812 0xFFFFFF
 // #define CORRECTION_KINGBRIGHT 0x902840
-#define LED_WHITE CRGB(190,255,190);
+#define LED_WHITE CRGB(255,255,150);
 
 #ifdef BRAINS_FEB
   #define LED_DT 12
@@ -33,7 +33,7 @@
 #endif
 #ifdef BRAINS_SEP
   #define LED_DT 5
-  #define COLOR_ORDER BRG
+  #define COLOR_ORDER GRB
   #define LED_TYPE SK6812
   #define NUM_LEDS 19
   const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
@@ -43,18 +43,18 @@
 
 CRGB physical_leds[NUM_LEDS];
 
-const int LED_BRIGHTNESS = 64;
+const int LED_BRIGHTNESS = 32;
 
 const CRGB COLOURS[] = {
   0xFF0000,
-  0xFF2200,
-  0xFF8800,
-  0xEEFF00,
-  0x00FF00,
+  0xFF4400,
+  0xFF9900,
+  0x99FF00,
+  0x11FF00,
   0x00FF33,
-  0x00FFCC,
+  0x00CCCC,
   0x0000FF,
-  0x6600FF,
+  0x3300FF,
   0x990099
 };
 
@@ -68,7 +68,7 @@ void led_init() {
   
   FastLED.setBrightness(LED_BRIGHTNESS); 
  
-  FastLED.setCorrection(CORRECTION_KINGBRIGHT);
+  FastLED.setCorrection(CORRECTION_SK6812);
   FastLED.clear();
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLOURS[i];
@@ -90,7 +90,7 @@ void update_leds() {
     }
      
     if(note_is_playing) {
-      leds(current_step) = CRGB(190,255,190);
+      leds(current_step) = LED_WHITE;
     } else {
     if(!step_enable[current_step]) {
       leds(current_step) = CRGB::Black;
@@ -99,6 +99,7 @@ void update_leds() {
   AudioNoInterrupts();
   FastLED.show();
   AudioInterrupts();
+  analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
 }
 
 #endif

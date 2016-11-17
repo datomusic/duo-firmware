@@ -67,8 +67,8 @@ PTE1          26
   // POT9 ADC0_DP0 ENV
 
   const int FILTER_RES_POT = A8;
-  const int OSC_DETUNE_POT = A9;  
-  const int OSC_PW_POT = A13;
+  const int OSC_DETUNE_POT = A13;  
+  const int OSC_PW_POT = A9;
 
   const int AMP_ENV_POT = A10;
 
