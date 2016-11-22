@@ -53,7 +53,11 @@ void led_init() {
 
 // Updates the LED colour and brightness to match the stored sequence
 void update_leds() {
-
+  if(sequencer_is_running) {
+      physical_leds[0] = CRGB::Black;
+  } else {
+      physical_leds[0] = LED_WHITE;
+  }
   for (int l = 0; l < NUM_STEPS; l++) {
     if (step_enable[l]) {
 

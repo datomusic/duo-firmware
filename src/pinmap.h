@@ -1,5 +1,5 @@
+#define BRAINS_SEP
 /*
-
 Port  Num     Arduino pin number
 PTA4          33
 PTA5          24
@@ -44,27 +44,12 @@ PTE1          26
   #define BTN_SYN3 24
   #define BTN_SYN4 20
 
-  // POT4 PTC1 RES A8
-  // POT5 PTC2 OSC A9
-  // POT6 ADC0_DM3 OSC_DETUNE A13
-  // POT7 ADC0_DP3 FILTER A12
-  // POT8 ADC0_DM0 AMP
-  // POT9 ADC0_DP0 ENV
-
-  // LED1 32 LED2 25 LED3 15
   const int OSC_LED = 32;
   const int FILTER_LED = 25;
   const int ENV_LED = 15;
 
   const int TEMPO_POT = A16; // PTC9
   const int GATE_POT = A18; // PTC10
-
-  // POT4 PTC1 RES A8
-  // POT5 PTC2 OSC A9
-  // POT6 ADC0_DM3 OSC_DETUNE A13
-  // POT7 ADC0_DP3 FILTER A12
-  // POT8 ADC0_DM0 AMP
-  // POT9 ADC0_DP0 ENV
 
   const int FILTER_RES_POT = A8;
   const int OSC_DETUNE_POT = A13;  
@@ -81,30 +66,6 @@ PTE1          26
 
   const int SYNC_OUT_PIN = 4; // PTA13
   const int AMP_ENABLE = 31; // PTE0
-
-  // SW1 PTA12 3
-  // SW2 PTA5 24
-  // SW3 PTC3 9
-  // SW4 PTD5 20
-#endif
-
-#ifdef BRAINS_FEB
-  #define LED_DT 12
-  #define LED_CLK 11
-  #define COLOR_ORDER BRG
-  #define LED_TYPE WS2801
-  #define NUM_LEDS 12
-  const int led_order[NUM_LEDS] = {9,6,7,8,4,5,0,1};
-#endif
-#ifdef BRAINS_AUG
-  #define LED_DT 32
-  #define LED_CLK 30
-  #define COLOR_ORDER BRG
-  #define LED_TYPE WS2801
-  #define NUM_LEDS 12
-  const int led_order[NUM_LEDS] = {9,6,7,8,4,5,0,1};
-#endif
-#ifdef BRAINS_SEP
   #define LED_DT 5
   #define COLOR_ORDER GRB
   #define LED_TYPE SK6812

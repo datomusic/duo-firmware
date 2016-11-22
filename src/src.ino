@@ -17,7 +17,6 @@
 #include "midinotes.h"
 #include <MIDI.h>
 
-#define BRAINS_SEP
 //#define NO_POTS
 //#define NO_AUDIO
 #include "pinmap.h"
@@ -43,7 +42,6 @@ unsigned long note_off_time;
 // Define the array of leds
 
 char set_key = 9;
-bool sequencer_is_running = false;
 
 // Musical settings
 //const int BLACK_KEYS[] = {22,25,27,30,32,34,37,39,42,44,46,49,51,54,56,58,61,63,66,68,73,75,78,80};
@@ -55,16 +53,16 @@ const char DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
 // Global variables
 int detune_amount = 0;
 int osc1_frequency = 0;
-byte osc1_midi_note = 0;
+uint8_t osc1_midi_note = 0;
 bool note_is_playing = 0;
-boolean note_is_triggered = false;
-boolean note_is_played = false;
-boolean double_speed = false;
+bool note_is_triggered = false;
+bool note_is_played = false;
+bool double_speed = false;
 int transpose = 0;
-boolean next_step_is_random = false;
+bool next_step_is_random = false;
 int num_notes_held = 0;
 int tempo_interval;
-boolean random_flag = 0;
+bool random_flag = 0;
 bool power_flag = 1;
 
 uint16_t keyboard_map = 0;
@@ -72,9 +70,9 @@ uint16_t old_keyboard_map = 0;
 const uint16_t KEYBOARD_MASK = 0b11111111111;
 
 void read_pots();
-void midi_note_on(byte channel, byte note, byte velocity);
-void midi_note_off(byte channel, byte note, byte velocity);
-void note_on(byte midi_note, byte velocity, boolean enabled);
+void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
+void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
+void note_on(uint8_t midi_note, uint8_t velocity, bool enabled);
 void note_off();
 float midi_note_to_frequency(int x) ;
 int detune(int note, int amount);
@@ -83,11 +81,8 @@ void handle_keys();
 void handle_midi();
 int tempo_interval_msec();
 void midi_init();
-void sequencer_start();
-void sequencer_stop();
-void sequencer();
-void off();
-void on();
+void power_off();
+void power_on();
 void keyboard_to_note();
 
 MIDI_CREATE_DEFAULT_INSTANCE();
@@ -146,11 +141,11 @@ void loop() {
     delay(100);
     //TODO: has to have been low at least once
     if(!digitalRead(row_pins[1])) {
-      on();
+      power_on();
       sequencer_start();
     }
     pinMode(col_pins[2],INPUT_PULLUP);
-    delay(100);
+    delay(20);
   }
 }
 
@@ -214,14 +209,14 @@ void handle_keys() {
                   if(sequencer_is_running) {
                     sequencer_stop();
                   } else {
-                    on();
+                    power_on();
                     sequencer_start();
                   }
                 }
                 break;
             case HOLD:
                 if (k == SEQ_START) {
-                  off();
+                  power_off();
                 }
                 break;
             case RELEASED:
@@ -304,15 +299,15 @@ void read_pots() {
   AudioInterrupts(); 
 }
 
-void midi_note_on(byte channel, byte note, byte velocity) {
+void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {
   note_on(note, velocity, true);
 }
 
-void midi_note_off(byte channel, byte note, byte velocity) {
+void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
   note_off();
 }
 
-void note_on(byte midi_note, byte velocity, boolean enabled) {
+void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
 
   // Override velocity if button on the synth is pressed
   if(!digitalRead(BTN_SYN1)) {
@@ -385,75 +380,7 @@ void midi_init() {
   MIDI.setHandleNoteOff(midi_note_off);
 }
 
-void sequencer_start() {
-  sequencer_is_running = true;
-  physical_leds[0] = CRGB::Black;
-}
-
-void sequencer_stop() {
-  sequencer_is_running = false;
-  physical_leds[0] = LED_WHITE;
-  note_off();
-}
-
-void sequencer() {
-  if(!double_speed) {
-    tempo_interval = tempo_interval_msec();
-  } else {
-    tempo_interval = (tempo_interval_msec()/2);
-  }
-
-  // Make sure the gate length is never longer than one step
-  if(gate_length_msec > tempo_interval) {
-    gate_length_msec = tempo_interval;
-  }
-
-  note_on_time = previous_note_on_time + tempo_interval;
-
-  if(millis() >= note_on_time)  {
-    if(note_is_triggered) {
-
-    } else {
-      note_is_triggered = true;
-      note_is_played = false;
-      // time for the next note
-      previous_note_on_time = millis();
-      note_off_time = previous_note_on_time + gate_length_msec;
-
-      if (!next_step_is_random && !random_flag) {
-        current_step++;
-        if (current_step >= NUM_STEPS) current_step = 0;
-      } else {
-        random_flag = false;
-        int random_step = random(NUM_STEPS);
-
-        while (random_step == current_step || random_step == current_step+1 || random_step+NUM_STEPS == current_step) { // Prevent random from stepping to the current or next step
-          random_step = random(NUM_STEPS);
-        }
-
-        current_step = random_step;
-      }
-      step_velocity[current_step] = INITIAL_VELOCITY;
-
-      note_on(SCALE[step_note[current_step]]+transpose, step_velocity[current_step], step_enable[current_step]);
-      digitalWrite(SYNC_OUT_PIN, HIGH);
-    }
-
-  }
-
-  if(!note_is_played && millis() >= note_off_time) { // We want to update the gate length continuously responding to pot readings
-    note_is_played = true;
-    digitalWrite(SYNC_OUT_PIN, LOW);
-    note_off();
-    note_is_triggered = false;
-    target_step = current_step + 1;
-    if (target_step >= NUM_STEPS) target_step = 0;
-    note_off_time = millis() + tempo_interval - gate_length_msec; // Set note off time to sometime in the future
-  }
-}
-
-
-void off() { // TODO: this is super crude and doesn't work, but it shows the effect
+void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
   AudioNoInterrupts();
   digitalWrite(AMP_ENABLE, LOW);
@@ -469,9 +396,16 @@ void off() { // TODO: this is super crude and doesn't work, but it shows the eff
   FastLED.clear();
   FastLED.show();
   power_flag = 0;
+  pinMode(row_pins[1],INPUT_PULLUP);
+  pinMode(col_pins[2],OUTPUT);
+  digitalWrite(col_pins[2],LOW);
+  while(!digitalRead(row_pins[1])) {
+    // wait for release of the power button
+  }
+  delay(100);
 }
 
-void on() {
+void power_on() {
   led_init();
   AudioInterrupts();
   digitalWrite(AMP_ENABLE, HIGH);
