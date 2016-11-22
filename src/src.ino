@@ -52,11 +52,11 @@ const float SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 };
 const char DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
 #define INITIAL_VELOCITY 100
 
-// Variable declarations
+// Global variables
 int detune_amount = 0;
 int osc1_frequency = 0;
 byte osc1_midi_note = 0;
-int note_is_playing = 0;
+bool note_is_playing = 0;
 boolean note_is_triggered = false;
 boolean note_is_played = false;
 boolean double_speed = false;
@@ -65,7 +65,11 @@ boolean next_step_is_random = false;
 int num_notes_held = 0;
 int tempo_interval;
 boolean random_flag = 0;
-boolean power = 1;
+bool power_flag = 1;
+
+uint16_t keyboard_map = 0;
+uint16_t old_keyboard_map = 0;
+const uint16_t KEYBOARD_MASK = 0b11111111111;
 
 void read_pots();
 void midi_note_on(byte channel, byte note, byte velocity);
@@ -84,6 +88,7 @@ void sequencer_stop();
 void sequencer();
 void off();
 void on();
+void keyboard_to_note();
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -99,12 +104,13 @@ void setup() {
   midi_init();
 
   led_init();
+
   keys_init();
+
   pins_init();
 
   Serial.println("Dato DUO firmware");
   previous_note_on_time = millis();
-  Serial.println(touchRead(17));
 
   #ifdef NO_AUDIO
   digitalWrite(AMP_ENABLE, LOW);
@@ -117,21 +123,58 @@ void setup() {
 
 void loop() {
 
-  if(sequencer_is_running) {
-    sequencer();
-  }
-  handle_keys();
-  if(power) {
-    update_leds();
+  if(power_flag != 0) {
+    handle_keys();
+
+    if(sequencer_is_running) {
+      sequencer();
+    } else {
+      keyboard_to_note();          
+    }
     handle_midi();
     read_pots();
+    update_leds();
+  } else {
+    pinMode(row_pins[1],INPUT_PULLUP);
+    pinMode(col_pins[2],OUTPUT);
+    digitalWrite(col_pins[2],LOW);
+    //TODO: Why do I need to force these LEDs low?
+    analogWrite(ENV_LED, 0);
+    analogWrite(FILTER_LED, 0);
+    analogWrite(OSC_LED, 0);
+    // Low power delay
+    delay(100);
+    //TODO: has to have been low at least once
+    if(!digitalRead(row_pins[1])) {
+      on();
+      sequencer_start();
+    }
+    pinMode(col_pins[2],INPUT_PULLUP);
+    delay(100);
   }
-
 }
 
+void keyboard_to_note() {
+  // If the old map was zero and now it's not, turn on the right note
+  if((old_keyboard_map & KEYBOARD_MASK) != (keyboard_map & KEYBOARD_MASK)) {
+    // We're starting from the top. High notes have priority
+    for(int i = 10; i >= 0; i--) {
+      if(bitRead(keyboard_map,i)){
+        note_on(SCALE[i]+transpose, INITIAL_VELOCITY, true);
+        break;
+      }
+    }
+  }
+
+  if((old_keyboard_map & KEYBOARD_MASK) && (keyboard_map & KEYBOARD_MASK)==0) {
+    // If the old map was not zero and now it is, turn off the note
+    note_off();
+  }
+  old_keyboard_map = keyboard_map;
+
+}
 // Scans the keypad and handles step enable and keys
 void handle_keys() {
-
   if (keypad.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
       if ( keypad.key[i].stateChanged ) {
@@ -139,6 +182,7 @@ void handle_keys() {
         switch (keypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
+                  bitSet(keyboard_map,(k - KEYB_0));
                   if(sequencer_is_running) {
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
@@ -150,8 +194,6 @@ void handle_keys() {
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
                     step_velocity[target_step] = INITIAL_VELOCITY; 
-                    num_notes_held++;
-                    note_on(SCALE[k-KEYB_0]+transpose, INITIAL_VELOCITY, true);
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
@@ -185,8 +227,7 @@ void handle_keys() {
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
-                  num_notes_held--;
-                  if(num_notes_held <= 0) note_off();
+                  bitClear(keyboard_map,(k - KEYB_0));
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {
@@ -204,7 +245,7 @@ void handle_keys() {
         }
       }
     }
-  }
+  } 
 }
 
 void handle_midi() {
@@ -273,12 +314,17 @@ void midi_note_off(byte channel, byte note, byte velocity) {
 
 void note_on(byte midi_note, byte velocity, boolean enabled) {
 
+  // Override velocity if button on the synth is pressed
+  if(!digitalRead(BTN_SYN1)) {
+    velocity = 127;
+  }
+
   note_is_playing = midi_note;
 
   if(enabled) {
     AudioNoInterrupts();
 
-    dc1.amplitude(velocity / 127.); // DC amplitude controls filter env amount
+    dc1.amplitude(velocity / 127.); // DC amplitude controls filter env amount.
     osc1_midi_note = midi_note;
     osc1_frequency = (int)midi_note_to_frequency(midi_note);
     waveform1.frequency(osc1_frequency);
@@ -297,7 +343,6 @@ void note_on(byte midi_note, byte velocity, boolean enabled) {
 }
 
 void note_off() {
-
   if (note_is_playing) {
     if(!step_enable[current_step]) {
       leds(current_step) = CRGB::Black;
@@ -410,6 +455,7 @@ void sequencer() {
 
 void off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
+  AudioNoInterrupts();
   digitalWrite(AMP_ENABLE, LOW);
 
   for(int i = 32; i >= 0; i--) {
@@ -420,12 +466,14 @@ void off() { // TODO: this is super crude and doesn't work, but it shows the eff
     analogWrite(OSC_LED,i);
     delay(20);
   }
-
-  power = false;
+  FastLED.clear();
+  FastLED.show();
+  power_flag = 0;
 }
 
 void on() {
   led_init();
+  AudioInterrupts();
   digitalWrite(AMP_ENABLE, HIGH);
-  power = true;
+  power_flag = 1;
 }
