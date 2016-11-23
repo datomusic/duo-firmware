@@ -1,7 +1,6 @@
 /*
   DATO DUO firmware
   (c) 2016, David Menting <david@dato.mu>
-
 */
 #include "Arduino.h"
 #include <Keypad.h>
