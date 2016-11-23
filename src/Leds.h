@@ -39,7 +39,7 @@ void led_init();
 void update_leds();
 
 void led_init() {
-  FastLED.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(physical_leds, NUM_LEDS);
+  FastLED.addLeds<LED_TYPE, LED_DATA, COLOR_ORDER>(physical_leds, NUM_LEDS);
   
   FastLED.setBrightness(LED_BRIGHTNESS); 
  
@@ -58,7 +58,7 @@ void update_leds() {
   } else {
       physical_leds[0] = LED_WHITE;
   }
-  for (int l = 0; l < NUM_STEPS; l++) {
+  for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
     if (step_enable[l]) {
 
       leds(l) = COLORS[step_note[l]];

@@ -2,52 +2,27 @@
   DATO DUO firmware
   (c) 2016, David Menting <david@dato.mu>
 
-  Hardware:
-  - Runs on a Teensy 3.1/3.2 or on the DUO brains with Kinetis K20DX256
-  - Output goes to the K20's 12 bit DAC output
-  - A button matrix is connected to the pins specified in pinmap.h
-  - LED drivers connected as specified in Leds.h
-  
-  The main loop() defines the sequencer behaviour. Parameters are updated
-  in read_pots() and keys are handled in handle_keys().
-
 */
 #include "Arduino.h"
 #include <Keypad.h>
-#include "midinotes.h"
-#include <MIDI.h>
 
-//#define NO_POTS
-//#define NO_AUDIO
-#include "pinmap.h"
-#include "Buttons.h"
+#define VERSION "0.4.1"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
-const int SYNC_LENGTH_MSEC = 1;
-const int MIN_TEMPO_MSEC = 666; // Tempo is actually an interval in ms
+const int SYNC_LENGTH_MSEC = 12;
+const int TEMPO_MIN_INTERVAL_MSEC = 666; // Tempo is actually an interval in ms
 
 // Sequencer settings
-const int NUM_STEPS = 8;
-
-unsigned char current_step = 0;
-unsigned char target_step = 0;
-unsigned int tempo = 0;
-unsigned long next_step_time = 0;
-unsigned long gate_off_time = 0;
-unsigned long sync_off_time = 0;
-unsigned long note_on_time;
-unsigned long previous_note_on_time;
-unsigned long note_off_time;
-// Define the array of leds
-
-char set_key = 9;
+uint8_t current_step = 0;
+uint8_t target_step = 0;
+int tempo = 0;
+uint8_t set_key = 9;
 
 // Musical settings
-//const int BLACK_KEYS[] = {22,25,27,30,32,34,37,39,42,44,46,49,51,54,56,58,61,63,66,68,73,75,78,80};
-const int SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
-const float SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
-const char DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
+const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
+const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
+const uint8_t    DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
 #define INITIAL_VELOCITY 100
 
 // Global variables
@@ -69,31 +44,31 @@ uint16_t keyboard_map = 0;
 uint16_t old_keyboard_map = 0;
 const uint16_t KEYBOARD_MASK = 0b11111111111;
 
-void read_pots();
-void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
-void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
+void keys_scan();
+bool keys_scan_powerbutton();
+void pots_read();
+
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled);
 void note_off();
-float midi_note_to_frequency(int x) ;
+
+void keyboard_to_note();
 int detune(int note, int amount);
-void handle_input_until(unsigned long until);
-void handle_keys();
-void handle_midi();
+
 int tempo_interval_msec();
-void midi_init();
+
 void power_off();
 void power_on();
-void keyboard_to_note();
 
-MIDI_CREATE_DEFAULT_INSTANCE();
-
+#include "pinmap.h"
+#include "MidiFunctions.h"
+#include "Buttons.h"
 #include "Synth.h"
 #include "Sequencer.h"
 #include "Leds.h"
 
 void setup() {
-
   Serial.begin(57600);
+
   audio_init();
 
   midi_init();
@@ -104,7 +79,6 @@ void setup() {
 
   pins_init();
 
-  Serial.println("Dato DUO firmware");
   previous_note_on_time = millis();
 
   #ifdef NO_AUDIO
@@ -114,38 +88,37 @@ void setup() {
   #endif
 
   sequencer_stop();
+
+  Serial.print("Dato DUO firmware ");
+  Serial.println(VERSION);
 }
 
 void loop() {
 
   if(power_flag != 0) {
-    handle_keys();
+    keys_scan();
 
     if(sequencer_is_running) {
       sequencer();
     } else {
       keyboard_to_note();          
     }
-    handle_midi();
-    read_pots();
+    midi_handle();
+    pots_read();
     update_leds();
   } else {
-    pinMode(row_pins[1],INPUT_PULLUP);
-    pinMode(col_pins[2],OUTPUT);
-    digitalWrite(col_pins[2],LOW);
     //TODO: Why do I need to force these LEDs low?
     analogWrite(ENV_LED, 0);
     analogWrite(FILTER_LED, 0);
     analogWrite(OSC_LED, 0);
-    // Low power delay
-    delay(100);
-    //TODO: has to have been low at least once
-    if(!digitalRead(row_pins[1])) {
+
+    if(keys_scan_powerbutton()) {
       power_on();
       sequencer_start();
+    } else {
+      //TODO: Low power delay
+      delay(100);
     }
-    pinMode(col_pins[2],INPUT_PULLUP);
-    delay(20);
   }
 }
 
@@ -166,10 +139,10 @@ void keyboard_to_note() {
     note_off();
   }
   old_keyboard_map = keyboard_map;
-
 }
+
 // Scans the keypad and handles step enable and keys
-void handle_keys() {
+void keys_scan() {
   if (keypad.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
       if ( keypad.key[i].stateChanged ) {
@@ -184,7 +157,7 @@ void handle_keys() {
                     step_velocity[target_step] = INITIAL_VELOCITY; 
                   } else {
                     current_step++;
-                    if (current_step >= NUM_STEPS) current_step = 0;
+                    if (current_step >= SEQUENCER_NUM_STEPS) current_step = 0;
                     target_step=current_step;
                     step_note[target_step] = k - KEYB_0;
                     step_enable[target_step] = 1;
@@ -243,24 +216,31 @@ void handle_keys() {
   } 
 }
 
-void handle_midi() {
-  MIDI.read();
+bool keys_scan_powerbutton() {
+  bool r = false;
+
+  //TODO:don't hard code row/col numbers
+  pinMode(row_pins[1],INPUT_PULLUP);
+  pinMode(col_pins[2],OUTPUT);
+  digitalWrite(col_pins[2],LOW);
+
+  r = (digitalRead(row_pins[1]) == LOW);
+
+  pinMode(col_pins[2],INPUT_PULLUP);
+
+  return(r);
 }
 
-void read_pots() {
-
-  // If the DUO brains are running without pots attached, do nothing
-  #ifdef NO_POTS
-    return;
-  #endif
+void pots_read() {
 
   // Read out the pots/switches
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
+  detune_amount = 1023-analogRead(OSC_DETUNE_POT);
+
   int volume_pot_value = analogRead(FADE_POT);
   int resonance = analogRead(FILTER_RES_POT);
   int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
   int filter_pot_value = analogRead(FILTER_FREQ_POT);
-  detune_amount = 1023-analogRead(OSC_DETUNE_POT);
   int pulse_pot_value = analogRead(OSC_PW_POT);
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
@@ -297,14 +277,6 @@ void read_pots() {
   mixer2.gain(1, map(volume_pot_value,0,1023,700,70)/1000.);
 
   AudioInterrupts(); 
-}
-
-void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {
-  note_on(note, velocity, true);
-}
-
-void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
-  note_off();
 }
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
@@ -350,10 +322,6 @@ void note_off() {
   } 
 }
 
-float midi_note_to_frequency(int x) {
-  return MIDI_NOTE_FREQUENCY[x];
-}
-
 int detune(int note, int amount) { // amount goes from 0-1023
   if (amount > 800) {
     return midi_note_to_frequency(note) * (amount+9000)/10000.;
@@ -366,18 +334,8 @@ int detune(int note, int amount) { // amount goes from 0-1023
 }
 
 int tempo_interval_msec() {
-  #ifdef NO_POTS
-    return 300;
-  #endif
   int potvalue = analogRead(TEMPO_POT);
-  return map(potvalue,10,1023,40,MIN_TEMPO_MSEC);
-  
-}
-
-void midi_init() {
-  MIDI.begin(MIDI_CHANNEL);
-  MIDI.setHandleNoteOn(midi_note_on);
-  MIDI.setHandleNoteOff(midi_note_off);
+  return map(potvalue,10,1023,40,TEMPO_MIN_INTERVAL_MSEC);
 }
 
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect

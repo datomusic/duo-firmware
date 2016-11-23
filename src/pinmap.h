@@ -35,46 +35,52 @@ PTD6          21
 PTD7           5
 PTE0          31
 PTE1          26
-
 */
 
 #ifdef BRAINS_SEP
-  #define BTN_SYN1 3 //PTA12
-  #define BTN_SYN2 9
-  #define BTN_SYN3 24
-  #define BTN_SYN4 20
+  
+  const int FILTER_RES_POT = A8;
+  const int OSC_DETUNE_POT = A13;  
+  const int OSC_PW_POT = A9;
+  const int AMP_ENV_POT = A10;
+  const int FILTER_FREQ_POT = A12;
+  const int FADE_POT = A11; 
+
+  const int BTN_SYN1 = 3;
+  const int BTN_SYN2 = 9;
+  const int BTN_SYN3 = 24;
+  const int BTN_SYN4 = 20;
+
+  const int BITC_PIN = BTN_SYN3;
+  const int NOISE_PIN = BTN_SYN4;
 
   const int OSC_LED = 32;
   const int FILTER_LED = 25;
   const int ENV_LED = 15;
 
-  const int TEMPO_POT = A16; // PTC9
-  const int GATE_POT = A18; // PTC10
+  const int TEMPO_POT = A16;
+  const int GATE_POT = A18;
 
-  const int FILTER_RES_POT = A8;
-  const int OSC_DETUNE_POT = A13;  
-  const int OSC_PW_POT = A9;
+  const int SYNC_OUT_PIN = 4;
+  const int AMP_ENABLE = 31;
+  const int LED_DATA = 5;
 
-  const int AMP_ENV_POT = A10;
-
-  const int FILTER_FREQ_POT = A12;
-
-  const int FADE_POT = A11; 
-
-  const int BITC_PIN = BTN_SYN3; // Lower left button
-  const int NOISE_PIN = BTN_SYN4; // Lower right button
-
-  const int SYNC_OUT_PIN = 4; // PTA13
-  const int AMP_ENABLE = 31; // PTE0
-  #define LED_DT 5
   #define COLOR_ORDER GRB
   #define LED_TYPE SK6812
-  #define NUM_LEDS 19
+
+  const int NUM_LEDS = 19;
   const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
+
+  const uint8_t ROWS = 5;
+  const uint8_t COLS = 5; 
+
+  uint8_t col_pins[COLS] = {2,14,7,8,6}; 
+  uint8_t row_pins[ROWS] = {10,13,11,12,28};
+
 #endif
-// Keypad matrix definitions are in Buttons.h
 
 void pins_init() {
+
   pinMode(BITC_PIN, INPUT_PULLUP);
   pinMode(NOISE_PIN, INPUT_PULLUP);
 
@@ -89,4 +95,5 @@ void pins_init() {
   pinMode(OSC_LED, OUTPUT);
   pinMode(FILTER_LED, OUTPUT);
   pinMode(ENV_LED, OUTPUT);
+
 }

@@ -1,3 +1,7 @@
+#ifndef MidiFunctions_h
+#define MidiFunctions_h
+#include <MIDI.h>
+
 const float MIDI_NOTE_FREQUENCY[127] = {
   8.1757989156, 8.6619572180, 9.1770239974, 9.7227182413, 10.3008611535, 10.9133822323, 11.5623257097, 12.2498573744, 12.9782717994, 13.7500000000, 14.5676175474, 15.4338531643, 16.3515978313,
  17.3239144361, 18.3540479948, 19.4454364826, 20.6017223071, 21.8267644646, 23.1246514195, 24.4997147489, 25.9565435987, 27.5000000000, 29.1352350949, 30.8677063285,  32.7031956626,
@@ -11,3 +15,35 @@ const float MIDI_NOTE_FREQUENCY[127] = {
 4434.9220956300,4698.6362866785,4978.0317395533,5274.0409106059,5587.6517029281,5919.9107633862,6271.9269757080,6644.8751612791,7040.0000000000,7458.6201842894,7902.1328200980, 8372.0180896192,
  8869.8441912599, 9397.2725733570, 9956.0634791066,10548.0818212118,11175.3034058561,11839.8215267723
 };
+
+MIDI_CREATE_DEFAULT_INSTANCE();
+
+void midi_init();
+void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
+void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
+void midi_handle();
+float midi_note_to_frequency(int x);
+
+void midi_handle() {
+  MIDI.read();
+}
+
+void midi_init() {
+  MIDI.begin(MIDI_CHANNEL);
+  MIDI.setHandleNoteOn(midi_note_on);
+  MIDI.setHandleNoteOff(midi_note_off);
+}
+
+float midi_note_to_frequency(int x) {
+  return MIDI_NOTE_FREQUENCY[x];
+}
+
+void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {
+  note_on(note, velocity, true);
+}
+
+void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
+  note_off();
+}
+
+#endif
