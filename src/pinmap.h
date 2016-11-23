@@ -56,6 +56,8 @@
   const int BTN_SYN3 = 24;
   const int BTN_SYN4 = 20;
 
+  const int ACCENT_PIN = BTN_SYN1;
+  const int SLIDE_PIN = BTN_SYN2;
   const int BITC_PIN = BTN_SYN3;
   const int NOISE_PIN = BTN_SYN4;
 

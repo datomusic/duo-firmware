@@ -53,18 +53,19 @@
 #include <synth_pinknoise.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform2;      //xy=106,313
-AudioSynthWaveform       waveform1;      //xy=107,260
-AudioSynthWaveformDc     dc1;            //xy=116,365
-AudioEffectEnvelope      envelope2;      //xy=255,365
-AudioMixer4              mixer1;         //xy=283,299
-AudioFilterStateVariable filter1;        //xy=431,307
-AudioEffectEnvelope      envelope1;      //xy=588,297
-AudioEffectBitcrusher    bitcrusher1;    //xy=746.0833282470703,300.0833282470703
-AudioAnalyzePeak         peak1;          //xy=755.0833129882812,411.0833435058594
-AudioSynthNoiseWhite     noise1;         //xy=764,346
-AudioMixer4              mixer2;         //xy=892,313
-AudioOutputAnalog        dac1;           //xy=1020,313
+AudioSynthWaveform       waveform2;      //xy=73.08332824707031,100.08333587646484
+AudioSynthWaveform       waveform1;      //xy=74.08332824707031,47.083335876464844
+AudioSynthWaveformDc     dc1;            //xy=83.08332824707031,152.08333587646484
+AudioEffectEnvelope      envelope2;      //xy=222.0833282470703,152.08333587646484
+AudioMixer4              mixer1;         //xy=250.0833282470703,86.08333587646484
+AudioFilterStateVariable filter1;        //xy=398.0833282470703,94.08333587646484
+AudioEffectEnvelope      envelope1;      //xy=555.0833282470703,84.08333587646484
+AudioSynthNoiseWhite     noise1;         //xy=562.0833129882812,149.08334350585938
+AudioAnalyzePeak         peak1;          //xy=700.0833129882812,40.083335876464844
+AudioEffectEnvelope      envelope3;      //xy=707.0833129882812,149.08331298828125
+AudioEffectBitcrusher    bitcrusher1;    //xy=713.0833129882812,84.08333587646484
+AudioMixer4              mixer2;         //xy=856.0833129882812,103.08333587646484
+AudioOutputAnalog        dac1;           //xy=983.0833129882812,103.08333587646484
 AudioConnection          patchCord1(waveform2, 0, mixer1, 1);
 AudioConnection          patchCord2(waveform1, 0, mixer1, 0);
 AudioConnection          patchCord3(dc1, envelope2);
@@ -73,11 +74,11 @@ AudioConnection          patchCord5(mixer1, 0, filter1, 0);
 AudioConnection          patchCord6(filter1, 0, envelope1, 0);
 AudioConnection          patchCord7(envelope1, peak1);
 AudioConnection          patchCord8(envelope1, bitcrusher1);
-AudioConnection          patchCord9(bitcrusher1, 0, mixer2, 0);
-AudioConnection          patchCord10(noise1, 0, mixer2, 1);
-AudioConnection          patchCord11(mixer2, dac1);
+AudioConnection          patchCord9(noise1, envelope3);
+AudioConnection          patchCord10(envelope3, 0, mixer2, 1);
+AudioConnection          patchCord11(bitcrusher1, 0, mixer2, 0);
+AudioConnection          patchCord12(mixer2, dac1);
 // GUItool: end automatically generated code
-
 
 void audio_init();
 
@@ -119,7 +120,16 @@ void audio_init() {
   bitcrusher1.bits(16);
   bitcrusher1.sampleRate(44100);
 
-  noise1.amplitude(0.0);
+  noise1.amplitude(0.3);
+  // Noise envelope
+  envelope3.delay(0);
+  envelope3.attack(1.0);
+  envelope3.hold(0);
+  envelope3.decay(0);
+  envelope3.sustain(0.5);
+  envelope3.release(70);
+
+
   mixer2.gain(0, 1.0);
   mixer2.gain(1, 0.7);
 }

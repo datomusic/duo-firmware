@@ -79,7 +79,6 @@ void sequencer_trigger_note() {
     while (random_step == current_step || random_step == current_step+1 || random_step+SEQUENCER_NUM_STEPS == current_step) { // Prevent random from stepping to the current or next step
       random_step = random(SEQUENCER_NUM_STEPS);
     }
-
     current_step = random_step;
   }
   step_velocity[current_step] = INITIAL_VELOCITY;

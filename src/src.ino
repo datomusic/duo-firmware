@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #include <Keypad.h>
 
-#define VERSION "0.4.1"
+#define VERSION "0.4.2"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
@@ -21,12 +21,14 @@ uint8_t set_key = 9;
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
 const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
-const uint8_t    DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
+const uint8_t DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
 #define INITIAL_VELOCITY 100
 
 // Global variables
 int detune_amount = 0;
-int osc1_frequency = 0;
+float osc1_frequency = 0.;
+float osc2_frequency = 0.;
+float osc1_target_frequency = 0.;
 uint8_t osc1_midi_note = 0;
 bool note_is_playing = 0;
 bool note_is_triggered = false;
@@ -51,7 +53,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled);
 void note_off();
 
 void keyboard_to_note();
-int detune(int note, int amount);
+float detune(int note, int amount);
 
 int tempo_interval_msec();
 
@@ -142,6 +144,18 @@ void keyboard_to_note() {
 
 // Scans the keypad and handles step enable and keys
 void keys_scan() {
+  static int old_noise_pin_value = 0;
+  int noise_pin_value = !digitalRead(NOISE_PIN);
+
+  if(noise_pin_value && !old_noise_pin_value) {
+    envelope3.noteOn();
+    old_noise_pin_value = noise_pin_value;
+  } 
+  if(!noise_pin_value && old_noise_pin_value) {
+    envelope3.noteOff();
+    old_noise_pin_value = noise_pin_value;
+  } 
+
   if (keypad.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
       if ( keypad.key[i].stateChanged ) {
@@ -242,14 +256,32 @@ void pots_read() {
   int filter_pot_value = analogRead(FILTER_FREQ_POT);
   int pulse_pot_value = analogRead(OSC_PW_POT);
 
+  float osc2_target_frequency = detune(osc1_midi_note,detune_amount);
+
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
+
+  // Constant rate glide
+  // if(osc1_frequency > osc1_target_frequency) {
+  //   osc1_frequency--;
+  // } else if(osc1_frequency < osc1_target_frequency){
+  //   osc1_frequency++;
+  // } 
+  if(!digitalRead(SLIDE_PIN)) {
+    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.06;
+    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.06;
+  } else {
+    osc1_frequency = osc1_target_frequency;
+    osc2_frequency = osc2_target_frequency;
+  }
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
 
+  waveform1.frequency(osc1_frequency);
+
   // TODO: mix away the oscillator at the end of the range
-  waveform2.frequency(detune(osc1_midi_note,detune_amount));
+  waveform2.frequency(osc2_frequency);
   waveform2.pulseWidth(map(pulse_pot_value,0,1023,1000,50)/1000.0);
 
   filter1.frequency(map(filter_pot_value,0,1023,60,300));
@@ -265,12 +297,6 @@ void pots_read() {
   } else {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
-  
-  if(digitalRead(NOISE_PIN)) {
-    noise1.amplitude(0.0);
-  } else {
-    noise1.amplitude(0.3);
-  }
 
   mixer2.gain(0, map(volume_pot_value,0,1023,1000,10)/1000.);
   mixer2.gain(1, map(volume_pot_value,0,1023,700,70)/1000.);
@@ -281,7 +307,7 @@ void pots_read() {
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
 
   // Override velocity if button on the synth is pressed
-  if(!digitalRead(BTN_SYN1)) {
+  if(!digitalRead(ACCENT_PIN)) {
     velocity = 127;
   }
 
@@ -292,7 +318,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
 
     dc1.amplitude(velocity / 127.); // DC amplitude controls filter env amount.
     osc1_midi_note = midi_note;
-    osc1_frequency = (int)midi_note_to_frequency(midi_note);
+    osc1_target_frequency = (int)midi_note_to_frequency(midi_note);
     waveform1.frequency(osc1_frequency);
     // Detune OSC2
     waveform2.frequency(detune(osc1_midi_note,detune_amount));
@@ -321,7 +347,7 @@ void note_off() {
   } 
 }
 
-int detune(int note, int amount) { // amount goes from 0-1023
+float detune(int note, int amount) { // amount goes from 0-1023
   if (amount > 800) {
     return midi_note_to_frequency(note) * (amount+9000)/10000.;
   } else if (amount < 100) {
@@ -340,7 +366,7 @@ int tempo_interval_msec() {
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
   AudioNoInterrupts();
-  digitalWrite(AMP_ENABLE, LOW);
+  // digitalWrite(AMP_ENABLE, LOW);
 
   for(int i = 32; i >= 0; i--) {
     FastLED.setBrightness(i);
