@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #include <Keypad.h>
 
-#define VERSION "0.4.2"
+#define VERSION "0.4.3"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
@@ -262,11 +262,6 @@ void pots_read() {
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
 
   // Constant rate glide
-  // if(osc1_frequency > osc1_target_frequency) {
-  //   osc1_frequency--;
-  // } else if(osc1_frequency < osc1_target_frequency){
-  //   osc1_frequency++;
-  // } 
   if(!digitalRead(SLIDE_PIN)) {
     osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.06;
     osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.06;
@@ -366,7 +361,7 @@ int tempo_interval_msec() {
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
   AudioNoInterrupts();
-  // digitalWrite(AMP_ENABLE, LOW);
+  digitalWrite(AMP_ENABLE, LOW);
 
   for(int i = 32; i >= 0; i--) {
     FastLED.setBrightness(i);
