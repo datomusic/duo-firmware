@@ -10,9 +10,7 @@
 #include "Arduino.h"
 #include <FastLED.h>
 
-// KINGBRIGHT  KPHF-1612QBDSURKZGC scaling values
 #define CORRECTION_SK6812 0xFFFFFF
-// #define CORRECTION_KINGBRIGHT 0x902840
 #define LED_WHITE CRGB(255,255,150);
 
 #define leds(A) physical_leds[led_order[A]]
@@ -37,6 +35,7 @@ const CRGB COLORS[] = {
 
 void led_init();
 void update_leds();
+void vu_meter();
 
 void led_init() {
   FastLED.addLeds<LED_TYPE, LED_DATA, COLOR_ORDER>(physical_leds, NUM_LEDS);
