@@ -16,6 +16,8 @@
 #define leds(A) physical_leds[led_order[A]]
 
 CRGB physical_leds[NUM_LEDS];
+const uint8_t LEDS_UPDATE_INTERVAL = 1000 / 30;
+unsigned long leds_last_updated = 0;
 
 const int LED_BRIGHTNESS = 32;
 
@@ -52,32 +54,37 @@ void led_init() {
 
 // Updates the LED colour and brightness to match the stored sequence
 void update_leds() {
-  if(sequencer_is_running) {
-      physical_leds[0] = CRGB::Black;
-  } else {
-      physical_leds[0] = LED_WHITE;
-  }
-  for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
-    if (step_enable[l]) {
 
-      leds(l) = COLORS[step_note[l]];
-
-      if (step_velocity[l] < 50) {
-        leds(l).nscale8_video(step_velocity[l]+20);
-      }
-    }
-     
-    if(note_is_playing) {
-      leds(current_step) = LED_WHITE;
+  if(millis() - leds_last_updated > LEDS_UPDATE_INTERVAL) {
+    if(sequencer_is_running) {
+        physical_leds[0] = CRGB::Black;
     } else {
-    if(!step_enable[current_step]) {
-      leds(current_step) = CRGB::Black;
-    }}
+        physical_leds[0] = LED_WHITE;
+    }
+    for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
+      if (step_enable[l]) {
+
+        leds(l) = COLORS[step_note[l]];
+
+        if (step_velocity[l] < 50) {
+          leds(l).nscale8_video(step_velocity[l]+20);
+        }
+      }
+       
+      if(note_is_playing) {
+        leds(current_step) = LED_WHITE;
+      } else {
+      if(!step_enable[current_step]) {
+        leds(current_step) = CRGB::Black;
+      }}
+    }
+    AudioNoInterrupts();
+    FastLED.show();
+    AudioInterrupts();
+    analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
+    leds_last_updated = millis();
   }
-  AudioNoInterrupts();
-  FastLED.show();
-  AudioInterrupts();
-  analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
+
 }
 
 #endif

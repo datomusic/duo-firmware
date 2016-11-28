@@ -134,7 +134,11 @@ void audio_init() {
   mixer2.gain(0, 1.0);
   mixer2.gain(1, 0.7);
 
-  dac1.analogReference(INTERNAL);
+  #ifdef SUPER_LOUD_MODE
+    dac1.analogReference(EXTERNAL);
+  #else
+    dac1.analogReference(INTERNAL);
+  #endif
 }
 
 #endif

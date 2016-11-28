@@ -96,7 +96,9 @@ void setup() {
 
 void loop() {
 
+
   if(power_flag != 0) {
+
     keys_scan();
 
     if(sequencer_is_running) {
@@ -263,8 +265,8 @@ void pots_read() {
 
   // Constant rate glide
   if(!digitalRead(SLIDE_PIN)) {
-    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.06;
-    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.06;
+    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.006;
+    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.006;
   } else {
     osc1_frequency = osc1_target_frequency;
     osc2_frequency = osc2_target_frequency;
