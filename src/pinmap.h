@@ -55,7 +55,7 @@
   const int BTN_SYN2 = 9;
   const int BTN_SYN3 = 24;
   const int BTN_SYN4 = 20;
-  
+
   const int TOUCH1 = 16;
   const int TOUCH2 = 17;
   const int TOUCH3 = 19;
@@ -64,7 +64,7 @@
   const int ACCENT_PIN = BTN_SYN1;
   const int SLIDE_PIN = BTN_SYN2;
   const int BITC_PIN = BTN_SYN3;
-  const int NOISE_PIN = BTN_SYN4;
+  const int DELAY_PIN = BTN_SYN4;
 
   const int OSC_LED = 32;
   const int FILTER_LED = 25;
@@ -94,7 +94,7 @@
 void pins_init() {
 
   pinMode(BITC_PIN, INPUT_PULLUP);
-  pinMode(NOISE_PIN, INPUT_PULLUP);
+  pinMode(DELAY_PIN, INPUT_PULLUP);
 
   pinMode(BTN_SYN1, INPUT_PULLUP);
   pinMode(BTN_SYN2, INPUT_PULLUP);

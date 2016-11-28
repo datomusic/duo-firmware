@@ -40,6 +40,7 @@
 //
 #include <analyze_peak.h>
 #include <effect_bitcrusher.h>
+#include <effect_delay.h>
 #include <effect_fade.h>
 #include <effect_envelope.h>
 #include <effect_multiply.h>
@@ -53,20 +54,20 @@
 #include <synth_pinknoise.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform2;      //xy=77.08332824707031,124
-AudioSynthWaveform       waveform1;      //xy=78.08332824707031,71
-AudioSynthWaveformDc     dc1;            //xy=87.08332824707031,176
-AudioEffectEnvelope      envelope2;      //xy=226.0833282470703,176
-AudioMixer4              mixer1;         //xy=254.0833282470703,110
-AudioFilterStateVariable filter1;        //xy=402.0833282470703,118
-AudioEffectEnvelope      envelope1;      //xy=559.0833282470703,108
-AudioSynthNoiseWhite     noise1;         //xy=566.0833282470703,173
-AudioAnalyzePeak         peak1;          //xy=704.0833282470703,64
-AudioEffectEnvelope      envelope3;      //xy=711.0833282470703,173
-AudioEffectBitcrusher    bitcrusher1;    //xy=717.0833282470703,108
-AudioMixer4              mixer2;         //xy=860.0833282470703,127
-AudioAnalyzePeak         peak2;          //xy=986.0833129882812,178.08331298828125
-AudioOutputAnalog        dac1;           //xy=987.0833282470703,127
+AudioSynthWaveform       waveform2;      //xy=78.10000610351562,97
+AudioSynthWaveform       waveform1;      //xy=79.10000610351562,44
+AudioSynthWaveformDc     dc1;            //xy=88.10000610351562,149
+AudioEffectEnvelope      envelope2;      //xy=227.10000610351562,149
+AudioMixer4              mixer1;         //xy=255.10000610351562,83
+AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
+AudioEffectEnvelope      envelope1;      //xy=560.1000061035156,81
+AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
+AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
+AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
+AudioMixer4              delayMixer;         //xy=728.0999755859375,279.1000061035156
+AudioMixer4              mixer2;         //xy=861.1000061035156,100
+AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
+AudioOutputAnalog        dac1;           //xy=988.1000061035156,100
 AudioConnection          patchCord1(waveform2, 0, mixer1, 1);
 AudioConnection          patchCord2(waveform1, 0, mixer1, 0);
 AudioConnection          patchCord3(dc1, envelope2);
@@ -75,17 +76,21 @@ AudioConnection          patchCord5(mixer1, 0, filter1, 0);
 AudioConnection          patchCord6(filter1, 0, envelope1, 0);
 AudioConnection          patchCord7(envelope1, peak1);
 AudioConnection          patchCord8(envelope1, bitcrusher1);
-AudioConnection          patchCord9(noise1, envelope3);
-AudioConnection          patchCord10(envelope3, 0, mixer2, 1);
+AudioConnection          patchCord9(delay1, 0, mixer2, 1);
+AudioConnection          patchCord10(delay1, 1, delayMixer, 1);
 AudioConnection          patchCord11(bitcrusher1, 0, mixer2, 0);
-AudioConnection          patchCord12(mixer2, dac1);
-AudioConnection          patchCord13(mixer2, peak2);
+AudioConnection          patchCord12(bitcrusher1, 0, delayMixer, 0);
+AudioConnection          patchCord13(delayMixer, delay1);
+AudioConnection          patchCord14(mixer2, dac1);
+AudioConnection          patchCord15(mixer2, peak2);
 // GUItool: end automatically generated code
+
+
 
 void audio_init();
 
 void audio_init() {
-  AudioMemory(20); // 260 bytes per block, 2.9ms per block
+  AudioMemory(150); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
   waveform1.begin(0.4, 220, WAVEFORM_SAWTOOTH);
@@ -122,17 +127,13 @@ void audio_init() {
   bitcrusher1.bits(16);
   bitcrusher1.sampleRate(44100);
 
-  noise1.amplitude(0.3);
-  // Noise envelope
-  envelope3.delay(0);
-  envelope3.attack(1.0);
-  envelope3.hold(0);
-  envelope3.decay(0);
-  envelope3.sustain(0.5);
-  envelope3.release(70);
+  delay1.delay(0, 100); // Delay time
+  delay1.delay(1, 266);
+  delayMixer.gain(0, 0.0); // Delay input
+  delayMixer.gain(1, 0.4); // Delay feedback
 
   mixer2.gain(0, 1.0);
-  mixer2.gain(1, 0.7);
+  mixer2.gain(1, 0.7); // Delay output
 
   #ifdef SUPER_LOUD_MODE
     dac1.analogReference(EXTERNAL);

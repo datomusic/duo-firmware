@@ -146,17 +146,11 @@ void keyboard_to_note() {
 
 // Scans the keypad and handles step enable and keys
 void keys_scan() {
-  static int old_noise_pin_value = 0;
-  int noise_pin_value = !digitalRead(NOISE_PIN);
-
-  if(noise_pin_value && !old_noise_pin_value) {
-    envelope3.noteOn();
-    old_noise_pin_value = noise_pin_value;
-  } 
-  if(!noise_pin_value && old_noise_pin_value) {
-    envelope3.noteOff();
-    old_noise_pin_value = noise_pin_value;
-  } 
+  if(digitalRead(DELAY_PIN)) {
+    delayMixer.gain(0, 0.0); // Delay input
+  } else {
+    delayMixer.gain(0, 0.5); // Delay input
+  }
 
   if (keypad.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
@@ -265,8 +259,8 @@ void pots_read() {
 
   // Constant rate glide
   if(!digitalRead(SLIDE_PIN)) {
-    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.006;
-    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.006;
+    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.02;
+    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.02;
   } else {
     osc1_frequency = osc1_target_frequency;
     osc2_frequency = osc2_target_frequency;
