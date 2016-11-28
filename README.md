@@ -12,7 +12,10 @@ For beginners, we recommend using the Arduino IDE for modifying and uploading th
 2. Download and install Teensyduino from [PJRC.com](https://www.pjrc.com/teensy/teensyduino.html). In the install wizard, enable the Audio, FastLED and Keypad libraries
 ![Teensyduino installer with Audio library checked](/img/teensyduino-installer-audio-library.png?raw=true)
 
-3. Clone this repository.
+3. Clone this repository including submodules `git clone --recursive https://github.com/datomusic/duo-firmware`
+
+###Troubleshooting
+If you're getting compilation errors related to missing libraries, make sure you have copied all libraries from the duo-firmware/libraries directory to your Arduino/libraries directory. Please file a GitHub issue with as much detail as you can so that we can troubleshoot the issue.
 
 ###Connecting and uploading
 Connect the Dato DUO to your computer using a micro USB cable.
@@ -27,6 +30,7 @@ Makefile method:
 ```
 make clean; make upload
 ```
+Currently, this is only tested on Mac.
 
 ##Hardware
 Circuit schematics will be added to this repository once the final hardware is available.
