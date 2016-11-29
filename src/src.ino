@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #include <Keypad.h>
 
-#define VERSION "0.4.3"
+#define VERSION "0.4.4"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
