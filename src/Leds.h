@@ -23,16 +23,17 @@ const int LED_BRIGHTNESS = 32;
 
 // ALternate pin colors
 const CRGB COLORS[] = {
-  0xFF0000,
-  0xFF9900,
+  0xFF0001,
+  0xFFDD00,
   0x11FF00,
-  0x0099CC,
-  0x6600CC,
-  0xFF4400,
+  0x0033DD,
+  0xFF00FF,
+  0xFF2209,
   0x99FF00,
-  0x00FF33,
-  0x0000FF,
-  0x990099
+  0x00EE22,
+  0x0099CC,
+  0xBB33BB
+  
 };
 
 void led_init();
