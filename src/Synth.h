@@ -42,7 +42,7 @@
 #include <effect_bitcrusher.h>
 #include <effect_delay.h>
 #include <effect_fade.h>
-#include <effect_envelope.h>
+#include "effect_envelope2.h"
 #include <effect_multiply.h>
 #include <filter_variable.h>
 #include <input_adc.h>
@@ -57,10 +57,10 @@
 AudioSynthWaveform       waveform2;      //xy=78.10000610351562,97
 AudioSynthWaveform       waveform1;      //xy=79.10000610351562,44
 AudioSynthWaveformDc     dc1;            //xy=88.10000610351562,149
-AudioEffectEnvelope      envelope2;      //xy=227.10000610351562,149
+AudioEffectEnvelope2      envelope2;      //xy=227.10000610351562,149
 AudioMixer4              mixer1;         //xy=255.10000610351562,83
 AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
-AudioEffectEnvelope      envelope1;      //xy=560.1000061035156,81
+AudioEffectEnvelope2      envelope1;      //xy=560.1000061035156,81
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81

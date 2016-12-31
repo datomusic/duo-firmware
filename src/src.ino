@@ -248,7 +248,7 @@ void pots_read() {
 
   int volume_pot_value = analogRead(FADE_POT);
   int resonance = analogRead(FILTER_RES_POT);
-  int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,300);
+  int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,500);
   int filter_pot_value = analogRead(FILTER_FREQ_POT);
   int pulse_pot_value = analogRead(OSC_PW_POT);
 
