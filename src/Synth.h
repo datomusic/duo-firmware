@@ -90,7 +90,7 @@ AudioConnection          patchCord15(mixer2, peak2);
 void audio_init();
 
 void audio_init() {
-  AudioMemory(150); // 260 bytes per block, 2.9ms per block
+  AudioMemory(200); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
   waveform1.begin(0.4, 220, WAVEFORM_SAWTOOTH);
@@ -128,7 +128,7 @@ void audio_init() {
   bitcrusher1.sampleRate(44100);
 
   delay1.delay(0, 100); // Delay time
-  delay1.delay(1, 266);
+  delay1.delay(1, 440);
   delayMixer.gain(0, 0.0); // Delay input
   delayMixer.gain(1, 0.4); // Delay feedback
 

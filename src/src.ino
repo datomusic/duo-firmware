@@ -89,6 +89,7 @@ void setup() {
   #endif
 
   sequencer_stop();
+  sequencer_start();
 
   Serial.print("Dato DUO firmware ");
   Serial.println(VERSION);
@@ -258,9 +259,10 @@ void pots_read() {
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
 
   // Constant rate glide
+  const float GLIDE_COEFFICIENT = 0.04f;
   if(!digitalRead(SLIDE_PIN)) {
-    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*0.02;
-    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*0.02;
+    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*GLIDE_COEFFICIENT;
+    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*GLIDE_COEFFICIENT;
   } else {
     osc1_frequency = osc1_target_frequency;
     osc2_frequency = osc2_target_frequency;

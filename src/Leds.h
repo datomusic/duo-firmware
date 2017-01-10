@@ -16,7 +16,7 @@
 #define leds(A) physical_leds[led_order[A]]
 
 CRGB physical_leds[NUM_LEDS];
-const uint8_t LEDS_UPDATE_INTERVAL = 1000 / 30;
+const uint8_t LEDS_UPDATE_INTERVAL = 6;
 unsigned long leds_last_updated = 0;
 
 const int LED_BRIGHTNESS = 32;
@@ -56,7 +56,7 @@ void led_init() {
 // Updates the LED colour and brightness to match the stored sequence
 void update_leds() {
 
-  if(millis() - leds_last_updated > LEDS_UPDATE_INTERVAL) {
+  //if(millis() - leds_last_updated > LEDS_UPDATE_INTERVAL) {
     if(sequencer_is_running) {
         physical_leds[0] = CRGB::Black;
     } else {
@@ -84,7 +84,7 @@ void update_leds() {
     AudioInterrupts();
     analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
     leds_last_updated = millis();
-  }
+  //}
 
 }
 
