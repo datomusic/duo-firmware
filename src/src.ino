@@ -48,6 +48,8 @@ const uint16_t KEYBOARD_MASK = 0b11111111111;
 void keys_scan();
 bool keys_scan_powerbutton();
 void pots_read();
+void drum_init();
+void drum_read();
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled);
 void note_off();
@@ -66,6 +68,7 @@ void power_on();
 #include "Synth.h"
 #include "Sequencer.h"
 #include "Leds.h"
+#include "DrumSynth.h"
 
 void setup() {
   Serial.begin(57600);
@@ -80,6 +83,8 @@ void setup() {
 
   pins_init();
 
+  drum_init();
+  
   previous_note_on_time = millis();
 
   #ifdef NO_AUDIO
@@ -89,14 +94,12 @@ void setup() {
   #endif
 
   sequencer_stop();
-  sequencer_start();
 
   Serial.print("Dato DUO firmware ");
   Serial.println(VERSION);
 }
 
 void loop() {
-
 
   if(power_flag != 0) {
 
@@ -110,6 +113,7 @@ void loop() {
     midi_handle();
     pots_read();
     update_leds();
+    drum_read();
   } else {
     //TODO: Why do I need to force these LEDs low?
     analogWrite(ENV_LED, 0);
