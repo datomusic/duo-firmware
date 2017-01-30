@@ -4,8 +4,9 @@
 */
 #include "Arduino.h"
 #include <Keypad.h>
+#include "TouchSlider.h"
 
-#define VERSION "0.4.5"
+#define VERSION "0.4.6"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
@@ -48,6 +49,8 @@ const uint16_t KEYBOARD_MASK = 0b11111111111;
 void keys_scan();
 bool keys_scan_powerbutton();
 void pots_read();
+void drum_init();
+void drum_read();
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled);
 void note_off();
@@ -66,8 +69,12 @@ void power_on();
 #include "Synth.h"
 #include "Sequencer.h"
 #include "Leds.h"
+#include "DrumSynth.h"
 
 void setup() {
+  
+  digitalWrite(AMP_ENABLE, LOW);
+  
   Serial.begin(57600);
 
   audio_init();
@@ -80,8 +87,14 @@ void setup() {
 
   pins_init();
 
+  drum_init();
+
+  touch_init();
+  
   previous_note_on_time = millis();
 
+  delay(800);
+  
   #ifdef NO_AUDIO
   digitalWrite(AMP_ENABLE, LOW);
   #else
@@ -89,14 +102,12 @@ void setup() {
   #endif
 
   sequencer_stop();
-  sequencer_start();
 
   Serial.print("Dato DUO firmware ");
   Serial.println(VERSION);
 }
 
 void loop() {
-
 
   if(power_flag != 0) {
 
@@ -110,6 +121,7 @@ void loop() {
     midi_handle();
     pots_read();
     update_leds();
+    drum_read();
   } else {
     //TODO: Why do I need to force these LEDs low?
     analogWrite(ENV_LED, 0);
@@ -291,8 +303,7 @@ void pots_read() {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
 
-  mixer2.gain(0, map(volume_pot_value,0,1023,1000,10)/1000.);
-  mixer2.gain(1, map(volume_pot_value,0,1023,700,70)/1000.);
+  audio_volume(1023-volume_pot_value);
 
   AudioInterrupts(); 
 }

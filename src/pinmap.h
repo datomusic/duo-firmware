@@ -57,9 +57,9 @@
   const int BTN_SYN4 = 20;
 
   const int TOUCH1 = 16;
-  const int TOUCH2 = 17;
-  const int TOUCH3 = 19;
-  const int TOUCH4 = 18;
+  const int TOUCH2 = 18;
+  const int TOUCH3 = 17;
+  const int TOUCH4 = 19;
 
   const int ACCENT_PIN = BTN_SYN1;
   const int SLIDE_PIN = BTN_SYN2;
@@ -83,13 +83,33 @@
   const int NUM_LEDS = 19;
   const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
 
-  const uint8_t ROWS = 5;
-  const uint8_t COLS = 5; 
-
-  uint8_t col_pins[COLS] = {2,14,7,8,6}; 
-  uint8_t row_pins[ROWS] = {10,13,11,12,28};
-
 #endif
+#ifdef SYNTH_JAN
+  const uint8_t POT_SYN1 = 0;
+  const uint8_t POT_SYN6 = 1;
+  const uint8_t SW_SYN4 = 2;
+  const uint8_t POT_SYN5 = 3;
+  const uint8_t SW_SYN3 = 4;
+  const uint8_t POT_SYN4 = 5;
+  const uint8_t POT_SYN3 = 6;
+  const uint8_t POT_SYN2 = 7;
+#endif
+
+//int muxAnalogRead(uint8_t channel) { 
+//  digitalWrite(SYN_ADDR0, channel & (1<<0));
+//  digitalWrite(SYN_ADDR1, channel & (1<<1));
+//  digitalWrite(SYN_ADDR2, channel & (1<<2));
+//  //do we need to wait a few nanoseconds?
+//  return analogRead(MUX_IO);
+//}
+//
+//uint8_t muxDigitalRead(uint8_t channel) { 
+//  digitalWrite(SYN_ADDR0, channel & (1<<0));
+//  digitalWrite(SYN_ADDR1, channel & (1<<1));
+//  digitalWrite(SYN_ADDR2, channel & (1<<2));
+//  //do we need to wait a few nanoseconds?
+//  return digitalRead(MUX_IO);
+//}
 
 void pins_init() {
 

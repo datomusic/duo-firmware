@@ -47,10 +47,15 @@ void led_init() {
  
   FastLED.setCorrection(CORRECTION_SK6812);
   FastLED.clear();
+
+  /* The 800ms delay introduced by this startup animation prevents
+     an audible pop/click at startup
+     AudioNoInterrupts() is needed for it to run smoothly
+     */
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[i];
+    FastLED.show();
   }
-  FastLED.show();
 }
 
 // Updates the LED colour and brightness to match the stored sequence
