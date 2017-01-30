@@ -57,9 +57,9 @@
   const int BTN_SYN4 = 20;
 
   const int TOUCH1 = 16;
-  const int TOUCH2 = 17;
-  const int TOUCH3 = 19;
-  const int TOUCH4 = 18;
+  const int TOUCH2 = 18;
+  const int TOUCH3 = 17;
+  const int TOUCH4 = 19;
 
   const int ACCENT_PIN = BTN_SYN1;
   const int SLIDE_PIN = BTN_SYN2;

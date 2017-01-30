@@ -4,8 +4,9 @@
 */
 #include "Arduino.h"
 #include <Keypad.h>
+#include "TouchSlider.h"
 
-#define VERSION "0.4.5"
+#define VERSION "0.4.6"
 
 const int MIDI_CHANNEL = 1;
 int gate_length_msec = 40;
@@ -71,6 +72,9 @@ void power_on();
 #include "DrumSynth.h"
 
 void setup() {
+  
+  digitalWrite(AMP_ENABLE, LOW);
+  
   Serial.begin(57600);
 
   audio_init();
@@ -84,9 +88,13 @@ void setup() {
   pins_init();
 
   drum_init();
+
+  touch_init();
   
   previous_note_on_time = millis();
 
+  delay(800);
+  
   #ifdef NO_AUDIO
   digitalWrite(AMP_ENABLE, LOW);
   #else
@@ -295,8 +303,7 @@ void pots_read() {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
 
-  mixer2.gain(0, map(volume_pot_value,0,1023,1000,10)/1000.);
-  mixer2.gain(1, map(volume_pot_value,0,1023,700,70)/1000.);
+  audio_volume(1023-volume_pot_value);
 
   AudioInterrupts(); 
 }
