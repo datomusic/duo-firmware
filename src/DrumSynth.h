@@ -14,8 +14,8 @@
  * Hat synth
  * White noise through an envelope
  */
-TouchSlider slider1(TOUCH1, TOUCH2);
-TouchSlider slider2(TOUCH3, TOUCH4);
+TouchSlider slider1(TOUCH4, TOUCH3);
+TouchSlider slider2(TOUCH1, TOUCH2);
 
 void touch_init();
 
@@ -87,7 +87,7 @@ void drum_init() {
   // Set all touch channels
   // Initialize the Audio Lib drum synth parts
   drum1.length(kick_duration);
-  drum1.frequency(100);
+  drum1.frequency(180);
   drum1.pitchMod(1.0);
 
   envelope3.attack(0.0);
@@ -115,7 +115,7 @@ void drum_read() {
 void kick_noteon(uint8_t velocity) {
   AudioNoInterrupts();
   drum1.length(kick_duration);
-  drum1.frequency(velocity/2+40);
+  drum1.frequency(velocity/2+60);
   AudioInterrupts();
   drum1.noteOn();
   kick_playing = 1;

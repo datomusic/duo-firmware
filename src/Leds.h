@@ -11,7 +11,7 @@
 #include <FastLED.h>
 
 #define CORRECTION_SK6812 0xFFFFFF
-#define LED_WHITE CRGB(255,255,150);
+#define LED_WHITE CRGB(230,255,150);
 
 #define leds(A) physical_leds[led_order[A]]
 
@@ -33,7 +33,6 @@ const CRGB COLORS[] = {
   0x00EE22,
   0x0099CC,
   0xBB33BB
-  
 };
 
 void led_init();

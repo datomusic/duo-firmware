@@ -18,8 +18,9 @@ class TouchSensor {
   public:
     uint8_t pin = 0; // Arduino pin number
 
-    TouchSensor(int pin) : pin(pin), _threshold(50), _cnt(0)    {
-    
+    TouchSensor(int pin) : pin(pin)  {
+      _threshold = 50;
+      _cnt = 0;
     }
     void updateBaseline() {
         if(_baselineIndex >= NUM_SAMPLES) { _baselineIndex = 0; }
@@ -83,9 +84,10 @@ class TouchSlider
 {
 public:
   TouchSensor a, b;
-  TouchSlider(int pinA, int pinB) : a(pinA), b(pinB), numTouches(0) {
+  TouchSlider(int pinA, int pinB) : a(pinA), b(pinB) {
     a.updateBaseline();
     b.updateBaseline();
+    numTouches = 0;
   }
   inline void setHandleTouchEvent(void (*fptr)(uint8_t event, int value)) {
     tTouchCallback  = fptr;

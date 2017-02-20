@@ -12,7 +12,7 @@ TEENSY_CORE_SPEED = 72000000
 ARDUINO = 10600
 
 # configurable options
-OPTIONS = -DUSB_SERIAL -DLAYOUT_US_ENGLISH
+OPTIONS = -DUSB_MIDI -DLAYOUT_US_ENGLISH
 
 # directory to build in
 BUILDDIR = $(abspath $(CURDIR)/build)
@@ -36,7 +36,7 @@ else
 endif
 
 # path location for Teensy 3 core
-COREPATH = teensy3
+COREPATH = teensy3/teensy3
 
 # path location for Arduino libraries
 LIBRARYPATH = $(CURDIR)/libraries
@@ -130,6 +130,9 @@ upload: post_compile reboot
 flash: $(TARGET).elf
 	@openocd -f $(CURDIR)/openocd/openocd.cfg -c "program $< reset exit"
 
+dfu: $(TARGET).bin
+	@dfu-util -d 1c11:b007 -D "$<"
+
 $(BUILDDIR)/%.o: %.c
 	@echo "[CC]\t$<"
 	@mkdir -p "$(dir $@)"
@@ -153,6 +156,11 @@ $(TARGET).elf: $(OBJS) $(LDSCRIPT)
 	@echo "[HEX]\t$@"
 	@$(SIZE) "$<"
 	@$(OBJCOPY) -O ihex -R .eeprom "$<" "$@"
+
+%.bin: %.elf
+	@echo "[BIN]\t$@"
+	@$(SIZE) "$<"
+	@$(OBJCOPY) -O binary  "$<" "$@"
 
 # compiler generated dependency info
 -include $(OBJS:.o=.d)

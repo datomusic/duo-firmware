@@ -62,6 +62,8 @@ int tempo_interval_msec();
 
 void power_off();
 void power_on();
+void amp_enable();
+void amp_disable();
 
 #include "pinmap.h"
 #include "MidiFunctions.h"
@@ -73,7 +75,8 @@ void power_on();
 
 void setup() {
   
-  digitalWrite(AMP_ENABLE, LOW);
+  amp_disable();
+  digitalWrite(HP_ENABLE, LOW);
   
   Serial.begin(57600);
 
@@ -92,15 +95,15 @@ void setup() {
   touch_init();
   
   previous_note_on_time = millis();
-
-  delay(800);
   
   #ifdef NO_AUDIO
-  digitalWrite(AMP_ENABLE, LOW);
+  amp_disable();
   #else
-  digitalWrite(AMP_ENABLE, HIGH);
+  amp_enable();
+  digitalWrite(HP_ENABLE, HIGH);
   #endif
 
+  sequencer_start();
   sequencer_stop();
 
   Serial.print("Dato DUO firmware ");
@@ -159,10 +162,22 @@ void keyboard_to_note() {
 
 // Scans the keypad and handles step enable and keys
 void keys_scan() {
-  if(digitalRead(DELAY_PIN)) {
+  if(muxDigitalRead(DELAY_PIN)) {
     delayMixer.gain(0, 0.0); // Delay input
+    delayMixer.gain(3, 0.0);
   } else {
     delayMixer.gain(0, 0.5); // Delay input
+    delayMixer.gain(3, 0.4); // Hat delay input
+  }
+
+  if(digitalRead(JACK_DETECT)) {
+    amp_disable();
+  } else {
+    amp_enable();
+  }
+
+  if(digitalRead(SYNC_DETECT)) {
+    sequencer_stop();
   }
 
   if (keypad.getKeys())  {
@@ -241,29 +256,24 @@ void keys_scan() {
 bool keys_scan_powerbutton() {
   bool r = false;
 
-  //TODO:don't hard code row/col numbers
   pinMode(row_pins[1],INPUT_PULLUP);
-  pinMode(col_pins[2],OUTPUT);
-  digitalWrite(col_pins[2],LOW);
-
+  pinMode(col_pins[1],OUTPUT);
+  digitalWrite(col_pins[1],LOW);
   r = (digitalRead(row_pins[1]) == LOW);
 
-  pinMode(col_pins[2],INPUT_PULLUP);
-
-  return(r);
+  return r;
 }
 
 void pots_read() {
-
   // Read out the pots/switches
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
-  detune_amount = 1023-analogRead(OSC_DETUNE_POT);
+  detune_amount = 1023-muxAnalogRead(OSC_DETUNE_POT);
 
-  int volume_pot_value = analogRead(FADE_POT);
-  int resonance = analogRead(FILTER_RES_POT);
-  int amp_env_release = map(analogRead(AMP_ENV_POT),0,1023,30,500);
-  int filter_pot_value = analogRead(FILTER_FREQ_POT);
-  int pulse_pot_value = analogRead(OSC_PW_POT);
+  int volume_pot_value = muxAnalogRead(FADE_POT);
+  int resonance = muxAnalogRead(FILTER_RES_POT);
+  int amp_env_release = map(muxAnalogRead(AMP_ENV_POT),0,1023,30,500);
+  int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
+  int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
 
   float osc2_target_frequency = detune(osc1_midi_note,detune_amount);
 
@@ -272,7 +282,7 @@ void pots_read() {
 
   // Constant rate glide
   const float GLIDE_COEFFICIENT = 0.04f;
-  if(!digitalRead(SLIDE_PIN)) {
+  if(!muxDigitalRead(SLIDE_PIN)) {
     osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*GLIDE_COEFFICIENT;
     osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*GLIDE_COEFFICIENT;
   } else {
@@ -370,7 +380,7 @@ int tempo_interval_msec() {
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
   AudioNoInterrupts();
-  digitalWrite(AMP_ENABLE, LOW);
+  amp_disable();
 
   for(int i = 32; i >= 0; i--) {
     FastLED.setBrightness(i);
@@ -384,8 +394,8 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
   FastLED.show();
   power_flag = 0;
   pinMode(row_pins[1],INPUT_PULLUP);
-  pinMode(col_pins[2],OUTPUT);
-  digitalWrite(col_pins[2],LOW);
+  pinMode(col_pins[1],OUTPUT);
+  digitalWrite(col_pins[1],LOW);
   while(!digitalRead(row_pins[1])) {
     // wait for release of the power button
   }
@@ -395,6 +405,15 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
 void power_on() {
   led_init();
   AudioInterrupts();
-  digitalWrite(AMP_ENABLE, HIGH);
+  digitalWrite(AMP_ENABLE, LOW);
   power_flag = 1;
+}
+
+void amp_enable() {
+  pinMode(AMP_ENABLE, OUTPUT);
+  digitalWrite(AMP_ENABLE, LOW);
+}
+
+void amp_disable() {
+  pinMode(AMP_ENABLE, INPUT);
 }

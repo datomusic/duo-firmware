@@ -89,7 +89,8 @@ AudioConnection          patchCord14(mixer2, dac1);
 AudioConnection          patchCord15(mixer2, peak2);
 AudioConnection          patchCord16(drum1, 0, mixer2, 2);
 AudioConnection          patchCord17(noise1, envelope3);
-AudioConnection          patchCord18(envelope3, 0, mixer2, 3);
+AudioConnection          patchCord18(envelope3, 0, delayMixer, 3);
+AudioConnection          patchCord19(envelope3, 0, mixer2, 3);
 // GUItool: end automatically generated code
 
 #define MAIN_GAIN 0.9
@@ -138,7 +139,7 @@ void audio_init() {
   bitcrusher1.bits(16);
   bitcrusher1.sampleRate(44100);
 
-  delay1.delay(0, 100); // Delay time
+  delay1.delay(0, 440); // Delay time
   delay1.delay(1, 440);
   delayMixer.gain(0, 0.0); // Delay input
   delayMixer.gain(1, 0.4); // Delay feedback
