@@ -100,8 +100,8 @@ void drum_init() {
 void drum_read() {
   // Read all touch channels
   // States:
-  slider1.update();
-  slider2.update();
+  slider1.update(millis());
+  slider2.update(millis());
   
   if(millis() > kick_on_time + kick_duration) {
     kick_playing = 0;

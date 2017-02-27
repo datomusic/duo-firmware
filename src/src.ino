@@ -9,15 +9,8 @@
 #define VERSION "0.4.6"
 
 const int MIDI_CHANNEL = 1;
-int gate_length_msec = 40;
 const int SYNC_LENGTH_MSEC = 12;
 const int TEMPO_MIN_INTERVAL_MSEC = 666; // Tempo is actually an interval in ms
-
-// Sequencer settings
-uint8_t current_step = 0;
-uint8_t target_step = 0;
-int tempo = 0;
-uint8_t set_key = 9;
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
@@ -25,7 +18,15 @@ const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 };
 const uint8_t DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
 #define INITIAL_VELOCITY 100
 
-// Global variables
+
+// Globals that should not be globals
+int gate_length_msec = 40;
+
+// Sequencer settings
+uint8_t current_step = 0;
+uint8_t target_step = 0;
+int tempo = 0;
+uint8_t set_key = 9;
 int detune_amount = 0;
 float osc1_frequency = 0.;
 float osc2_frequency = 0.;

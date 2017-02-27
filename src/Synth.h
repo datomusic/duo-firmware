@@ -81,7 +81,7 @@ AudioConnection          patchCord6(filter1, 0, envelope1, 0);
 AudioConnection          patchCord7(envelope1, peak1);
 AudioConnection          patchCord8(envelope1, bitcrusher1);
 AudioConnection          patchCord9(delay1, 0, mixer2, 1);
-AudioConnection          patchCord10(delay1, 1, delayMixer, 1);
+AudioConnection          patchCord10(delay1, 0, delayMixer, 1);
 AudioConnection          patchCord11(bitcrusher1, 0, mixer2, 0);
 AudioConnection          patchCord12(bitcrusher1, 0, delayMixer, 0);
 AudioConnection          patchCord13(delayMixer, delay1);
@@ -140,7 +140,6 @@ void audio_init() {
   bitcrusher1.sampleRate(44100);
 
   delay1.delay(0, 440); // Delay time
-  delay1.delay(1, 440);
   delayMixer.gain(0, 0.0); // Delay input
   delayMixer.gain(1, 0.4); // Delay feedback
 

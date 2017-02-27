@@ -3,7 +3,6 @@
  * Otherwise returns a value that corresponds to the 
  * 
  * Requires Teensy's touchRead
- * Requires Arduino bitClear, bitSet, and millis()
  * 
  */
  
@@ -93,13 +92,12 @@ public:
     tTouchCallback  = fptr;
   }
   bool touchDetected;
-  void update(){
-    // Update the sensor
+  void update(unsigned long sysTick){
     a.update();
     b.update();
     
-    if(millis() > lastUpdate + 100) {
-      lastUpdate = millis();
+    if(sysTick > lastUpdate + 100) {
+      lastUpdate = sysTick;
       a.updateBaseline();
       b.updateBaseline();
     }
@@ -112,7 +110,7 @@ public:
     if(a.touchDetected() || b.touchDetected()) {
       numTouches |= 1UL;
     } else {
-      numTouches = bitClear(numTouches, 0);
+      numTouches &= ~1UL;
     }
 
     uint16_t bottomBits = numTouches & B1111;
@@ -123,7 +121,7 @@ public:
       if (tTouchCallback != 0) {
         tTouchCallback(1, _sliderValue);
       }
-      _lastTouch = millis();
+      _lastTouch = sysTick;
     }
     
     if(touchDetected && bottomBits == 0) {
