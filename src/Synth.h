@@ -61,12 +61,9 @@ AudioSynthWaveformDc     dc1;            //xy=88.10000610351562,149
 AudioEffectEnvelope2      envelope2;      //xy=227.10000610351562,149
 AudioMixer4              mixer1;         //xy=255.10000610351562,83
 AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
-AudioSynthNoiseWhite     noise1;         //xy=595.833251953125,244.40475463867188
 AudioEffectEnvelope2      envelope1;      //xy=560.1000061035156,81
-AudioEffectEnvelope2      envelope3;      //xy=731.547611781529,244.40475463867185
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
-AudioSynthSimpleDrum     drum1;          //xy=800.1190403529575,180.11904035295757
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
 AudioMixer4              delayMixer;         //xy=728.0999755859375,279.1000061035156
 AudioMixer4              mixer2;         //xy=861.1000061035156,100
@@ -87,16 +84,12 @@ AudioConnection          patchCord12(bitcrusher1, 0, delayMixer, 0);
 AudioConnection          patchCord13(delayMixer, delay1);
 AudioConnection          patchCord14(mixer2, dac1);
 AudioConnection          patchCord15(mixer2, peak2);
-AudioConnection          patchCord16(drum1, 0, mixer2, 2);
-AudioConnection          patchCord17(noise1, envelope3);
-AudioConnection          patchCord18(envelope3, 0, delayMixer, 3);
-AudioConnection          patchCord19(envelope3, 0, mixer2, 3);
 // GUItool: end automatically generated code
 
-#define MAIN_GAIN 0.9
+#define MAIN_GAIN 0.8
 #define DELAY_GAIN 0.6
-#define KICK_GAIN 0.8
-#define HAT_GAIN 0.3
+#define KICK_GAIN 0.9
+#define HAT_GAIN 0.9
 
 void audio_init();
 void audio_volume(uint8_t volume);
