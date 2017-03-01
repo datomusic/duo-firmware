@@ -26,8 +26,8 @@
  * Modified version from https://github.com/floretan/Audio/commit/6e11d3e685362140707c9eff9711a9b066a5281d
  */
 
-#ifndef effect_envelope_h_
-#define effect_envelope_h_
+#ifndef effect_envelope2_h_
+#define effect_envelope2_h_
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"

@@ -44,9 +44,9 @@
 #define POT_1       A10
 #define POT_2       A11
 #define MUX_IO      A18
+#define MUX_IO_DIGITAL 29
 // NC
 // DAC_OUT
-
 #define SYN_ADDR0    33
 #define SYN_ADDR1    24
 #define SYN_ADDR2     3
@@ -147,21 +147,21 @@ int muxAnalogRead(uint8_t channel) {
   digitalWrite(SYN_ADDR0, channel & (1<<0));
   digitalWrite(SYN_ADDR1, channel & (1<<1));
   digitalWrite(SYN_ADDR2, channel & (1<<2));
-  // //do we need to wait a few nanoseconds?
+  //do we need to wait a few nanoseconds?
   delayMicroseconds(10);
   return analogRead(MUX_IO);
 }
 
 uint8_t muxDigitalRead(uint8_t channel) { 
-  pinMode(29, INPUT_PULLUP);
+  pinMode(MUX_IO_DIGITAL, INPUT_PULLUP);
   digitalWrite(SYN_ADDR0, channel & (1<<0));
   digitalWrite(SYN_ADDR1, channel & (1<<1));
   digitalWrite(SYN_ADDR2, channel & (1<<2));
-  delayMicroseconds(10);
-  // //Wait a few microseconds for the selection to propagate. 
-  // //Less than 3 seems not to work so let's take 4 to be sure
-  uint8_t p = digitalRead(29);
-  pinMode(29, INPUT);
+  delayMicroseconds(4);
+  //Wait a few microseconds for the selection to propagate. 
+  //Less than 3 seems not to work so let's take 4 to be sure
+  uint8_t p = digitalRead(MUX_IO_DIGITAL);
+  pinMode(MUX_IO_DIGITAL, INPUT);
   delayMicroseconds(10);
   return p;
 }

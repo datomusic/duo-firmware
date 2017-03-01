@@ -2,44 +2,37 @@
   DATO DUO firmware - DrumSynth
   (c) 2017, Benjamin Brandenburg <bnjmn7@gmail.com>
 */
+#include <filter_biquad.h>
+#include <synth_sine.h>
 
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
-
-// GUItool: begin automatically generated code
-AudioSynthWaveformSine   hat_sine1;          //xy=71,248
-AudioSynthNoiseWhite     hat_noise1;         //xy=88,171
-AudioSynthSimpleDrum     kick_drum1;          //xy=134,415
-AudioEffectEnvelope2      hat_envelope3;      //xy=246,235
-AudioEffectEnvelope2      hat_envelope1;      //xy=256,138
-AudioEffectEnvelope2     kick_envelope2;      //xy=308,411
-AudioFilterStateVariable hat_filter1;        //xy=432,130
-AudioFilterStateVariable kick_filter2;        //xy=443,282
-AudioFilterBiquad        hat_biquad1;        //xy=575,92
-AudioConnection          hatkick_patchCord1(hat_sine1, hat_envelope3);
-AudioConnection          hatkick_patchCord2(hat_noise1, hat_envelope1);
-AudioConnection          hatkick_patchCord3(kick_drum1, kick_envelope2);
-AudioConnection          hatkick_patchCord4(hat_envelope3, 0, hat_filter1, 1);
-AudioConnection          hatkick_patchCord5(hat_envelope1, 0, hat_filter1, 0);
-AudioConnection          hatkick_patchCord6(kick_envelope2, 0, kick_filter2, 0);
-AudioConnection          hatkick_patchCord7(hat_filter1, 0, hat_biquad1, 0);
+  // GUItool: begin automatically generated code
+AudioSynthNoiseWhite     hat_noise1;     //xy=378,191
+AudioSynthSimpleDrum     kick_drum1;     //xy=437,383
+AudioEffectEnvelope2     hat_envelope1;  //xy=546,191
+AudioSynthSimpleDrum     hat_snappy;          //xy=590,250
+AudioEffectEnvelope2     kick_envelope2; //xy=602,383
+AudioFilterStateVariable hat_filter1;    //xy=713,197
+AudioFilterStateVariable kick_filter2;   //xy=775,386
+AudioMixer4              hat_mixer;         //xy=872,257
+AudioConnection          hatkick_patchCord1(hat_noise1, hat_envelope1);
+AudioConnection          hatkick_patchCord2(kick_drum1, kick_envelope2);
+AudioConnection          hatkick_patchCord3(hat_envelope1, 0, hat_filter1, 0);
+AudioConnection          hatkick_patchCord4(hat_snappy, 0, hat_mixer, 1);
+AudioConnection          hatkick_patchCord5(kick_envelope2, 0, kick_filter2, 0);
+AudioConnection          hatkick_patchCord6(hat_filter1, 2, hat_mixer, 0);
+AudioConnection          hatkick_patchCord7(hat_mixer, 0, delayMixer, 3);
 AudioConnection          hatkick_patchCord8(kick_filter2, 0, mixer2, 2);
-AudioConnection          hatkick_patchCord9(hat_biquad1, 0, mixer2, 3);
-
+AudioConnection          hatkick_patchCord9(hat_mixer, 0, mixer2, 3);
 // GUItool: end automatically generated code
 
 int kick_duration = 100;
 unsigned long kick_on_time, hat_on_time;
 bool kick_playing = 0;
-int hat_duration = 200;
+int hat_duration = 100;
 bool hat_playing = 0;
 
 void drum_init();
 void drum_read();
-
 void kick_noteon(uint8_t velocity);
 void hat_noteon(uint8_t velocity);
 void kick_noteoff();
@@ -53,16 +46,10 @@ void hatEvent(uint8_t event, int value);
 TouchSlider slider1(TOUCH4, TOUCH3);
 TouchSlider slider2(TOUCH1, TOUCH2);
 
-
 void kickEvent(uint8_t event, int value) {
-  Serial.print("\nevent callback ");
-  Serial.print(event);
-  Serial.print(" a: ");
-  Serial.print(slider1.a.getSignal());
-  Serial.print(" b: ");
-  Serial.print(slider1.b.getSignal());
 
-  int val = constrain(map(value,-50,100,0,100),0,127);
+  int val = constrain(value+63,0,127);
+
   switch(event) {
     case TOUCHEVENT_TOUCH:
       kick_noteon(val);
@@ -74,14 +61,8 @@ void kickEvent(uint8_t event, int value) {
 }
 
 void hatEvent(uint8_t event, int value) {
-  Serial.print("\nevent callback ");
-  Serial.print(event);
-  Serial.print(" a: ");
-  Serial.print(slider2.a.getSignal());
-  Serial.print(" b: ");
-  Serial.print(slider2.a.getSignal());
+  int val = constrain(value+63,0,127);
 
-  int val = constrain(map(value,-50,100,0,100),0,127);
   switch(event) {
     case TOUCHEVENT_TOUCH:
       hat_noteon(val);
@@ -105,17 +86,14 @@ void touch_init() {
 
 void drum_init() {
   // HI-HAT ->
-  hat_envelope1.attack(2);
-  hat_envelope1.release(1);
- // hat_envelope1.decay(1);
-  hat_envelope1.sustain(0.02);
-  hat_biquad1.setHighShelf(1, 2000, 0.7, 1); // before freq = 2000
-
-  //SINE WAVE ADDED TO NOISE
-  hat_envelope3.attack(0.5);
-  hat_envelope3.release(1);
-  hat_envelope3.sustain(0.04);
-
+  hat_envelope1.attack(2.0);
+  hat_envelope1.release(0.0);
+  // hat_envelope1.decay(1);
+  hat_envelope1.sustain(0.0);
+  // hat_biquad1.setHighShelf(1, 2000, 0.7, 1); // before freq = 2000
+  hat_snappy.length(30);
+  hat_snappy.pitchMod(4.0);
+  hat_snappy.frequency(126);
   // KICK DRUM ->
   kick_drum1.length(kick_duration);
   kick_drum1.frequency(60);
@@ -144,7 +122,6 @@ void kick_noteon(uint8_t velocity) {
   AudioNoInterrupts();
   //change Kick parameters here
   AudioInterrupts();
-  //.noteOn();
   kick_drum1.noteOn();
   kick_envelope2.noteOn();
   kick_playing = 1;
@@ -158,26 +135,24 @@ void kick_noteoff() {
 
 void hat_noteon(uint8_t velocity) {
  hat_duration = velocity + 10;
- int val_hattouch = velocity*8;
- int freq = 4500 - val_hattouch;
- int freq_2 = velocity/2; // mapping 0 - 63
- float q_respot = val_hattouch / 500.0; // Q FROM 0.0 to 2.0
+
+ // int val_hattouch = velocity*8;
+ // int freq = 4500 - velocity*8;
+ // int freq_2 = velocity/2; // mapping 0 - 63
+ // float q_respot = velocity / 127.0; // Q FROM 0.0 to 2.0
+ hat_snappy.noteOn();
  AudioNoInterrupts();
  //change Hat parameters here
  hat_noise1.amplitude(1.0);
- hat_envelope1.decay(40+3*freq_2);
- hat_filter1.frequency(freq); // FILTER_RES_POT
- hat_filter1.resonance(q_respot); // OSC_DETUNE POT
- hat_biquad1.setBandpass(0, 8000-6*val_hattouch, 1); // Before 10000
- hat_biquad1.setHighpass(0, 9000-4*val_hattouch, 1);
- // SINE WAVE ADDED TO NOISE
- hat_sine1.frequency(200+2*val_hattouch);
- hat_sine1.amplitude(1.0);
- hat_envelope3.decay(40+freq_2);
+ hat_envelope1.decay(map(velocity,0,127,20,30));
+
+ hat_filter1.frequency(2000);
+ hat_filter1.resonance(map(velocity,0,127,300,70)/100.);
+
+ hat_mixer.gain(0, map(velocity,0,127,70,20)/100.); // noise gain
+ hat_mixer.gain(1, map(velocity,0,127,0,100)/100.); // snappy gain
  AudioInterrupts();
- //.noteOn();
  hat_envelope1.noteOn();
- hat_envelope3.noteOn();
  hat_playing = 1;
  hat_on_time = millis();
 }
@@ -188,5 +163,4 @@ void hat_noteoff() {
   hat_noise1.amplitude(0.0);
   AudioInterrupts();
   hat_playing = 0;
-
 }

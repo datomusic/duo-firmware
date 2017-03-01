@@ -55,22 +55,22 @@
 #include <synth_simple_drum.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform2;      //xy=78.10000610351562,97
-AudioSynthWaveform       waveform1;      //xy=79.10000610351562,44
+AudioSynthWaveform       osc_pulse;      //xy=78.10000610351562,97
+AudioSynthWaveform       osc_saw;        //xy=79.10000610351562,44
 AudioSynthWaveformDc     dc1;            //xy=88.10000610351562,149
-AudioEffectEnvelope2      envelope2;      //xy=227.10000610351562,149
+AudioEffectEnvelope2     envelope2;      //xy=227.10000610351562,149
 AudioMixer4              mixer1;         //xy=255.10000610351562,83
 AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
-AudioEffectEnvelope2      envelope1;      //xy=560.1000061035156,81
+AudioEffectEnvelope2     envelope1;      //xy=560.1000061035156,81
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
-AudioMixer4              delayMixer;         //xy=728.0999755859375,279.1000061035156
+AudioMixer4              delayMixer;     //xy=728.0999755859375,279.1000061035156
 AudioMixer4              mixer2;         //xy=861.1000061035156,100
 AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
 AudioOutputAnalog        dac1;           //xy=988.1000061035156,100
-AudioConnection          patchCord1(waveform2, 0, mixer1, 1);
-AudioConnection          patchCord2(waveform1, 0, mixer1, 0);
+AudioConnection          patchCord1(osc_pulse, 0, mixer1, 1);
+AudioConnection          patchCord2(osc_saw, 0, mixer1, 0);
 AudioConnection          patchCord3(dc1, envelope2);
 AudioConnection          patchCord4(envelope2, 0, filter1, 1);
 AudioConnection          patchCord5(mixer1, 0, filter1, 0);
@@ -98,9 +98,9 @@ void audio_init() {
   AudioMemory(200); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
-  waveform1.begin(0.4, 220, WAVEFORM_SAWTOOTH);
-  waveform2.pulseWidth(0.5);
-  waveform2.begin(0.4, 110, WAVEFORM_PULSE);
+  osc_saw.begin(0.4, 220, WAVEFORM_SAWTOOTH);
+  osc_pulse.pulseWidth(0.5);
+  osc_pulse.begin(0.4, 110, WAVEFORM_PULSE);
   
   // Mixer mixes the oscillators
   mixer1.gain(0, 0.5); // OSC1

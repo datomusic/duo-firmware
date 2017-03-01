@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.4.6"
+#define VERSION "0.4.7"
 
 const int MIDI_CHANNEL = 1;
 const int SYNC_LENGTH_MSEC = 12;
@@ -15,9 +15,8 @@ const int TEMPO_MIN_INTERVAL_MSEC = 666; // Tempo is actually an interval in ms
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
 const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
-const uint8_t DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
-#define INITIAL_VELOCITY 100
 
+#define INITIAL_VELOCITY 100
 
 // Globals that should not be globals
 int gate_length_msec = 40;
@@ -28,10 +27,10 @@ uint8_t target_step = 0;
 int tempo = 0;
 uint8_t set_key = 9;
 int detune_amount = 0;
-float osc1_frequency = 0.;
-float osc2_frequency = 0.;
-float osc1_target_frequency = 0.;
-uint8_t osc1_midi_note = 0;
+float osc_saw_frequency = 0.;
+float osc_pulse_frequency = 0.;
+float osc_saw_target_frequency = 0.;
+uint8_t osc_saw_midi_note = 0;
 bool note_is_playing = 0;
 bool note_is_triggered = false;
 bool note_is_played = false;
@@ -65,6 +64,8 @@ void power_off();
 void power_on();
 void amp_enable();
 void amp_disable();
+void headphone_disable();
+void headphone_enable();
 
 #include "pinmap.h"
 #include "MidiFunctions.h"
@@ -73,11 +74,12 @@ void amp_disable();
 #include "Sequencer.h"
 #include "Leds.h"
 #include "DrumSynth.h"
+#include "Pitch.h"
 
 void setup() {
   
   amp_disable();
-  digitalWrite(HP_ENABLE, LOW);
+  headphone_disable();
   
   Serial.begin(57600);
 
@@ -101,7 +103,7 @@ void setup() {
   amp_disable();
   #else
   amp_enable();
-  digitalWrite(HP_ENABLE, HIGH);
+  headphone_enable();
   #endif
 
   sequencer_start();
@@ -276,7 +278,7 @@ void pots_read() {
   int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
 
-  float osc2_target_frequency = detune(osc1_midi_note,detune_amount);
+  float osc_pulse_target_frequency = detune(osc_saw_midi_note,detune_amount);
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
@@ -284,23 +286,23 @@ void pots_read() {
   // Constant rate glide
   const float GLIDE_COEFFICIENT = 0.04f;
   if(!muxDigitalRead(SLIDE_PIN)) {
-    osc1_frequency = osc1_frequency + (osc1_target_frequency - osc1_frequency)*GLIDE_COEFFICIENT;
-    osc2_frequency = osc2_frequency + (osc2_target_frequency - osc2_frequency)*GLIDE_COEFFICIENT;
+    osc_saw_frequency = osc_saw_frequency + (osc_saw_target_frequency - osc_saw_frequency)*GLIDE_COEFFICIENT;
+    osc_pulse_frequency = osc_pulse_frequency + (osc_pulse_target_frequency - osc_pulse_frequency)*GLIDE_COEFFICIENT;
   } else {
-    osc1_frequency = osc1_target_frequency;
-    osc2_frequency = osc2_target_frequency;
+    osc_saw_frequency = osc_saw_target_frequency;
+    osc_pulse_frequency = osc_pulse_target_frequency;
   }
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
 
-  waveform1.frequency(osc1_frequency);
+  osc_saw.frequency(osc_saw_frequency);
 
   // TODO: mix away the oscillator at the end of the range
-  waveform2.frequency(osc2_frequency);
-  waveform2.pulseWidth(map(pulse_pot_value,0,1023,1000,50)/1000.0);
+  osc_pulse.frequency(osc_pulse_frequency);
+  osc_pulse.pulseWidth(map(pulse_pot_value,0,1023,1000,50)/1000.0);
 
-  filter1.frequency(map(filter_pot_value,0,1023,60,300));
+  filter1.frequency(map(filter_pot_value,0,1023,60,400));
   //filter1.frequency(fscale(0.,1023.,60.,300.,filter_pot_value,0));
 
   // TODO: do exponential filter pot behaviour
@@ -332,11 +334,11 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     AudioNoInterrupts();
 
     dc1.amplitude(velocity / 127.); // DC amplitude controls filter env amount.
-    osc1_midi_note = midi_note;
-    osc1_target_frequency = (int)midi_note_to_frequency(midi_note);
-    waveform1.frequency(osc1_frequency);
+    osc_saw_midi_note = midi_note;
+    osc_saw_target_frequency = (int)midi_note_to_frequency(midi_note);
+    osc_saw.frequency(osc_saw_frequency);
     // Detune OSC2
-    waveform2.frequency(detune(osc1_midi_note,detune_amount));
+    osc_pulse.frequency(detune(osc_saw_midi_note,detune_amount));
 
     AudioInterrupts(); 
 
@@ -351,12 +353,12 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
 
 void note_off() {
   if (note_is_playing) {
+    MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
     if(!step_enable[current_step]) {
       leds(current_step) = CRGB::Black;
     } else {
       envelope1.noteOff();
       envelope2.noteOff();
-      MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
     }
     note_is_playing = 0;
   } 
@@ -417,4 +419,12 @@ void amp_enable() {
 
 void amp_disable() {
   pinMode(AMP_ENABLE, INPUT);
+}
+
+void headphone_disable() {
+  digitalWrite(HP_ENABLE, LOW);
+}
+
+void headphone_enable() {
+  digitalWrite(HP_ENABLE, HIGH);
 }

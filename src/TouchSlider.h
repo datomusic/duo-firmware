@@ -1,6 +1,7 @@
 /*
  * Returns 0 when no touch is detected. 
- * Otherwise returns a value that corresponds to the 
+ * Otherwise returns a value that corresponds to the relative
+ * location of the first touch on the slider
  * 
  * Requires Teensy's touchRead
  * 
