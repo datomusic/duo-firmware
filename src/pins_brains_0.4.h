@@ -40,7 +40,7 @@
  *   PTE0          31
  *   PTE1          26
  */
-
+#define SEQ_0_4
 #define POT_1       A10
 #define POT_2       A11
 #define MUX_IO      A18
@@ -116,6 +116,8 @@ const int SYNC_OUT_PIN = SYNC_OUT;
 const int NUM_LEDS = 19;
 const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
 
+// Multiplexer channels.
+// TODO: a gpio abstraction function would probably be a good idea
 #define POT_SYN1 0
 #define POT_SYN2 1
 
@@ -128,12 +130,10 @@ const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
 #define POT_SYN5 6
 #define POT_SYN6 7
 
-
 const int SLIDE_PIN = 1;
 const int DELAY_PIN = 2;
 const int AMP_ENV_POT = 4;
 const int FILTER_RES_POT = 0;
-
 
 const int FILTER_FREQ_POT = 5;
 
@@ -148,7 +148,7 @@ int muxAnalogRead(uint8_t channel) {
   digitalWrite(SYN_ADDR1, channel & (1<<1));
   digitalWrite(SYN_ADDR2, channel & (1<<2));
   //do we need to wait a few nanoseconds?
-  delayMicroseconds(10);
+  delayMicroseconds(4);
   return analogRead(MUX_IO);
 }
 
@@ -174,8 +174,9 @@ void pins_init() {
   pinMode(ACCENT_PIN, INPUT_PULLUP);
 
   pinMode(SYNC_OUT_PIN, OUTPUT);
-  pinMode(AMP_ENABLE, OUTPUT);
+  // pinMode(AMP_ENABLE, OUTPUT);
   pinMode(HP_ENABLE, OUTPUT);
+  pinMode(SYNC_IN, INPUT);
 
   pinMode(JACK_DETECT, INPUT);
   pinMode(SYNC_DETECT, INPUT);
@@ -183,4 +184,6 @@ void pins_init() {
   pinMode(SYN_ADDR0, OUTPUT);
   pinMode(SYN_ADDR1, OUTPUT);
   pinMode(SYN_ADDR2, OUTPUT);
+
+  randomSeed(analogRead(MUX_IO));
 }

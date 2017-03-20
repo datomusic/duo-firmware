@@ -46,50 +46,42 @@ void led_init() {
  
   FastLED.setCorrection(CORRECTION_SK6812);
   FastLED.clear();
-
+  FastLED.show();
   /* The 800ms delay introduced by this startup animation prevents
      an audible pop/click at startup
      AudioNoInterrupts() is needed for it to run smoothly
      */
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[i];
+    delay(200);
     FastLED.show();
   }
 }
 
 // Updates the LED colour and brightness to match the stored sequence
 void update_leds() {
+  for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
+    if (step_enable[l]) {
 
-  //if(millis() - leds_last_updated > LEDS_UPDATE_INTERVAL) {
-    if(sequencer_is_running) {
-        physical_leds[0] = CRGB::Black;
-    } else {
-        physical_leds[0] = LED_WHITE;
-    }
-    for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
-      if (step_enable[l]) {
+      leds(l) = COLORS[step_note[l]];
 
-        leds(l) = COLORS[step_note[l]];
-
-        if (step_velocity[l] < 50) {
-          leds(l).nscale8_video(step_velocity[l]+20);
-        }
+      if (step_velocity[l] < 50) {
+        leds(l).nscale8_video(step_velocity[l]+20);
       }
-       
-      if(note_is_playing) {
-        leds(current_step) = LED_WHITE;
-      } else {
-      if(!step_enable[current_step]) {
-        leds(current_step) = CRGB::Black;
-      }}
     }
-    AudioNoInterrupts();
-    FastLED.show();
-    AudioInterrupts();
-    analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
-    leds_last_updated = millis();
-  //}
-
+     
+    if(note_is_playing) {
+      leds(current_step) = LED_WHITE;
+    } else {
+    if(!step_enable[current_step]) {
+      leds(current_step) = CRGB::Black;
+    }}
+  }
+  AudioNoInterrupts();
+  FastLED.show();
+  AudioInterrupts();
+  analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
+  leds_last_updated = millis();
 }
 
 #endif

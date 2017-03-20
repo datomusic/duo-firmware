@@ -10,7 +10,6 @@
 
 const int MIDI_CHANNEL = 1;
 const int SYNC_LENGTH_MSEC = 12;
-const int TEMPO_MIN_INTERVAL_MSEC = 666; // Tempo is actually an interval in ms
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
@@ -22,7 +21,7 @@ const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 };
 int gate_length_msec = 40;
 
 // Sequencer settings
-uint8_t current_step = 0;
+uint8_t current_step = 8; // TODO: should be sequencer_num_steps
 uint8_t target_step = 0;
 int tempo = 0;
 uint8_t set_key = 9;
@@ -47,7 +46,6 @@ uint16_t old_keyboard_map = 0;
 const uint16_t KEYBOARD_MASK = 0b11111111111;
 
 void keys_scan();
-bool keys_scan_powerbutton();
 void pots_read();
 void drum_init();
 void drum_read();
@@ -77,21 +75,17 @@ void headphone_enable();
 #include "Pitch.h"
 
 void setup() {
-  
+  pins_init();
   amp_disable();
   headphone_disable();
-  
-  Serial.begin(57600);
-
+  sequencer_init();
   audio_init();
+  led_init();
+  Serial.begin(57600);
 
   midi_init();
 
-  led_init();
-
   keys_init();
-
-  pins_init();
 
   drum_init();
 
@@ -106,9 +100,6 @@ void setup() {
   headphone_enable();
   #endif
 
-  sequencer_start();
-  sequencer_stop();
-
   Serial.print("Dato DUO firmware ");
   Serial.println(VERSION);
 }
@@ -119,11 +110,10 @@ void loop() {
 
     keys_scan();
 
-    if(sequencer_is_running) {
-      sequencer();
-    } else {
+    if(!sequencer_is_running) {
       keyboard_to_note();          
     }
+    sequencer_update();
     midi_handle();
     pots_read();
     update_leds();
@@ -136,7 +126,6 @@ void loop() {
 
     if(keys_scan_powerbutton()) {
       power_on();
-      sequencer_start();
     } else {
       //TODO: Low power delay
       delay(100);
@@ -179,10 +168,6 @@ void keys_scan() {
     amp_enable();
   }
 
-  if(digitalRead(SYNC_DETECT)) {
-    sequencer_stop();
-  }
-
   if (keypad.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
       if ( keypad.key[i].stateChanged ) {
@@ -208,6 +193,9 @@ void keys_scan() {
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
                   step_velocity[k-STEP_1] = INITIAL_VELOCITY;
                 } else if (k == BTN_SEQ2) {
+                  if(!sequencer_is_running) {
+                    sequencer_advance();
+                  }
                   double_speed = true;
                 } else if (k == BTN_DOWN) {
                   transpose--;
@@ -217,14 +205,12 @@ void keys_scan() {
                   if(transpose>12){transpose = 24;}
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = true;
+                  if(!sequencer_is_running) {
+                    sequencer_advance();
+                  }
                   random_flag = true;
                 } else if (k == SEQ_START) {
-                  if(sequencer_is_running) {
-                    sequencer_stop();
-                  } else {
-                    power_on();
-                    sequencer_start();
-                  }
+                  sequencer_toggle_start();
                 }
                 break;
             case HOLD:
@@ -254,17 +240,6 @@ void keys_scan() {
       }
     }
   } 
-}
-
-bool keys_scan_powerbutton() {
-  bool r = false;
-
-  pinMode(row_pins[1],INPUT_PULLUP);
-  pinMode(col_pins[1],OUTPUT);
-  digitalWrite(col_pins[1],LOW);
-  r = (digitalRead(row_pins[1]) == LOW);
-
-  return r;
 }
 
 void pots_read() {
@@ -375,11 +350,6 @@ float detune(int note, int amount) { // amount goes from 0-1023
   }
 }
 
-int tempo_interval_msec() {
-  int potvalue = analogRead(TEMPO_POT);
-  return map(potvalue,10,1023,40,TEMPO_MIN_INTERVAL_MSEC);
-}
-
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
   AudioNoInterrupts();
@@ -396,10 +366,10 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
   FastLED.clear();
   FastLED.show();
   power_flag = 0;
-  pinMode(row_pins[1],INPUT_PULLUP);
-  pinMode(col_pins[1],OUTPUT);
-  digitalWrite(col_pins[1],LOW);
-  while(!digitalRead(row_pins[1])) {
+  pinMode(row_pins[powerbutton_row],INPUT_PULLUP);
+  pinMode(col_pins[powerbutton_col],OUTPUT);
+  digitalWrite(col_pins[powerbutton_col],LOW);
+  while(!digitalRead(row_pins[powerbutton_row])) {
     // wait for release of the power button
   }
   delay(100);

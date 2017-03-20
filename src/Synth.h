@@ -88,7 +88,7 @@ AudioConnection          patchCord15(mixer2, peak2);
 
 #define MAIN_GAIN 0.8
 #define DELAY_GAIN 0.6
-#define KICK_GAIN 0.9
+#define KICK_GAIN 1.0
 #define HAT_GAIN 0.9
 
 void audio_init();

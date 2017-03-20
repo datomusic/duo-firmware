@@ -40,13 +40,7 @@ void midi_init() {
 }
 
 void midi_handle_timecode(byte data) {
-  static int c = 0;
 
-  c++;
-  if(c >= 12) {
-    //advance sequencer
-    c = 0;
-  }
 }
 
 float midi_note_to_frequency(int x) {

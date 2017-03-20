@@ -12,7 +12,7 @@ TEENSY_CORE_SPEED = 72000000
 ARDUINO = 10600
 
 # configurable options
-OPTIONS = -DUSB_MIDI -DLAYOUT_US_ENGLISH
+OPTIONS = -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 
 # directory to build in
 BUILDDIR = $(abspath $(CURDIR)/build)
@@ -71,7 +71,7 @@ ifeq ($(TEENSY), 30)
 else
     ifeq ($(TEENSY), 31)
         CPPFLAGS += -D__MK20DX256__ -mcpu=cortex-m4
-        LDSCRIPT = $(COREPATH)/mk20dx256.ld
+        LDSCRIPT = $(CURDIR)/mk20dx256-dfu.ld
         LDFLAGS += -mcpu=cortex-m4 -T$(LDSCRIPT)
     else
         ifeq ($(TEENSY), LC)
