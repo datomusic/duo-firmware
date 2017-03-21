@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.4.7"
+#define VERSION "0.5.0"
 
 const int MIDI_CHANNEL = 1;
 const int SYNC_LENGTH_MSEC = 12;
@@ -32,7 +32,6 @@ float osc_saw_target_frequency = 0.;
 uint8_t osc_saw_midi_note = 0;
 bool note_is_playing = 0;
 bool note_is_triggered = false;
-bool note_is_played = false;
 bool double_speed = false;
 int transpose = 0;
 bool next_step_is_random = false;
@@ -40,6 +39,12 @@ int num_notes_held = 0;
 int tempo_interval;
 bool random_flag = 0;
 bool power_flag = 1;
+bool amp_enabled = 0;
+
+uint32_t pitch_update_time = 0;
+uint32_t midi_clock = 0;
+uint16_t audio_peak_values;
+uint16_t peak_update_time;
 
 uint16_t keyboard_map = 0;
 uint16_t old_keyboard_map = 0;
@@ -58,12 +63,15 @@ float detune(int note, int amount);
 
 int tempo_interval_msec();
 
+void update_amps();
 void power_off();
 void power_on();
 void amp_enable();
 void amp_disable();
 void headphone_disable();
 void headphone_enable();
+
+void enter_dfu();
 
 #include "pinmap.h"
 #include "MidiFunctions.h"
@@ -75,6 +83,7 @@ void headphone_enable();
 #include "Pitch.h"
 
 void setup() {
+
   pins_init();
   amp_disable();
   headphone_disable();
@@ -84,22 +93,15 @@ void setup() {
   Serial.begin(57600);
 
   midi_init();
+  MIDI.setHandleStart(sequencer_start);
+  MIDI.setHandleStop(sequencer_stop);
 
   keys_init();
-
   drum_init();
-
   touch_init();
   
   previous_note_on_time = millis();
   
-  #ifdef NO_AUDIO
-  amp_disable();
-  #else
-  amp_enable();
-  headphone_enable();
-  #endif
-
   Serial.print("Dato DUO firmware ");
   Serial.println(VERSION);
 }
@@ -107,9 +109,7 @@ void setup() {
 void loop() {
 
   if(power_flag != 0) {
-
     keys_scan();
-
     if(!sequencer_is_running) {
       keyboard_to_note();          
     }
@@ -118,12 +118,8 @@ void loop() {
     pots_read();
     update_leds();
     drum_read();
+    update_amps();
   } else {
-    //TODO: Why do I need to force these LEDs low?
-    analogWrite(ENV_LED, 0);
-    analogWrite(FILTER_LED, 0);
-    analogWrite(OSC_LED, 0);
-
     if(keys_scan_powerbutton()) {
       power_on();
     } else {
@@ -131,6 +127,10 @@ void loop() {
       delay(100);
     }
   }
+  // if(!digitalRead(ACCENT_PIN)) {
+  //   enter_dfu();
+  //   return;
+  // }
 }
 
 void keyboard_to_note() {
@@ -160,12 +160,6 @@ void keys_scan() {
   } else {
     delayMixer.gain(0, 0.5); // Delay input
     delayMixer.gain(3, 0.4); // Hat delay input
-  }
-
-  if(digitalRead(JACK_DETECT)) {
-    amp_disable();
-  } else {
-    amp_enable();
   }
 
   if (keypad.getKeys())  {
@@ -250,7 +244,7 @@ void pots_read() {
   int volume_pot_value = muxAnalogRead(FADE_POT);
   int resonance = muxAnalogRead(FILTER_RES_POT);
   int amp_env_release = map(muxAnalogRead(AMP_ENV_POT),0,1023,30,500);
-  int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
+  uint32_t filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
 
   float osc_pulse_target_frequency = detune(osc_saw_midi_note,detune_amount);
@@ -259,10 +253,13 @@ void pots_read() {
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
 
   // Constant rate glide
-  const float GLIDE_COEFFICIENT = 0.04f;
+  const float GLIDE_COEFFICIENT = 0.3f;
   if(!muxDigitalRead(SLIDE_PIN)) {
-    osc_saw_frequency = osc_saw_frequency + (osc_saw_target_frequency - osc_saw_frequency)*GLIDE_COEFFICIENT;
-    osc_pulse_frequency = osc_pulse_frequency + (osc_pulse_target_frequency - osc_pulse_frequency)*GLIDE_COEFFICIENT;
+    if(pitch_update_time < millis()) {
+      osc_saw_frequency = osc_saw_frequency + (osc_saw_target_frequency - osc_saw_frequency)*GLIDE_COEFFICIENT;
+      osc_pulse_frequency = osc_pulse_frequency + (osc_pulse_target_frequency - osc_pulse_frequency)*GLIDE_COEFFICIENT;
+      pitch_update_time = millis() + 10;
+    }
   } else {
     osc_saw_frequency = osc_saw_target_frequency;
     osc_pulse_frequency = osc_pulse_target_frequency;
@@ -277,10 +274,7 @@ void pots_read() {
   osc_pulse.frequency(osc_pulse_frequency);
   osc_pulse.pulseWidth(map(pulse_pot_value,0,1023,1000,50)/1000.0);
 
-  filter1.frequency(map(filter_pot_value,0,1023,60,400));
-  //filter1.frequency(fscale(0.,1023.,60.,300.,filter_pot_value,0));
-
-  // TODO: do exponential filter pot behaviour
+  filter1.frequency(((filter_pot_value*filter_pot_value)/3072)+40);
   filter1.resonance(map(resonance,0,1023,500,70)/100.0); // 0.7-5.0 range
 
   envelope1.release(amp_env_release);
@@ -363,6 +357,9 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
     analogWrite(OSC_LED,i);
     delay(20);
   }
+  analogWrite(ENV_LED, 0);
+  analogWrite(FILTER_LED, 0);
+  analogWrite(OSC_LED, 0);
   FastLED.clear();
   FastLED.show();
   power_flag = 0;
@@ -375,20 +372,58 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
   delay(100);
 }
 
+/*
+  Checks whether the audio amp needs to be on.
+  This prevents idle noise from the speaker
+ */
+void update_amps() {
+  if(power_flag) {
+    if(peak_update_time < millis()) {
+
+      audio_peak_values <<= 1;
+      
+      if(peak2.available()) {
+        if(peak2.read() > 0.01f) {
+          audio_peak_values |= 1UL;
+        } else {
+          audio_peak_values &= ~1UL;
+        }
+      } else {
+        audio_peak_values &= ~1UL;
+      }
+
+      if((audio_peak_values == 0UL || digitalRead(JACK_DETECT))) {
+        amp_disable();
+        peak_update_time = millis() + 5; // We want to wake up quickly
+      } else {
+        amp_enable();
+        peak_update_time = millis() + 200; // We don't want to go to sleep too fast
+      }
+    }
+  }
+}
+
 void power_on() {
+  midi_clock = 0;
   led_init();
   AudioInterrupts();
-  digitalWrite(AMP_ENABLE, LOW);
+  amp_enable();
   power_flag = 1;
 }
 
 void amp_enable() {
-  pinMode(AMP_ENABLE, OUTPUT);
-  digitalWrite(AMP_ENABLE, LOW);
+  if(amp_enabled == 0) {
+    pinMode(AMP_ENABLE, OUTPUT);
+    digitalWrite(AMP_ENABLE, LOW);
+    amp_enabled = 1;
+  }
 }
 
 void amp_disable() {
-  pinMode(AMP_ENABLE, INPUT);
+  if(amp_enabled == 1) {
+    pinMode(AMP_ENABLE, INPUT);
+    amp_enabled = 0;
+  }
 }
 
 void headphone_disable() {
@@ -397,4 +432,19 @@ void headphone_disable() {
 
 void headphone_enable() {
   digitalWrite(HP_ENABLE, HIGH);
+}
+
+void enter_dfu() {
+  #define VBAT                    *(volatile uint8_t *)0x4003E000 // Register available in all power states
+  const uint8_t sys_reset_to_loader_magic[22] = "\xff\x00\x7fRESET TO LOADER\x7f\x00\xff";
+
+  // Blank all leds
+  FastLED.clear();
+  physical_leds[0] = CRGB::Blue;
+  FastLED.show();
+  // Reset
+  for (unsigned int pos = 0; pos < sizeof(sys_reset_to_loader_magic); pos++ ) {
+    (&VBAT)[ pos ] = sys_reset_to_loader_magic[ pos ];
+  }
+  SCB_AIRCR = 0x05FA0004; // software reset
 }

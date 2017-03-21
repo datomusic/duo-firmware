@@ -22,7 +22,7 @@ void midi_init();
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle();
-void midi_handle_timecode(byte data);
+void midi_handle_clock();
 float midi_note_to_frequency(int x);
 
 void midi_handle() {
@@ -34,13 +34,11 @@ void midi_init() {
   MIDI.setHandleNoteOn(midi_note_on);
   MIDI.setHandleNoteOff(midi_note_off);
 
-//  MIDI.setHandleStart(sequencer_start);
-//  MIDI.setHandleStop(sequencer_stop);
-  MIDI.setHandleTimeCodeQuarterFrame(midi_handle_timecode);
+  MIDI.setHandleClock(midi_handle_clock);
 }
 
-void midi_handle_timecode(byte data) {
-
+void midi_handle_clock() {
+  midi_clock++;
 }
 
 float midi_note_to_frequency(int x) {

@@ -53,7 +53,7 @@ void led_init() {
      */
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[i];
-    delay(200);
+    delay(80);
     FastLED.show();
   }
 }

@@ -37,7 +37,7 @@ void hatEvent(uint8_t event, int value);
 #define TOUCHEVENT_TOUCH 1
 #define TOUCHEVENT_RELEASE 2
 
-TouchSlider slider1(TOUCH4, TOUCH3);
+TouchSlider kickSlider(TOUCH3, TOUCH4);
 TouchSlider slider2(TOUCH1, TOUCH2);
 
 void kickEvent(uint8_t event, int value) {
@@ -69,9 +69,9 @@ void hatEvent(uint8_t event, int value) {
 
 
 void touch_init() {
-  slider1.a.setThreshold(30);
-  slider1.b.setThreshold(30);
-  slider1.setHandleTouchEvent(kickEvent);
+  kickSlider.a.setThreshold(30);
+  kickSlider.b.setThreshold(30);
+  kickSlider.setHandleTouchEvent(kickEvent);
   slider2.a.setThreshold(30);
   slider2.b.setThreshold(30);
   slider2.setHandleTouchEvent(hatEvent);
@@ -94,7 +94,7 @@ void drum_init() {
 }
 
 void drum_read() {
-  slider1.update(millis());
+  kickSlider.update(millis());
   slider2.update(millis());
   
   if(millis() > kick_on_time + kick_duration) {

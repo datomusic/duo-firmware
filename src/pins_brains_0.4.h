@@ -45,7 +45,7 @@
 #define POT_2       A11
 #define MUX_IO      A18
 #define MUX_IO_DIGITAL 29
-// NC
+#define UNCONNECTED_ANALOG 12 //ADC0_DP3/A12 is unconnected
 // DAC_OUT
 #define SYN_ADDR0    33
 #define SYN_ADDR1    24
@@ -185,5 +185,5 @@ void pins_init() {
   pinMode(SYN_ADDR1, OUTPUT);
   pinMode(SYN_ADDR2, OUTPUT);
 
-  randomSeed(analogRead(MUX_IO));
+  randomSeed(UNCONNECTED_ANALOG);
 }
