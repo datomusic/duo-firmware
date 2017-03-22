@@ -28,8 +28,9 @@ uint8_t set_key = 9;
 int detune_amount = 0;
 float osc_saw_frequency = 0.;
 float osc_pulse_frequency = 0.;
+float osc_pulse_target_frequency = 0.;
 float osc_saw_target_frequency = 0.;
-uint8_t osc_saw_midi_note = 0;
+uint8_t osc_pulse_midi_note = 0;
 bool note_is_playing = 0;
 bool note_is_triggered = false;
 bool double_speed = false;
@@ -127,10 +128,10 @@ void loop() {
       delay(100);
     }
   }
-  if(!digitalRead(ACCENT_PIN)) {
-    enter_dfu();
-    return;
-  }
+  // if(!digitalRead(ACCENT_PIN)) {
+  //   enter_dfu();
+  //   return;
+  // }
 }
 
 void keyboard_to_note() {
@@ -241,13 +242,19 @@ void pots_read() {
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
   detune_amount = 1023-muxAnalogRead(OSC_DETUNE_POT);
 
+  osc_saw.amplitude(muxAnalogRead(OSC_PW_POT)/1023.0);
+  // if(muxAnalogRead(OSC_DETUNE_POT)<100) {
+  //   osc_saw.amplitude(muxAnalogRead(OSC_DETUNE_POT)/100.);
+  // } else {
+  //   osc_saw.amplitude(1.0);
+  // }
   int volume_pot_value = muxAnalogRead(FADE_POT);
   int resonance = muxAnalogRead(FILTER_RES_POT);
   int amp_env_release = map(muxAnalogRead(AMP_ENV_POT),0,1023,30,500);
   uint32_t filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
 
-  float osc_pulse_target_frequency = detune(osc_saw_midi_note,detune_amount);
+  float osc_saw_target_frequency = detune(osc_pulse_midi_note,detune_amount);
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
@@ -303,11 +310,11 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     AudioNoInterrupts();
 
     dc1.amplitude(velocity / 127.); // DC amplitude controls filter env amount.
-    osc_saw_midi_note = midi_note;
-    osc_saw_target_frequency = (int)midi_note_to_frequency(midi_note);
-    osc_saw.frequency(osc_saw_frequency);
+    osc_pulse_midi_note = midi_note;
+    osc_pulse_target_frequency = (int)midi_note_to_frequency(midi_note);
+    osc_pulse.frequency(osc_pulse_frequency);
     // Detune OSC2
-    osc_pulse.frequency(detune(osc_saw_midi_note,detune_amount));
+    osc_saw.frequency(detune(osc_pulse_midi_note,detune_amount));
 
     AudioInterrupts(); 
 

@@ -15,7 +15,7 @@
 
 #define leds(A) physical_leds[led_order[A]]
 #define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
-  
+
 CRGB physical_leds[NUM_LEDS];
 const uint8_t LEDS_UPDATE_INTERVAL = 6;
 unsigned long leds_last_updated = 0;
@@ -49,7 +49,6 @@ void led_init() {
   FastLED.show();
   /* The 800ms delay introduced by this startup animation prevents
      an audible pop/click at startup
-     AudioNoInterrupts() is needed for it to run smoothly
      */
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[i];
@@ -75,32 +74,30 @@ void led_update() {
       if(note_is_playing) {
         leds(current_step) = LED_WHITE;
       } else {
-      if(!step_enable[current_step]) {
-        leds(current_step) = CRGB::Black;
-      }}
-
-      if(!sequencer_is_running) {
-
-        if(((sequencer_clock % 24) < 12)) {
-          if(step_enable[next_step]) {
-            leds(next_step) = COLORS[step_note[next_step]];
-          } else {
-            leds(next_step) = CRGB::Black;
-          }
-          led_play = LED_WHITE;
-          led_play.fadeLightBy((sequencer_clock % 12)*16);
-        } else {
-          physical_leds[0] = CRGB::Black;
-          leds(next_step) = LED_WHITE;
-          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
+        if(!step_enable[current_step]) {
+          leds(current_step) = CRGB::Black;
         }
-      } else {
-        led_play = LED_WHITE;
+
+        if(!sequencer_is_running) {
+          if(((sequencer_clock % 24) < 12)) {
+            if(step_enable[next_step]) {
+              leds(next_step) = COLORS[step_note[next_step]];
+            } else {
+              leds(next_step) = CRGB::Black;
+            }
+            led_play = LED_WHITE;
+            led_play.fadeLightBy((sequencer_clock % 12)*16);
+          } else {
+            physical_leds[0] = CRGB::Black;
+            leds(next_step) = LED_WHITE;
+            leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
+          }
+        } else {
+          led_play = LED_WHITE;
+        }
       }
     }
-    AudioNoInterrupts();
     FastLED.show();
-    AudioInterrupts();
     analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
   }
 }
