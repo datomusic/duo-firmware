@@ -78,9 +78,8 @@ class TempoHandler
     int pot_pin;
     uint8_t _source = 0;
     uint8_t _sync_pin_previous_value = 1;
-    const int TEMPO_MIN_INTERVAL_MSEC = 56; // Tempo is actually an interval in ms
-    const int TEMPO_MAX_INTERVAL_MSEC = 3;
-    uint32_t _clock_time;
+    const unsigned int TEMPO_MAX_INTERVAL_USEC = 56000;
+    const unsigned int TEMPO_MIN_INTERVAL_USEC = 3000;
     uint32_t _previous_clock_time;
     uint16_t _tempo_interval;
     bool _midi_clock_block = false;
@@ -111,15 +110,14 @@ class TempoHandler
 
     void update_internal() {
       int potvalue = analogRead(TEMPO_POT);
-      _tempo_interval = map(potvalue,0,1023,TEMPO_MAX_INTERVAL_MSEC,TEMPO_MIN_INTERVAL_MSEC);
+      _tempo_interval = map(potvalue,0,1023,TEMPO_MIN_INTERVAL_USEC,TEMPO_MAX_INTERVAL_USEC);
       if(double_speed) {
         _tempo_interval /= 2;
       }
-      _clock_time = _previous_clock_time + _tempo_interval;
 
-      if(millis() >= _clock_time)  {
+      if((micros() - _previous_clock_time) > _tempo_interval)  {
         if (tTempoCallback != 0) {
-          _previous_clock_time = millis();
+          _previous_clock_time = micros();
           tTempoCallback();
         }
       }
