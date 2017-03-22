@@ -12,13 +12,15 @@ void sequencer_init();
 void sequencer_start();
 void sequencer_stop();
 void sequencer_advance();
-void sequencer_clock();
+void sequencer_tick_clock();
 void sequencer_reset();
 void sequencer_update();
-void sequencer_trigger_note();
-void sequencer_untrigger_note();
+static void sequencer_trigger_note();
+static void sequencer_untrigger_note();
 bool sequencer_is_running = false;
 bool note_is_done_playing = false;
+
+uint8_t sequencer_clock = 0;
 
 uint32_t next_step_time = 0;
 uint32_t gate_off_time = 0;
@@ -34,18 +36,21 @@ void sequencer_init() {
   for(int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
     step_note[i] = random(9);
   }
-  tempo_handler.setHandleTempoEvent(sequencer_clock);
+  tempo_handler.setHandleTempoEvent(sequencer_tick_clock);
+  sequencer_stop();
+  current_step = SEQUENCER_NUM_STEPS - 1;
 }
 
 void sequencer_start() {
   tempo_handler.midi_clock_reset();
   sequencer_is_running = true;
+  sequencer_clock = 0;
 }
 
 void sequencer_stop() {
   if(sequencer_is_running) {
     sequencer_is_running = false;
-    note_off();
+    sequencer_untrigger_note();
   }
   midi_clock = 0;
 }
@@ -58,11 +63,14 @@ void sequencer_toggle_start() {
   }
 }
 
-void sequencer_clock() {
-  if(sequencer_is_running) {
+void sequencer_tick_clock() {
+  if(sequencer_is_running && (sequencer_clock % 12)==0) {
     sequencer_advance();
-  } else {
-    // Blink the led
+  } 
+
+  sequencer_clock++;
+  if(sequencer_clock == 96) {
+    sequencer_clock = 0;
   }
 }
 
@@ -94,11 +102,11 @@ void sequencer_update() {
   }
 }
 
-
-void sequencer_trigger_note() {
-  if(note_is_playing) {
-    note_off();
+static void sequencer_trigger_note() {
+  if(note_is_playing || (note_off_time > millis())) {
+    sequencer_untrigger_note();
   }
+
   note_is_triggered = true;
   note_is_done_playing = false;
   previous_note_on_time = millis();
@@ -109,7 +117,7 @@ void sequencer_trigger_note() {
   note_on(SCALE[step_note[current_step]]+transpose, step_velocity[current_step], step_enable[current_step]);
 }
 
-void sequencer_untrigger_note() {
+static void sequencer_untrigger_note() {
   note_is_done_playing = true;
   note_off();
   note_is_triggered = false;

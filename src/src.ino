@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.5.0"
+#define VERSION "0.5.1"
 
 const int MIDI_CHANNEL = 1;
 const int SYNC_LENGTH_MSEC = 12;
@@ -63,7 +63,7 @@ float detune(int note, int amount);
 
 int tempo_interval_msec();
 
-void update_amps();
+void amp_update();
 void power_off();
 void power_on();
 void amp_enable();
@@ -116,9 +116,9 @@ void loop() {
     sequencer_update();
     midi_handle();
     pots_read();
-    update_leds();
+    led_update();
     drum_read();
-    update_amps();
+    amp_update();
   } else {
     if(keys_scan_powerbutton()) {
       power_on();
@@ -127,10 +127,10 @@ void loop() {
       delay(100);
     }
   }
-  // if(!digitalRead(ACCENT_PIN)) {
-  //   enter_dfu();
-  //   return;
-  // }
+  if(!digitalRead(ACCENT_PIN)) {
+    enter_dfu();
+    return;
+  }
 }
 
 void keyboard_to_note() {
@@ -357,9 +357,6 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
     analogWrite(OSC_LED,i);
     delay(20);
   }
-  analogWrite(ENV_LED, 0);
-  analogWrite(FILTER_LED, 0);
-  analogWrite(OSC_LED, 0);
   FastLED.clear();
   FastLED.show();
   power_flag = 0;
@@ -376,14 +373,14 @@ void power_off() { // TODO: this is super crude and doesn't work, but it shows t
   Checks whether the audio amp needs to be on.
   This prevents idle noise from the speaker
  */
-void update_amps() {
+void amp_update() {
   if(power_flag) {
     if(peak_update_time < millis()) {
 
       audio_peak_values <<= 1;
       
       if(peak2.available()) {
-        if(peak2.read() > 0.01f) {
+        if(peak2.read() > 0.001f) {
           audio_peak_values |= 1UL;
         } else {
           audio_peak_values &= ~1UL;

@@ -78,8 +78,8 @@ class TempoHandler
     int pot_pin;
     uint8_t _source = 0;
     uint8_t _sync_pin_previous_value = 1;
-    const int TEMPO_MIN_INTERVAL_MSEC = 666; // Tempo is actually an interval in ms
-    const int TEMPO_MAX_INTERVAL_MSEC = 40;
+    const int TEMPO_MIN_INTERVAL_MSEC = 56; // Tempo is actually an interval in ms
+    const int TEMPO_MAX_INTERVAL_MSEC = 3;
     uint32_t _clock_time;
     uint32_t _previous_clock_time;
     uint16_t _tempo_interval;
@@ -87,11 +87,6 @@ class TempoHandler
     uint8_t _midi_divider;
 
     void update_midi() { 
-      if(double_speed) {
-        _midi_divider = 6; 
-      } else {
-        _midi_divider = 12;
-      }
       if(midi_clock % _midi_divider == 0) {
         if (tTempoCallback != 0 && !_midi_clock_block) {
           _midi_clock_block = 1; // Block callback from triggering multiple times
@@ -115,7 +110,6 @@ class TempoHandler
     }
 
     void update_internal() {
-      // Read the position of the tempo pot
       int potvalue = analogRead(TEMPO_POT);
       _tempo_interval = map(potvalue,0,1023,TEMPO_MAX_INTERVAL_MSEC,TEMPO_MIN_INTERVAL_MSEC);
       if(double_speed) {

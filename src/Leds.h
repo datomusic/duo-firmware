@@ -14,11 +14,11 @@
 #define LED_WHITE CRGB(230,255,150);
 
 #define leds(A) physical_leds[led_order[A]]
-
+#define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
 CRGB physical_leds[NUM_LEDS];
 const uint8_t LEDS_UPDATE_INTERVAL = 6;
 unsigned long leds_last_updated = 0;
-
+#define led_play physical_leds[0]
 const int LED_BRIGHTNESS = 32;
 
 // ALternate pin colors
@@ -36,8 +36,7 @@ const CRGB COLORS[] = {
 };
 
 void led_init();
-void update_leds();
-void vu_meter();
+void led_update();
 
 void led_init() {
   FastLED.addLeds<LED_TYPE, LED_DATA, COLOR_ORDER>(physical_leds, NUM_LEDS);
@@ -53,35 +52,59 @@ void led_init() {
      */
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[i];
-    delay(80);
+    delay(40);
     FastLED.show();
   }
 }
 
 // Updates the LED colour and brightness to match the stored sequence
-void update_leds() {
-  for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
-    if (step_enable[l]) {
+void led_update() {
+  if(!power_flag) {
+    analogWrite(ENV_LED, 0);
+    analogWrite(FILTER_LED, 0);
+    analogWrite(OSC_LED, 0);
+  } else {
+    for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
+      if (step_enable[l]) {
 
-      leds(l) = COLORS[step_note[l]];
+        leds(l) = COLORS[step_note[l]];
 
-      if (step_velocity[l] < 50) {
-        leds(l).nscale8_video(step_velocity[l]+20);
+        if (step_velocity[l] < 50) {
+          leds(l).nscale8_video(step_velocity[l]+20);
+        }
+      }
+       
+      if(note_is_playing) {
+        leds(current_step) = LED_WHITE;
+      } else {
+      if(!step_enable[current_step]) {
+        leds(current_step) = CRGB::Black;
+      }}
+
+      if(!sequencer_is_running) {
+
+        if(((sequencer_clock % 24) < 12)) {
+          if(step_enable[next_step]) {
+            leds(next_step) = COLORS[step_note[next_step]];
+          } else {
+            leds(next_step) = CRGB::Black;
+          }
+          led_play = LED_WHITE;
+          led_play.fadeLightBy((sequencer_clock % 12)*8);
+        } else {
+          physical_leds[0] = CRGB::Black;
+          leds(next_step) = LED_WHITE;
+          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*8);
+        }
+      } else {
+        led_play = LED_WHITE;
       }
     }
-     
-    if(note_is_playing) {
-      leds(current_step) = LED_WHITE;
-    } else {
-    if(!step_enable[current_step]) {
-      leds(current_step) = CRGB::Black;
-    }}
+    AudioNoInterrupts();
+    FastLED.show();
+    AudioInterrupts();
+    analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
   }
-  AudioNoInterrupts();
-  FastLED.show();
-  AudioInterrupts();
-  analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
-  leds_last_updated = millis();
 }
 
 #endif
