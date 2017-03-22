@@ -47,7 +47,7 @@ void led_init() {
   FastLED.setCorrection(CORRECTION_SK6812);
   FastLED.clear();
   FastLED.show();
-  /* The 800ms delay introduced by this startup animation prevents
+  /* The 400ms delay introduced by this startup animation prevents
      an audible pop/click at startup
      */
   for(int i = 0; i < 10; i++) {

@@ -77,7 +77,6 @@ class TempoHandler
     void (*tTempoCallback)();
     int pot_pin;
     uint8_t _source = 0;
-    uint8_t _sync_pin_previous_value = 1;
     const unsigned int TEMPO_MAX_INTERVAL_USEC = 56000;
     const unsigned int TEMPO_MIN_INTERVAL_USEC = 3000;
     uint32_t _previous_clock_time;
@@ -89,7 +88,7 @@ class TempoHandler
       if(midi_clock % _midi_divider == 0) {
         if (tTempoCallback != 0 && !_midi_clock_block) {
           _midi_clock_block = 1; // Block callback from triggering multiple times
-          _previous_clock_time = millis();
+          _previous_clock_time = micros();
           tTempoCallback();
         }
       } else {
@@ -97,13 +96,24 @@ class TempoHandler
       }
     }
     void update_sync() {
+      static uint8_t _sync_pin_previous_value = 1;
+      static uint32_t _previous_sync_time = 0;
       uint8_t _sync_pin_value = digitalRead(SYNC_IN);
 
-      if(_sync_pin_previous_value && !_sync_pin_value) {
+      if((micros() - _previous_clock_time) > _tempo_interval) {
         if (tTempoCallback != 0) {
-          _previous_clock_time = millis();
+          _previous_clock_time = micros();
           tTempoCallback();
         }
+      }
+
+      if(_sync_pin_previous_value && !_sync_pin_value) {
+        _tempo_interval = (micros() - _previous_sync_time)/12;
+
+        if(_tempo_interval > TEMPO_MAX_INTERVAL_USEC) {
+          _tempo_interval = TEMPO_MAX_INTERVAL_USEC;
+        }
+        _previous_sync_time = micros();
       }
       _sync_pin_previous_value = _sync_pin_value;
     }

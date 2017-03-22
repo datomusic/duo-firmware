@@ -1,6 +1,5 @@
 // Key matrix
 /*
-
   Rows are set to input_pullup and cols are pulled low one by one
 */
 

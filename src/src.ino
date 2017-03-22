@@ -128,10 +128,6 @@ void loop() {
       delay(100);
     }
   }
-  // if(!digitalRead(ACCENT_PIN)) {
-  //   enter_dfu();
-  //   return;
-  // }
 }
 
 void keyboard_to_note() {
@@ -298,7 +294,6 @@ void pots_read() {
 }
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
-
   // Override velocity if button on the synth is pressed
   if(!digitalRead(ACCENT_PIN)) {
     velocity = 127;
@@ -322,7 +317,6 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
-    // Set LED to white but don't play a note
     leds(current_step) = LED_WHITE;
   }
 }
@@ -438,11 +432,15 @@ void headphone_enable() {
   digitalWrite(HP_ENABLE, HIGH);
 }
 
+/*
+ * enter_dfu() writes a special string to the K20DX256's VBAT register and reboots the mcu
+ * This signals the Kiibohd DFU bootloader that it should start in firmware update mode
+ */
 void enter_dfu() {
   #define VBAT                    *(volatile uint8_t *)0x4003E000 // Register available in all power states
   const uint8_t sys_reset_to_loader_magic[22] = "\xff\x00\x7fRESET TO LOADER\x7f\x00\xff";
 
-  // Blank all leds
+  // Blank all leds and turn the power button blue before rebooting
   FastLED.clear();
   physical_leds[0] = CRGB::Blue;
   FastLED.show();
