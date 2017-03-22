@@ -15,6 +15,7 @@
 
 #define leds(A) physical_leds[led_order[A]]
 #define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
+  
 CRGB physical_leds[NUM_LEDS];
 const uint8_t LEDS_UPDATE_INTERVAL = 6;
 unsigned long leds_last_updated = 0;
@@ -66,12 +67,9 @@ void led_update() {
   } else {
     for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
       if (step_enable[l]) {
-
         leds(l) = COLORS[step_note[l]];
-
-        if (step_velocity[l] < 50) {
-          leds(l).nscale8_video(step_velocity[l]+20);
-        }
+      } else {
+        leds(l) = CRGB::Black;
       }
        
       if(note_is_playing) {
@@ -90,11 +88,11 @@ void led_update() {
             leds(next_step) = CRGB::Black;
           }
           led_play = LED_WHITE;
-          led_play.fadeLightBy((sequencer_clock % 12)*8);
+          led_play.fadeLightBy((sequencer_clock % 12)*16);
         } else {
           physical_leds[0] = CRGB::Black;
           leds(next_step) = LED_WHITE;
-          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*8);
+          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
         }
       } else {
         led_play = LED_WHITE;

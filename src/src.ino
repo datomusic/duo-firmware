@@ -21,7 +21,7 @@ const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 };
 int gate_length_msec = 40;
 
 // Sequencer settings
-uint8_t current_step = 8; // TODO: should be sequencer_num_steps
+uint8_t current_step; // TODO: should be sequencer_num_steps
 uint8_t target_step = 0;
 int tempo = 0;
 uint8_t set_key = 9;

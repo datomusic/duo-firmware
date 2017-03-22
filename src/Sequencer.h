@@ -77,15 +77,10 @@ void sequencer_tick_clock() {
 void sequencer_advance() {
   if (!next_step_is_random && !random_flag) {
     current_step++;
-    if (current_step >= SEQUENCER_NUM_STEPS) current_step = 0;
+    current_step%=SEQUENCER_NUM_STEPS;
   } else {
     random_flag = false;
-    int random_step = random(SEQUENCER_NUM_STEPS);
-
-    while (random_step == current_step || random_step == current_step+1 || random_step+SEQUENCER_NUM_STEPS == current_step) { // Prevent random from stepping to the current or next step
-      random_step = random(SEQUENCER_NUM_STEPS);
-    }
-    current_step = random_step;
+    current_step = ((current_step + random(2, SEQUENCER_NUM_STEPS))%SEQUENCER_NUM_STEPS);
   }
   sequencer_trigger_note();
 }
