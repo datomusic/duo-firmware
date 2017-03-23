@@ -9,6 +9,7 @@ uint8_t step_enable[] = { 1,0,1,1,1,1,0,1 };
 uint8_t step_velocity[] = { 100,100,100,100,100,100,100,100 };
 
 void sequencer_init();
+void sequencer_restart();
 void sequencer_start();
 void sequencer_stop();
 void sequencer_advance();
@@ -41,7 +42,16 @@ void sequencer_init() {
   current_step = SEQUENCER_NUM_STEPS - 1;
 }
 
+void sequencer_restart() {
+  MIDI.sendRealTime(midi::Start);
+  current_step = SEQUENCER_NUM_STEPS - 1;
+  tempo_handler.midi_clock_reset();
+  sequencer_is_running = true;
+  sequencer_clock = 0;
+}
+
 void sequencer_start() {
+  MIDI.sendRealTime(midi::Continue);
   tempo_handler.midi_clock_reset();
   sequencer_is_running = true;
   sequencer_clock = 0;
@@ -49,6 +59,7 @@ void sequencer_start() {
 
 void sequencer_stop() {
   if(sequencer_is_running) {
+    MIDI.sendRealTime(midi::Stop);
     sequencer_is_running = false;
     sequencer_untrigger_note();
   }
@@ -64,17 +75,23 @@ void sequencer_toggle_start() {
 }
 
 void sequencer_tick_clock() {
-  if(sequencer_is_running && (sequencer_clock % 12)==0) {
+  uint8_t divider = 12;
+  if(double_speed) {
+    divider = 6;
+  }
+  if(sequencer_is_running && (sequencer_clock % divider)==0) {
     sequencer_advance();
   } 
-
   sequencer_clock++;
-  if(sequencer_clock == 96) {
+  if(sequencer_clock >= 96) {
     sequencer_clock = 0;
   }
 }
 
 void sequencer_advance() {
+  if(!note_is_done_playing) {
+    sequencer_untrigger_note();
+  }
   if (!next_step_is_random && !random_flag) {
     current_step++;
     current_step%=SEQUENCER_NUM_STEPS;
@@ -98,10 +115,6 @@ void sequencer_update() {
 }
 
 static void sequencer_trigger_note() {
-  if(note_is_playing || (note_off_time > millis())) {
-    sequencer_untrigger_note();
-  }
-
   note_is_triggered = true;
   note_is_done_playing = false;
   previous_note_on_time = millis();

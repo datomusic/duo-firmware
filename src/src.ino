@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.5.1"
+#define VERSION "0.5.2"
 
 const int MIDI_CHANNEL = 1;
 const int SYNC_LENGTH_MSEC = 12;
@@ -25,7 +25,6 @@ uint8_t current_step; // TODO: should be sequencer_num_steps
 uint8_t target_step = 0;
 int tempo = 0;
 uint8_t set_key = 9;
-int detune_amount = 0;
 float osc_saw_frequency = 0.;
 float osc_pulse_frequency = 0.;
 float osc_pulse_target_frequency = 0.;
@@ -42,7 +41,6 @@ bool random_flag = 0;
 bool power_flag = 1;
 bool amp_enabled = 0;
 
-uint32_t pitch_update_time = 0;
 uint32_t midi_clock = 0;
 uint16_t audio_peak_values;
 uint16_t peak_update_time;
@@ -94,7 +92,9 @@ void setup() {
   Serial.begin(57600);
 
   midi_init();
-  MIDI.setHandleStart(sequencer_start);
+
+  MIDI.setHandleStart(sequencer_restart);
+  MIDI.setHandleContinue(sequencer_restart);
   MIDI.setHandleStop(sequencer_stop);
 
   keys_init();
@@ -116,6 +116,7 @@ void loop() {
     }
     sequencer_update();
     midi_handle();
+    pitch_update();
     pots_read();
     led_update();
     drum_read();
@@ -236,49 +237,31 @@ void keys_scan() {
 void pots_read() {
   // Read out the pots/switches
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
-  detune_amount = 1023-muxAnalogRead(OSC_DETUNE_POT);
 
-  osc_saw.amplitude(muxAnalogRead(OSC_PW_POT)/1023.0);
-  // if(muxAnalogRead(OSC_DETUNE_POT)<100) {
-  //   osc_saw.amplitude(muxAnalogRead(OSC_DETUNE_POT)/100.);
-  // } else {
-  //   osc_saw.amplitude(1.0);
-  // }
   int volume_pot_value = muxAnalogRead(FADE_POT);
   int resonance = muxAnalogRead(FILTER_RES_POT);
   int amp_env_release = map(muxAnalogRead(AMP_ENV_POT),0,1023,30,500);
   uint32_t filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
-
-  float osc_saw_target_frequency = detune(osc_pulse_midi_note,detune_amount);
-
+  detune_amount = muxAnalogRead(OSC_DETUNE_POT);
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
-
-  // Constant rate glide
-  const float GLIDE_COEFFICIENT = 0.3f;
-  if(!muxDigitalRead(SLIDE_PIN)) {
-    if(pitch_update_time < millis()) {
-      osc_saw_frequency = osc_saw_frequency + (osc_saw_target_frequency - osc_saw_frequency)*GLIDE_COEFFICIENT;
-      osc_pulse_frequency = osc_pulse_frequency + (osc_pulse_target_frequency - osc_pulse_frequency)*GLIDE_COEFFICIENT;
-      pitch_update_time = millis() + 10;
-    }
-  } else {
-    osc_saw_frequency = osc_saw_target_frequency;
-    osc_pulse_frequency = osc_pulse_target_frequency;
-  }
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
 
   osc_saw.frequency(osc_saw_frequency);
 
-  // TODO: mix away the oscillator at the end of the range
+  if(detune_amount > 800) {
+    osc_saw.amplitude(map(detune_amount,800,1023,400,0)/1000.);
+  } else {
+    osc_saw.amplitude(0.4);
+  }
   osc_pulse.frequency(osc_pulse_frequency);
-  osc_pulse.pulseWidth(map(pulse_pot_value,0,1023,1000,50)/1000.0);
+  osc_pulse.pulseWidth(map(pulse_pot_value,0,1023,1000,100)/1000.0);
 
   filter1.frequency(((filter_pot_value*filter_pot_value)/3072)+40);
-  filter1.resonance(map(resonance,0,1023,500,70)/100.0); // 0.7-5.0 range
+  filter1.resonance(map(resonance,0,1023,70,500)/100.0); // 0.7-5.0 range
 
   envelope1.release(amp_env_release);
 
@@ -288,7 +271,7 @@ void pots_read() {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
 
-  audio_volume(1023-volume_pot_value);
+  audio_volume(volume_pot_value);
 
   AudioInterrupts(); 
 }
@@ -332,17 +315,6 @@ void note_off() {
     }
     note_is_playing = 0;
   } 
-}
-
-float detune(int note, int amount) { // amount goes from 0-1023
-  if (amount > 800) {
-    return midi_note_to_frequency(note) * (amount+9000)/10000.;
-  } else if (amount < 100) {
-    return midi_note_to_frequency(note - 12) * ( 20000 - amount )/20000.;
-  } else {
-    int offset = map(amount,200,900,4,0);
-    return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[offset]);
-  }
 }
 
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
@@ -425,11 +397,11 @@ void amp_disable() {
 }
 
 void headphone_disable() {
-  digitalWrite(HP_ENABLE, LOW);
+  digitalWrite(HP_ENABLE, HIGH);
 }
 
 void headphone_enable() {
-  digitalWrite(HP_ENABLE, HIGH);
+  digitalWrite(HP_ENABLE, LOW);
 }
 
 /*

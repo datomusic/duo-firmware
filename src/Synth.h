@@ -98,9 +98,9 @@ void audio_init() {
   AudioMemory(200); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
-  osc_saw.begin(0.4, 220, WAVEFORM_SAWTOOTH);
+  osc_saw.begin(0.4, 110, WAVEFORM_SAWTOOTH);
   osc_pulse.pulseWidth(0.5);
-  osc_pulse.begin(0.4, 110, WAVEFORM_PULSE);
+  osc_pulse.begin(0.4, 220, WAVEFORM_PULSE);
   
   // Mixer mixes the oscillators
   mixer1.gain(0, 0.5); // OSC1

@@ -15,14 +15,8 @@
  * Calls a callback function every time the timer advances
  * Sends MIDI timecode packets
  * Sends sync pulses
-
- Does the tempohandler handle sync source switching as well? If so
- it needs to know about pins
-
- Are we going to pass the tempo pot pin value? Or the tempo pot pin number?
-
  */
- 
+
 #ifndef TempoHandler_h
 #define TempoHandler_h
 
@@ -77,19 +71,20 @@ class TempoHandler
     void (*tTempoCallback)();
     int pot_pin;
     uint8_t _source = 0;
-    const unsigned int TEMPO_MAX_INTERVAL_USEC = 56000;
-    const unsigned int TEMPO_MIN_INTERVAL_USEC = 3000;
+    const unsigned int TEMPO_MAX_INTERVAL_USEC = 48000;
+    const unsigned int TEMPO_MIN_INTERVAL_USEC = 3600;
     uint32_t _previous_clock_time;
     uint16_t _tempo_interval;
     bool _midi_clock_block = false;
     uint8_t _midi_divider;
+    uint8_t _clock = 0;
 
     void update_midi() { 
       if(midi_clock % _midi_divider == 0) {
-        if (tTempoCallback != 0 && !_midi_clock_block) {
+        if (!_midi_clock_block) {
           _midi_clock_block = 1; // Block callback from triggering multiple times
           _previous_clock_time = micros();
-          tTempoCallback();
+          trigger();
         }
       } else {
         _midi_clock_block = 0;
@@ -97,23 +92,15 @@ class TempoHandler
     }
     void update_sync() {
       static uint8_t _sync_pin_previous_value = 1;
-      static uint32_t _previous_sync_time = 0;
       uint8_t _sync_pin_value = digitalRead(SYNC_IN);
 
-      if((micros() - _previous_clock_time) > _tempo_interval) {
+      if(_sync_pin_previous_value && !_sync_pin_value) {
         if (tTempoCallback != 0) {
           _previous_clock_time = micros();
-          tTempoCallback();
+          // TODO: Probably the worst way ever to convert Volca Sync to 24ppqn
+          _clock+=11;
+          trigger();
         }
-      }
-
-      if(_sync_pin_previous_value && !_sync_pin_value) {
-        _tempo_interval = (micros() - _previous_sync_time)/12;
-
-        if(_tempo_interval > TEMPO_MAX_INTERVAL_USEC) {
-          _tempo_interval = TEMPO_MAX_INTERVAL_USEC;
-        }
-        _previous_sync_time = micros();
       }
       _sync_pin_previous_value = _sync_pin_value;
     }
@@ -121,15 +108,29 @@ class TempoHandler
     void update_internal() {
       int potvalue = analogRead(TEMPO_POT);
       _tempo_interval = map(potvalue,0,1023,TEMPO_MIN_INTERVAL_USEC,TEMPO_MAX_INTERVAL_USEC);
-      if(double_speed) {
-        _tempo_interval /= 2;
-      }
 
       if((micros() - _previous_clock_time) > _tempo_interval)  {
-        if (tTempoCallback != 0) {
-          _previous_clock_time = micros();
-          tTempoCallback();
-        }
+        _previous_clock_time = micros();
+        trigger();
+      }
+    }
+
+    /*
+     * Calls the callback, updates the clock and sends out MIDI/Sync pulses
+     */
+    void trigger() {
+      _clock++;
+      MIDI.sendRealTime(midi::Clock);
+      if((_clock % 12) == 0) {
+        digitalWrite(SYNC_OUT_PIN, HIGH);
+      } else if((_clock % 12) == 1) {
+        digitalWrite(SYNC_OUT_PIN, LOW);
+      }
+      if (tTempoCallback != 0) {
+        tTempoCallback();
+      }
+      if(_clock >= 24) { 
+        _clock = 0;
       }
     }
 };
