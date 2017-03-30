@@ -182,6 +182,7 @@ void keys_scan() {
                   if(transpose>12){transpose = 12;}
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = false;
+                  random_flag = false;
                 } 
                 break;
             case IDLE:
