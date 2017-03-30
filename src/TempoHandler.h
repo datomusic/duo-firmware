@@ -30,6 +30,9 @@ class TempoHandler
     inline void setHandleTempoEvent(void (*fptr)()) {
       tTempoCallback = fptr;
     }
+    inline void setHandleResetEvent(void (*fptr)()) {
+      tResetCallback = fptr;
+    }
     void update() {
       // Determine which source is selected for tempo
       if(digitalRead(SYNC_DETECT)) {
@@ -69,6 +72,7 @@ class TempoHandler
     }
   private:
     void (*tTempoCallback)();
+    void (*tResetCallback)();
     int pot_pin;
     uint8_t _source = 0;
     const unsigned int TEMPO_MAX_INTERVAL_USEC = 48000;
@@ -98,7 +102,6 @@ class TempoHandler
         if (tTempoCallback != 0) {
           _previous_clock_time = micros();
           // TODO: Probably the worst way ever to convert Volca Sync to 24ppqn
-          _clock+=11;
           trigger();
         }
       }
@@ -121,6 +124,11 @@ class TempoHandler
     void trigger() {
       _clock++;
       MIDI.sendRealTime(midi::Clock);
+      if((_clock % 24) == 0) {
+        if (tResetCallback != 0) {
+          tResetCallback();
+        }
+      }
       if((_clock % 12) == 0) {
         digitalWrite(SYNC_OUT_PIN, HIGH);
       } else if((_clock % 12) == 1) {

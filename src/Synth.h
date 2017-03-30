@@ -95,7 +95,7 @@ void audio_init();
 void audio_volume(uint8_t volume);
 
 void audio_init() {
-  AudioMemory(200); // 260 bytes per block, 2.9ms per block
+  AudioMemory(128); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
   osc_saw.begin(0.4, 110, WAVEFORM_SAWTOOTH);

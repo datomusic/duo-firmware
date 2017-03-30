@@ -1,24 +1,15 @@
-/*
-  TODO:
-  - split this into header file and source file
-  - have the main program determine the led colours
-
- */
 #ifndef Leds_h
 #define Leds_h
 
-#include "Arduino.h"
 #include <FastLED.h>
 
-#define CORRECTION_SK6812 0xFFFFFF
+#define CORRECTION_SK6812 0xFFF1E0
 #define LED_WHITE CRGB(230,255,150);
 
 #define leds(A) physical_leds[led_order[A]]
 #define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
 
 CRGB physical_leds[NUM_LEDS];
-const uint8_t LEDS_UPDATE_INTERVAL = 6;
-unsigned long leds_last_updated = 0;
 #define led_play physical_leds[0]
 const int LED_BRIGHTNESS = 32;
 
@@ -59,47 +50,42 @@ void led_init() {
 
 // Updates the LED colour and brightness to match the stored sequence
 void led_update() {
-  if(!power_flag) {
-    analogWrite(ENV_LED, 0);
-    analogWrite(FILTER_LED, 0);
-    analogWrite(OSC_LED, 0);
-  } else {
-    for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
-      if (step_enable[l]) {
-        leds(l) = COLORS[step_note[l]];
-      } else {
-        leds(l) = CRGB::Black;
+  for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
+    if (step_enable[l]) {
+      leds(l) = COLORS[step_note[l]];
+    } else {
+      leds(l) = CRGB::Black;
+    }
+     
+    if(note_is_playing) {
+      leds(current_step) = LED_WHITE;
+    } else {
+      if(!step_enable[current_step]) {
+        leds(current_step) = CRGB::Black;
       }
-       
-      if(note_is_playing) {
-        leds(current_step) = LED_WHITE;
-      } else {
-        if(!step_enable[current_step]) {
-          leds(current_step) = CRGB::Black;
-        }
 
-        if(!sequencer_is_running) {
-          if(((sequencer_clock % 24) < 12)) {
-            if(step_enable[next_step]) {
-              leds(next_step) = COLORS[step_note[next_step]];
-            } else {
-              leds(next_step) = CRGB::Black;
-            }
-            led_play = LED_WHITE;
-            led_play.fadeLightBy((sequencer_clock % 12)*16);
+      if(!sequencer_is_running) {
+        if(((sequencer_clock % 24) < 12)) {
+          if(step_enable[next_step]) {
+            leds(next_step) = COLORS[step_note[next_step]];
           } else {
-            physical_leds[0] = CRGB::Black;
-            leds(next_step) = LED_WHITE;
-            leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
+            leds(next_step) = CRGB::Black;
           }
-        } else {
           led_play = LED_WHITE;
+          led_play.fadeLightBy((sequencer_clock % 12)*16);
+        } else {
+          physical_leds[0] = CRGB::Black;
+          leds(next_step) = LED_WHITE;
+          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
         }
+      } else {
+        led_play = LED_WHITE;
       }
     }
-    FastLED.show();
-    analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
   }
+  FastLED.show();
+  analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
+  //TODO: filter and pulse led should be set here as well
 }
 
 #endif

@@ -22,7 +22,6 @@ int gate_length_msec = 40;
 
 // Sequencer settings
 uint8_t current_step; // TODO: should be sequencer_num_steps
-uint8_t target_step = 0;
 int tempo = 0;
 uint8_t set_key = 9;
 float osc_saw_frequency = 0.;
@@ -32,14 +31,11 @@ float osc_saw_target_frequency = 0.;
 uint8_t osc_pulse_midi_note = 0;
 bool note_is_playing = 0;
 bool note_is_triggered = false;
-bool double_speed = false;
 int transpose = 0;
 bool next_step_is_random = false;
 int num_notes_held = 0;
 int tempo_interval;
 bool random_flag = 0;
-bool power_flag = 1;
-bool amp_enabled = 0;
 
 uint32_t midi_clock = 0;
 uint16_t audio_peak_values;
@@ -62,14 +58,6 @@ float detune(int note, int amount);
 
 int tempo_interval_msec();
 
-void amp_update();
-void power_off();
-void power_on();
-void amp_enable();
-void amp_disable();
-void headphone_disable();
-void headphone_enable();
-
 void enter_dfu();
 
 #include "pinmap.h"
@@ -80,6 +68,7 @@ void enter_dfu();
 #include "Leds.h"
 #include "DrumSynth.h"
 #include "Pitch.h"
+#include "Power.h"
 
 void setup() {
 
@@ -108,46 +97,16 @@ void setup() {
 }
 
 void loop() {
-
-  if(power_flag != 0) {
+  if(power_check()) {
     keys_scan();
-    if(!sequencer_is_running) {
-      keyboard_to_note();          
-    }
+    keyboard_to_note();          
     sequencer_update();
     midi_handle();
     pitch_update();
     pots_read();
     led_update();
     drum_read();
-    amp_update();
-  } else {
-    if(keys_scan_powerbutton()) {
-      power_on();
-    } else {
-      //TODO: Low power delay
-      delay(100);
-    }
   }
-}
-
-void keyboard_to_note() {
-  // If the old map was zero and now it's not, turn on the right note
-  if((old_keyboard_map & KEYBOARD_MASK) != (keyboard_map & KEYBOARD_MASK)) {
-    // We're starting from the top. High notes have priority
-    for(int i = 10; i >= 0; i--) {
-      if(bitRead(keyboard_map,i)){
-        note_on(SCALE[i]+transpose, INITIAL_VELOCITY, true);
-        break;
-      }
-    }
-  }
-
-  if((old_keyboard_map & KEYBOARD_MASK) && (keyboard_map & KEYBOARD_MASK)==0) {
-    // If the old map was not zero and now it is, turn off the note
-    note_off();
-  }
-  old_keyboard_map = keyboard_map;
 }
 
 // Scans the keypad and handles step enable and keys
@@ -168,18 +127,6 @@ void keys_scan() {
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   bitSet(keyboard_map,(k - KEYB_0));
-                  if(sequencer_is_running) {
-                    step_note[target_step] = k - KEYB_0;
-                    step_enable[target_step] = 1;
-                    step_velocity[target_step] = INITIAL_VELOCITY; 
-                  } else {
-                    current_step++;
-                    if (current_step >= SEQUENCER_NUM_STEPS) current_step = 0;
-                    target_step=current_step;
-                    step_note[target_step] = k - KEYB_0;
-                    step_enable[target_step] = 1;
-                    step_velocity[target_step] = INITIAL_VELOCITY; 
-                  }
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
@@ -212,7 +159,7 @@ void keys_scan() {
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
+                  // MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
                   bitClear(keyboard_map,(k - KEYB_0));
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
@@ -227,6 +174,9 @@ void keys_scan() {
                 } 
                 break;
             case IDLE:
+                if (k <= KEYB_9 && k >= KEYB_0) {
+                  bitClear(keyboard_map,(k - KEYB_0));
+                }
                 break;
         }
       }
@@ -315,93 +265,8 @@ void note_off() {
     }
     note_is_playing = 0;
   } 
-}
+  //Purge all held notes
 
-void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
-  sequencer_stop();
-  AudioNoInterrupts();
-  amp_disable();
-
-  for(int i = 32; i >= 0; i--) {
-    FastLED.setBrightness(i);
-    FastLED.show();
-    analogWrite(ENV_LED,i);
-    analogWrite(FILTER_LED,i);
-    analogWrite(OSC_LED,i);
-    delay(20);
-  }
-  FastLED.clear();
-  FastLED.show();
-  power_flag = 0;
-  pinMode(row_pins[powerbutton_row],INPUT_PULLUP);
-  pinMode(col_pins[powerbutton_col],OUTPUT);
-  digitalWrite(col_pins[powerbutton_col],LOW);
-  while(!digitalRead(row_pins[powerbutton_row])) {
-    // wait for release of the power button
-  }
-  delay(100);
-}
-
-/*
-  Checks whether the audio amp needs to be on.
-  This prevents idle noise from the speaker
- */
-void amp_update() {
-  if(power_flag) {
-    if(peak_update_time < millis()) {
-
-      audio_peak_values <<= 1;
-      
-      if(peak2.available()) {
-        if(peak2.read() > 0.001f) {
-          audio_peak_values |= 1UL;
-        } else {
-          audio_peak_values &= ~1UL;
-        }
-      } else {
-        audio_peak_values &= ~1UL;
-      }
-
-      if((audio_peak_values == 0UL || digitalRead(JACK_DETECT))) {
-        amp_disable();
-        peak_update_time = millis() + 5; // We want to wake up quickly
-      } else {
-        amp_enable();
-        peak_update_time = millis() + 200; // We don't want to go to sleep too fast
-      }
-    }
-  }
-}
-
-void power_on() {
-  midi_clock = 0;
-  led_init();
-  AudioInterrupts();
-  amp_enable();
-  power_flag = 1;
-}
-
-void amp_enable() {
-  if(amp_enabled == 0) {
-    pinMode(AMP_ENABLE, OUTPUT);
-    digitalWrite(AMP_ENABLE, LOW);
-    amp_enabled = 1;
-  }
-}
-
-void amp_disable() {
-  if(amp_enabled == 1) {
-    pinMode(AMP_ENABLE, INPUT);
-    amp_enabled = 0;
-  }
-}
-
-void headphone_disable() {
-  digitalWrite(HP_ENABLE, HIGH);
-}
-
-void headphone_enable() {
-  digitalWrite(HP_ENABLE, LOW);
 }
 
 /*
