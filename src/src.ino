@@ -6,10 +6,9 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.5.2"
+#define VERSION "0.6.2"
 
 const int MIDI_CHANNEL = 1;
-const int SYNC_LENGTH_MSEC = 12;
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
@@ -98,14 +97,26 @@ void setup() {
 
 void loop() {
   if(power_check()) {
+    // Fast stuff
     keys_scan();
-    keyboard_to_note();          
+    keyboard_to_note();      
     sequencer_update();
     midi_handle();
     pitch_update();
+
+    // Slow stuff
     pots_read();
-    led_update();
     drum_read();
+
+    // Fast stuff again
+    keys_scan();
+    keyboard_to_note();      
+    sequencer_update();
+    midi_handle();
+    pitch_update();
+
+    // Slow stuff
+    led_update();
   }
 }
 
@@ -190,10 +201,12 @@ void pots_read() {
 
   int volume_pot_value = muxAnalogRead(FADE_POT);
   int resonance = muxAnalogRead(FILTER_RES_POT);
-  int amp_env_release = map(muxAnalogRead(AMP_ENV_POT),0,1023,30,500);
-  uint32_t filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
+  int amp_env_release = muxAnalogRead(AMP_ENV_POT);
+  int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
+
   detune_amount = muxAnalogRead(OSC_DETUNE_POT);
+
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
 
@@ -213,7 +226,7 @@ void pots_read() {
   filter1.frequency(((filter_pot_value*filter_pot_value)/3072)+40);
   filter1.resonance(map(resonance,0,1023,70,500)/100.0); // 0.7-5.0 range
 
-  envelope1.release(amp_env_release);
+  envelope1.release(map(amp_env_release,0,1023,30,500));
 
   if(digitalRead(BITC_PIN)) {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);

@@ -2,7 +2,6 @@
 #define Sequencer_h
 
 #include "TempoHandler.h"
-#include "Keyboard.h"
 
 //Initial sequencer values
 uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
@@ -61,7 +60,7 @@ void sequencer_restart() {
 }
 
 void sequencer_reset_clock() {
-  sequencer_clock = 0;
+  sequencer_clock -= (sequencer_clock%12);
 }
 
 void sequencer_start() {

@@ -20,10 +20,10 @@ void pitch_update() {
 
   const float GLIDE_COEFFICIENT = 0.3f;
   if(!muxDigitalRead(SLIDE_PIN)) {
-    if(pitch_update_time < millis()) {
+    if((millis() - pitch_update_time) > 10) {
       osc_saw_frequency = osc_saw_frequency + (osc_saw_target_frequency - osc_saw_frequency)*GLIDE_COEFFICIENT;
       osc_pulse_frequency = osc_pulse_frequency + (osc_pulse_target_frequency - osc_pulse_frequency)*GLIDE_COEFFICIENT;
-      pitch_update_time = millis() + 10;
+      pitch_update_time = millis();
     }
   } else {
     osc_saw_frequency = osc_saw_target_frequency;
