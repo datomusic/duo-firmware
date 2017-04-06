@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.6.2"
+#define VERSION "0.6.3"
 
 const int MIDI_CHANNEL = 1;
 
@@ -32,17 +32,12 @@ bool note_is_playing = 0;
 bool note_is_triggered = false;
 int transpose = 0;
 bool next_step_is_random = false;
-int num_notes_held = 0;
 int tempo_interval;
 bool random_flag = 0;
 
 uint32_t midi_clock = 0;
 uint16_t audio_peak_values;
 uint16_t peak_update_time;
-
-uint16_t keyboard_map = 0;
-uint16_t old_keyboard_map = 0;
-const uint16_t KEYBOARD_MASK = 0b11111111111;
 
 void keys_scan();
 void pots_read();
@@ -137,7 +132,7 @@ void keys_scan() {
         switch (keypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  bitSet(keyboard_map,(k - KEYB_0));
+                  keyboard_set_note(k - KEYB_0);
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
@@ -171,7 +166,7 @@ void keys_scan() {
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   // MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
-                  bitClear(keyboard_map,(k - KEYB_0));
+                  keyboard_unset_note(k - KEYB_0);
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {
@@ -187,7 +182,7 @@ void keys_scan() {
                 break;
             case IDLE:
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  bitClear(keyboard_map,(k - KEYB_0));
+                  keyboard_unset_note(k - KEYB_0);
                 }
                 break;
         }
@@ -199,14 +194,28 @@ void keys_scan() {
 void pots_read() {
   // Read out the pots/switches
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
-
-  int volume_pot_value = muxAnalogRead(FADE_POT);
-  int resonance = muxAnalogRead(FILTER_RES_POT);
-  int amp_env_release = muxAnalogRead(AMP_ENV_POT);
-  int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
-  int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
-
+  
   detune_amount = muxAnalogRead(OSC_DETUNE_POT);
+
+  static int previous_amp_env_release = 0;
+  int amp_env_release = muxAnalogRead(AMP_ENV_POT);
+  if((previous_amp_env_release/4) - (amp_env_release/4)) {
+    MIDI.send(midi::ControlChange, 72, amp_env_release/4, MIDI_CHANNEL);
+  }
+  previous_amp_env_release = amp_env_release;
+
+  int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
+
+  static int previous_volume_pot_value = 0;
+  int volume_pot_value = muxAnalogRead(FADE_POT);
+
+  if((previous_volume_pot_value/4) != (volume_pot_value/4)) {
+    MIDI.send(midi::ControlChange, 7, volume_pot_value/4, MIDI_CHANNEL);
+  }
+  previous_volume_pot_value = volume_pot_value;
+
+  int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
+  int resonance = muxAnalogRead(FILTER_RES_POT);
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
@@ -279,8 +288,6 @@ void note_off() {
     }
     note_is_playing = 0;
   } 
-  //Purge all held notes
-
 }
 
 /*

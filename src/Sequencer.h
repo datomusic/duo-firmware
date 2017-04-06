@@ -3,6 +3,21 @@
 
 #include "TempoHandler.h"
 
+// class Sequencer {
+//   public:
+//     void init();
+//     void restart();
+//     void start();
+//     void stop();
+//     void advance();
+//     void advance_without_play();
+//     void clock_tick();
+//     void clock_reset();
+//     void reset();
+//     void update();
+//   private:
+// };
+
 //Initial sequencer values
 uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
 uint8_t step_enable[] = { 1,0,1,1,1,1,0,1 };
@@ -18,6 +33,8 @@ void sequencer_reset();
 void sequencer_update();
 void keyboard_to_note();
 int keyboard_get_highest_note();
+int keyboard_get_latest_note();
+
 void sequencer_reset_clock();
 static void sequencer_advance_without_play();
 static void sequencer_trigger_note();
@@ -34,7 +51,6 @@ uint32_t previous_note_on_time;
 uint32_t note_off_time;
 
 bool double_speed = false;
-
 
 const uint8_t SEQUENCER_NUM_STEPS = 8;
 
@@ -113,8 +129,8 @@ void sequencer_advance_without_play() {
   }
 
   // Sample keys
-  if(keyboard_get_highest_note() != -1) {
-    step_note[current_step] = keyboard_get_highest_note();
+  if(keyboard_get_latest_note() != -1) {
+    step_note[current_step] = keyboard_get_latest_note();
     step_enable[current_step] = 1;
     step_velocity[current_step] = INITIAL_VELOCITY; 
   }
@@ -157,33 +173,64 @@ static void sequencer_untrigger_note() {
 
 
 #define KEYBOARD_SIZE 10
-#define KEYBOARD_NO_KEY -1
+
+uint8_t keyboard_map[KEYBOARD_SIZE] = { 0,0,0,0,0,0,0,0,0,0 };
+uint8_t keyboard_latest_note = 0;
+
+int keyboard_get_number_pressed_notes() {
+  int n = 0;
+  for(int i = KEYBOARD_SIZE; i >= 0; i--) {
+    if(keyboard_map[i]){
+      n++;
+    }
+  }
+  return n;
+}
 
 int keyboard_get_highest_note() {
   for(int i = KEYBOARD_SIZE; i >= 0; i--) {
-    if(bitRead(keyboard_map,i)){
+    if(keyboard_map[i]){
       return i;
     }
   }
   return -1;
 }
 
-void keyboard_to_note() {
-  if(!sequencer_is_running) {
-    // If the old map was zero and now it's not, turn on the right note
-    if((old_keyboard_map & KEYBOARD_MASK) != (keyboard_map & KEYBOARD_MASK)) {
-      // We're starting from the top. High notes have priority
-      if(keyboard_get_highest_note() > -1) {
-        sequencer_advance_without_play();
-        note_on(SCALE[keyboard_get_highest_note()]+transpose, INITIAL_VELOCITY, true);
-      }
+int keyboard_get_latest_note() {
+  for(int i = 0; i < KEYBOARD_SIZE; i++) {
+    if(keyboard_map[i]){
+      return keyboard_latest_note;
     }
+  }
+  return -1;
+}
 
-    if((old_keyboard_map & KEYBOARD_MASK) && (keyboard_map & KEYBOARD_MASK)==0) {
-      // If the old map was not zero and now it is, turn off the note
-      note_off();
+void keyboard_set_note(uint8_t note) {
+  if(!keyboard_map[note]) {
+    keyboard_latest_note = note;
+  }
+  keyboard_map[note] = 1;
+}
+
+void keyboard_unset_note(uint8_t note) {
+  keyboard_map[note] = 0;
+}
+
+void keyboard_to_note() {
+  static int n = 0; // Latest note
+
+  if(!sequencer_is_running) {
+    // If a key has been pressed,
+    int k = keyboard_get_latest_note();
+    if(n != k) {
+      if(k == -1) {
+        note_off();
+      } else {
+        sequencer_advance_without_play();
+        note_on(SCALE[keyboard_get_latest_note()]+transpose, INITIAL_VELOCITY, true);
+      }
+      n = k;
     }
-    old_keyboard_map = keyboard_map;
   }
 }
 
