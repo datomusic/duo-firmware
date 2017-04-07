@@ -8,15 +8,17 @@ AudioSynthNoiseWhite     hat_noise1;     //xy=378,191
 AudioSynthSimpleDrum     kick_drum1;     //xy=437,383
 AudioEffectEnvelope2     hat_envelope1;  //xy=546,191
 AudioSynthSimpleDrum     hat_snappy;          //xy=590,250
-AudioFilterStateVariable hat_filter1;    //xy=713,197
+AudioFilterStateVariable hat_filter_bp;    //xy=713,197
+AudioFilterStateVariable hat_filter_hp;    
 AudioMixer4              hat_mixer;         //xy=872,257
 AudioConnection          hatkick_patchCord1(hat_noise1, hat_envelope1);
-AudioConnection          hatkick_patchCord3(hat_envelope1, 0, hat_filter1, 0);
+AudioConnection          hatkick_patchCord3(hat_envelope1, 0, hat_filter_hp, 0);
 AudioConnection          hatkick_patchCord4(hat_snappy, 0, hat_mixer, 1);
-AudioConnection          hatkick_patchCord6(hat_filter1, 2, hat_mixer, 0);
+AudioConnection          hatkick_patchCord6(hat_filter_bp, 1, hat_mixer, 0);
 AudioConnection          hatkick_patchCord7(hat_mixer, 0, delayMixer, 3);
 AudioConnection          hatkick_patchCord8(kick_drum1, 0, mixer2, 2);
 AudioConnection          hatkick_patchCord9(hat_mixer, 0, mixer2, 3);
+AudioConnection          hatkick_patchCord10(hat_filter_hp, 2, hat_filter_bp, 0);
 // GUItool: end automatically generated code
 
 int kick_duration = 100;
@@ -83,6 +85,8 @@ void drum_init() {
   hat_envelope1.attack(2.0);
   hat_envelope1.release(0.0);
   hat_envelope1.sustain(0.0);
+  hat_filter_bp.frequency(4000);
+  hat_filter_hp.frequency(6000);
   hat_snappy.length(30);
   hat_snappy.pitchMod(4.0);
   hat_snappy.frequency(126);
@@ -127,11 +131,9 @@ void hat_noteon(uint8_t velocity) {
  }
 
  AudioNoInterrupts();
- hat_noise1.amplitude(1.0);
- hat_envelope1.decay(velocity/4);
-
- hat_filter1.frequency(4000);
- hat_filter1.resonance(map(velocity,0,127,200,70)/100.);
+ hat_noise1.amplitude(0.8);
+ hat_envelope1.decay((velocity/4)+20);
+ hat_filter_bp.resonance(map(velocity,0,127,100,70)/100.);
 
  hat_mixer.gain(1, map(velocity,0,127,0,100)/100.); // snappy gain
  hat_mixer.gain(0, map(velocity,0,127,70,20)/100.); // noise gain
