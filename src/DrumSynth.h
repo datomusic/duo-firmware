@@ -136,7 +136,7 @@ void hat_noteon(uint8_t velocity) {
  hat_filter_bp.resonance(map(velocity,0,127,100,70)/100.);
 
  hat_mixer.gain(1, map(velocity,0,127,0,100)/100.); // snappy gain
- hat_mixer.gain(0, map(velocity,0,127,70,20)/100.); // noise gain
+ hat_mixer.gain(0, map(velocity,0,127,50,20)/100.); // noise gain
  AudioInterrupts();
 
  hat_envelope1.noteOn();

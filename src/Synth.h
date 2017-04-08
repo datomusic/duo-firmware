@@ -65,8 +65,8 @@ AudioEffectEnvelope2     envelope1;      //xy=560.1000061035156,81
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
-AudioMixer4              delayMixer;     //xy=728.0999755859375,279.1000061035156
-AudioMixer4              mixer2;         //xy=861.1000061035156,100
+AudioMixer4              mixer_delay;     //xy=728.0999755859375,279.1000061035156
+AudioMixer4              mixer_output;         //xy=861.1000061035156,100
 AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
 AudioOutputAnalog        dac1;           //xy=988.1000061035156,100
 AudioConnection          patchCord1(osc_pulse, 0, mixer1, 1);
@@ -77,13 +77,13 @@ AudioConnection          patchCord5(mixer1, 0, filter1, 0);
 AudioConnection          patchCord6(filter1, 0, envelope1, 0);
 AudioConnection          patchCord7(envelope1, peak1);
 AudioConnection          patchCord8(envelope1, bitcrusher1);
-AudioConnection          patchCord9(delay1, 0, mixer2, 1);
-AudioConnection          patchCord10(delay1, 0, delayMixer, 1);
-AudioConnection          patchCord11(bitcrusher1, 0, mixer2, 0);
-AudioConnection          patchCord12(bitcrusher1, 0, delayMixer, 0);
-AudioConnection          patchCord13(delayMixer, delay1);
-AudioConnection          patchCord14(mixer2, dac1);
-AudioConnection          patchCord15(mixer2, peak2);
+AudioConnection          patchCord9(delay1, 0, mixer_output, 1);
+AudioConnection          patchCord10(delay1, 0, mixer_delay, 1);
+AudioConnection          patchCord11(bitcrusher1, 0, mixer_output, 0);
+AudioConnection          patchCord12(bitcrusher1, 0, mixer_delay, 0);
+AudioConnection          patchCord13(mixer_delay, delay1);
+AudioConnection          patchCord14(mixer_output, dac1);
+AudioConnection          patchCord15(mixer_output, peak2);
 // GUItool: end automatically generated code
 
 #define MAIN_GAIN 0.8
@@ -133,13 +133,13 @@ void audio_init() {
   bitcrusher1.sampleRate(44100);
 
   delay1.delay(0, 440); // Delay time
-  delayMixer.gain(0, 0.0); // Delay input
-  delayMixer.gain(1, 0.4); // Delay feedback
+  mixer_delay.gain(0, 0.0); // Delay input
+  mixer_delay.gain(1, 0.4); // Delay feedback
 
-  mixer2.gain(0, MAIN_GAIN);
-  mixer2.gain(1, DELAY_GAIN); // Delay output
-  mixer2.gain(2, KICK_GAIN); // Kick output
-  mixer2.gain(3, HAT_GAIN); // Hat output
+  mixer_output.gain(0, MAIN_GAIN);
+  mixer_output.gain(1, DELAY_GAIN); // Delay output
+  mixer_output.gain(2, KICK_GAIN); // Kick output
+  mixer_output.gain(3, HAT_GAIN); // Hat output
   
   #ifdef SUPER_LOUD_MODE
     dac1.analogReference(EXTERNAL);
@@ -149,10 +149,10 @@ void audio_init() {
 }
 
 void audio_volume(int volume) {
-  mixer2.gain(0, (volume/1023.)*MAIN_GAIN);
-  mixer2.gain(1, (volume/1023.)*DELAY_GAIN);
-  mixer2.gain(2, (volume/1023.)*KICK_GAIN);
-  mixer2.gain(3, (volume/1023.)*HAT_GAIN);
+  mixer_output.gain(0, (volume/1023.)*MAIN_GAIN);
+  mixer_output.gain(1, (volume/1023.)*DELAY_GAIN);
+  mixer_output.gain(2, (volume/1023.)*KICK_GAIN);
+  mixer_output.gain(3, (volume/1023.)*HAT_GAIN);
 }
 
 #endif

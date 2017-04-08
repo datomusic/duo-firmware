@@ -43,8 +43,7 @@
 #define SEQ_0_4
 #define POT_1       A10
 #define POT_2       A11
-#define MUX_IO      A18
-#define MUX_IO_DIGITAL 29
+#define MUX_IO       29
 #define UNCONNECTED_ANALOG 13 //ADC0_DM3/A13 is unconnected
 // DAC_OUT
 #define SYN_ADDR0    33
@@ -144,24 +143,25 @@ const int OSC_PW_POT = 7;
 const int FADE_POT = 6; 
 
 int muxAnalogRead(uint8_t channel) { 
-  digitalWrite(SYN_ADDR0, channel & (1<<0));
-  digitalWrite(SYN_ADDR1, channel & (1<<1));
-  digitalWrite(SYN_ADDR2, channel & (1<<2));
+  pinMode(MUX_IO, INPUT);
+  digitalWrite(SYN_ADDR0, bitRead(channel,0));
+  digitalWrite(SYN_ADDR1, bitRead(channel,1));
+  digitalWrite(SYN_ADDR2, bitRead(channel,2));
   //do we need to wait a few nanoseconds?
   delayMicroseconds(4);
   return analogRead(MUX_IO);
 }
 
 uint8_t muxDigitalRead(uint8_t channel) { 
-  pinMode(MUX_IO_DIGITAL, INPUT_PULLUP);
-  digitalWrite(SYN_ADDR0, channel & (1<<0));
-  digitalWrite(SYN_ADDR1, channel & (1<<1));
-  digitalWrite(SYN_ADDR2, channel & (1<<2));
+  pinMode(MUX_IO, INPUT_PULLUP);
+  digitalWrite(SYN_ADDR0, bitRead(channel,0));
+  digitalWrite(SYN_ADDR1, bitRead(channel,1));
+  digitalWrite(SYN_ADDR2, bitRead(channel,2));
   delayMicroseconds(4);
   //Wait a few microseconds for the selection to propagate. 
   //Less than 3 seems not to work so let's take 4 to be sure
-  uint8_t p = digitalRead(MUX_IO_DIGITAL);
-  pinMode(MUX_IO_DIGITAL, INPUT);
+  uint8_t p = digitalRead(MUX_IO);
+  pinMode(MUX_IO, INPUT);
   delayMicroseconds(10);
   return p;
 }

@@ -131,7 +131,7 @@ flash: $(TARGET).elf
 	@openocd -f $(CURDIR)/openocd/openocd.cfg -c "program $< reset exit"
 
 dfu: $(TARGET).bin
-	@dfu-util -d 1c11:b007 -D "$<"
+	@dfu-util -d 1fc9:8189 -D "$<"
 
 $(BUILDDIR)/%.o: %.c
 	@echo "[CC]\t$<"

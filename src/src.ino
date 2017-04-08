@@ -80,7 +80,7 @@ void setup() {
   MIDI.setHandleContinue(sequencer_restart);
   MIDI.setHandleStop(sequencer_stop);
 
-  keys_init();
+  button_matrix_init();
   drum_init();
   touch_init();
   
@@ -115,21 +115,21 @@ void loop() {
   }
 }
 
-// Scans the keypad and handles step enable and keys
+// Scans the button_matrix and handles step enable and keys
 void keys_scan() {
   if(muxDigitalRead(DELAY_PIN)) {
-    delayMixer.gain(0, 0.0); // Delay input
-    delayMixer.gain(3, 0.0);
+    mixer_delay.gain(0, 0.0); // Delay input
+    mixer_delay.gain(3, 0.0);
   } else {
-    delayMixer.gain(0, 0.5); // Delay input
-    delayMixer.gain(3, 0.4); // Hat delay input
+    mixer_delay.gain(0, 0.5); // Delay input
+    mixer_delay.gain(3, 0.4); // Hat delay input
   }
 
-  if (keypad.getKeys())  {
+  if (button_matrix.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
-      if ( keypad.key[i].stateChanged ) {
-        char k = keypad.key[i].kchar;
-        switch (keypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
+      if ( button_matrix.key[i].stateChanged ) {
+        char k = button_matrix.key[i].kchar;
+        switch (button_matrix.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   keyboard_set_note(k - KEYB_0);
