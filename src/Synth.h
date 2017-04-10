@@ -103,8 +103,8 @@ void audio_init() {
   osc_pulse.begin(0.4, 220, WAVEFORM_PULSE);
   
   // Mixer mixes the oscillators
-  mixer1.gain(0, 0.5); // OSC1
-  mixer1.gain(1, 0.5); // OSC2
+  mixer1.gain(0, 0.45); // OSC1
+  mixer1.gain(1, 0.45); // OSC2
 
   // Filter
   filter1.resonance(0.7); // range 0.7-5.0
