@@ -15,9 +15,9 @@ AudioConnection          hatkick_patchCord1(hat_noise1, hat_envelope1);
 AudioConnection          hatkick_patchCord3(hat_envelope1, 0, hat_filter_hp, 0);
 AudioConnection          hatkick_patchCord4(hat_snappy, 0, hat_mixer, 1);
 AudioConnection          hatkick_patchCord6(hat_filter_bp, 1, hat_mixer, 0);
-AudioConnection          hatkick_patchCord7(hat_mixer, 0, delayMixer, 3);
-AudioConnection          hatkick_patchCord8(kick_drum1, 0, mixer2, 2);
-AudioConnection          hatkick_patchCord9(hat_mixer, 0, mixer2, 3);
+AudioConnection          hatkick_patchCord7(hat_mixer, 0, mixer_delay, 3);
+AudioConnection          hatkick_patchCord8(kick_drum1, 0, mixer_output, 2);
+AudioConnection          hatkick_patchCord9(hat_mixer, 0, mixer_output, 3);
 AudioConnection          hatkick_patchCord10(hat_filter_hp, 2, hat_filter_bp, 0);
 // GUItool: end automatically generated code
 
