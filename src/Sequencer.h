@@ -2,6 +2,9 @@
 #define Sequencer_h
 
 #include "TempoHandler.h"
+#include "note_stack.h"
+
+NoteStack note_stack;
 
 // class Sequencer {
 //   public:
@@ -57,6 +60,7 @@ const uint8_t SEQUENCER_NUM_STEPS = 8;
 TempoHandler tempo_handler;
 
 void sequencer_init() {
+  note_stack.Init();
   for(int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
     step_note[i] = random(9);
   }
@@ -117,6 +121,8 @@ void sequencer_tick_clock() {
 }
 
 void sequencer_advance_without_play() {
+  static uint8_t a = 0;
+
   if(!note_is_done_playing) {
     sequencer_untrigger_note();
   }
@@ -129,8 +135,12 @@ void sequencer_advance_without_play() {
   }
 
   // Sample keys
-  if(keyboard_get_latest_note() != -1) {
-    step_note[current_step] = keyboard_get_latest_note();
+  if(note_stack.size() > 0) {
+    if(!sequencer_is_running) {
+      step_note[current_step] = note_stack.most_recent_note().note;
+    } else {
+      step_note[current_step] = note_stack.sorted_note(++a % note_stack.size()).note;
+    }
     step_enable[current_step] = 1;
     step_velocity[current_step] = INITIAL_VELOCITY; 
   }
@@ -172,64 +182,32 @@ static void sequencer_untrigger_note() {
 }
 
 
-#define KEYBOARD_SIZE 10
-
-uint8_t keyboard_map[KEYBOARD_SIZE] = { 0,0,0,0,0,0,0,0,0,0 };
-uint8_t keyboard_latest_note = 0;
-
-int keyboard_get_number_pressed_notes() {
-  int n = 0;
-  for(int i = KEYBOARD_SIZE; i >= 0; i--) {
-    if(keyboard_map[i]){
-      n++;
-    }
-  }
-  return n;
-}
-
-int keyboard_get_highest_note() {
-  for(int i = KEYBOARD_SIZE; i >= 0; i--) {
-    if(keyboard_map[i]){
-      return i;
-    }
-  }
-  return -1;
-}
-
-int keyboard_get_latest_note() {
-  for(int i = 0; i < KEYBOARD_SIZE; i++) {
-    if(keyboard_map[i]){
-      return keyboard_latest_note;
-    }
-  }
-  return -1;
-}
-
 void keyboard_set_note(uint8_t note) {
-  if(!keyboard_map[note]) {
-    keyboard_latest_note = note;
-  }
-  keyboard_map[note] = 1;
+  note_stack.NoteOn(note, INITIAL_VELOCITY);
 }
 
 void keyboard_unset_note(uint8_t note) {
-  keyboard_map[note] = 0;
+  note_stack.NoteOff(note);
 }
 
 void keyboard_to_note() {
-  static int n = 0; // Latest note
+  static uint8_t n = 0;
+  static uint8_t s = 0;
 
   if(!sequencer_is_running) {
-    // If a key has been pressed,
-    int k = keyboard_get_latest_note();
-    if(n != k) {
-      if(k == -1) {
-        note_off();
+    if(note_stack.size() != s) {
+      s = note_stack.size();
+      if(s > 0) {
+        uint8_t k = note_stack.most_recent_note().note;
+        if(k != n) {
+          sequencer_advance_without_play();
+          note_on(SCALE[note_stack.most_recent_note().note]+transpose, INITIAL_VELOCITY, true);
+          n = k;
+        }
       } else {
-        sequencer_advance_without_play();
-        note_on(SCALE[keyboard_get_latest_note()]+transpose, INITIAL_VELOCITY, true);
+        note_off();
+        n = 255; // Make sure this is a non existing note in the scale
       }
-      n = k;
     }
   }
 }
