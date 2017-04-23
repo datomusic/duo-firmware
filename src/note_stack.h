@@ -43,7 +43,7 @@
 
 #include <cstdint>
 
-static const uint8_t kNoteStackSize = 8;
+static const uint8_t kNoteStackSize = 10;
 
 struct NoteEntry {
   uint8_t note;
