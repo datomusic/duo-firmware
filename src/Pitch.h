@@ -8,7 +8,7 @@
   Oscillator 2 can be detuned in steps
 */
 
-const uint8_t DETUNE_OFFSET_SEMITONES[] = { 3,4,5,7,9 };
+const uint8_t DETUNE_OFFSET_SEMITONES[] = { 4,5,7,9 };
 int detune_amount = 0;
 uint32_t pitch_update_time = 0;
 void pitch_update();
@@ -32,14 +32,22 @@ void pitch_update() {
 }
 
 float detune(int note, int amount) { // amount goes from 0-1023
-  if (amount > 800) {
-    return midi_note_to_frequency(note) * (amount+9000)/10000.;
-  } else if (amount < 200) {
-    return midi_note_to_frequency(note - 12) * ( 20000 - amount )/20000.;
-  } else {
-    int offset = map(amount,200,800,4,0);
-    return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[offset]);
+  if (amount > 850) {
+    return midi_note_to_frequency(note) * (amount+9000)/10240.;
   }
+  if (amount > 680) {
+    return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[0]);
+  }
+  if (amount > 560) {
+    return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[1]);
+  }
+  if (amount > 350) {
+    return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[2]);
+  }
+  if (amount > 200) {
+    return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[3]);
+  }
+  return midi_note_to_frequency(note - 12) * ( 20000 - amount )/20000.;
 }
 
 #endif
