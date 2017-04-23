@@ -191,8 +191,8 @@ void keyboard_unset_note(uint8_t note) {
 }
 
 void keyboard_to_note() {
-  static uint8_t n = 0;
-  static uint8_t s = 0;
+  static uint8_t n = 255;
+  static uint8_t s = 255;
 
   if(!sequencer_is_running) {
     if(note_stack.size() != s) {
