@@ -111,11 +111,11 @@ void amp_disable() {
 }
 
 void headphone_disable() {
-  digitalWrite(HP_ENABLE, HIGH);
+  digitalWrite(HP_ENABLE, LOW);
 }
 
 void headphone_enable() {
-  digitalWrite(HP_ENABLE, LOW);
+  digitalWrite(HP_ENABLE, HIGH);
 }
 
 #endif
