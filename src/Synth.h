@@ -141,6 +141,17 @@ void audio_init() {
   mixer_output.gain(2, KICK_GAIN); // Kick output
   mixer_output.gain(3, HAT_GAIN); // Hat output
   
+  /* 
+    Sets the reference voltage for the internal DAC, which
+    in turn determines the peak to peak voltage of the audio
+    signal.
+
+    Clipping and other distortion may occur in SUPER_LOUD_MODE
+    so use with caution.
+
+    INTERNAL = 1.1V internal reference
+    EXTERNAL = 3.3V supply voltage
+    */
   #ifdef SUPER_LOUD_MODE
     dac1.analogReference(EXTERNAL);
   #else
