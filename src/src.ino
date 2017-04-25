@@ -6,12 +6,18 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.6.4"
+#define VERSION "0.6.6"
+
+/*
+  DEV mode does the following:
+  - Reset the DUO to DFU mode when long pressing the Play button
+ */
+#define DEV_MODE
 
 const int MIDI_CHANNEL = 1;
 
 // Musical settings
-const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 }; // Low with 2 note split
+const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 };
 const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
 
 #define INITIAL_VELOCITY 100
@@ -88,6 +94,7 @@ void setup() {
   
   Serial.print("Dato DUO firmware ");
   Serial.println(VERSION);
+  headphone_enable();
 }
 
 void loop() {
@@ -160,7 +167,11 @@ void keys_scan() {
                 break;
             case HOLD:
                 if (k == SEQ_START) {
-                  power_off();
+                  #ifdef DEV_MODE
+                    enter_dfu();
+                  #else
+                    power_off();
+                  #endif
                 }
                 break;
             case RELEASED:
@@ -197,22 +208,22 @@ void pots_read() {
   
   detune_amount = muxAnalogRead(OSC_DETUNE_POT);
 
-  static int previous_amp_env_release = 0;
+  // static int previous_amp_env_release = 0;
   int amp_env_release = muxAnalogRead(AMP_ENV_POT);
-  if((previous_amp_env_release/4) - (amp_env_release/4)) {
-    MIDI.send(midi::ControlChange, 72, amp_env_release/4, MIDI_CHANNEL);
-  }
-  previous_amp_env_release = amp_env_release;
+  // if((previous_amp_env_release/4) - (amp_env_release/4)) {
+  //   MIDI.send(midi::ControlChange, 72, amp_env_release/4, MIDI_CHANNEL);
+  // }
+  // previous_amp_env_release = amp_env_release;
 
   int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
 
-  static int previous_volume_pot_value = 0;
+  // static int previous_volume_pot_value = 0;
   int volume_pot_value = muxAnalogRead(FADE_POT);
 
-  if((previous_volume_pot_value/4) != (volume_pot_value/4)) {
-    MIDI.send(midi::ControlChange, 7, volume_pot_value/4, MIDI_CHANNEL);
-  }
-  previous_volume_pot_value = volume_pot_value;
+  // if((previous_volume_pot_value/4) != (volume_pot_value/4)) {
+  //   MIDI.send(midi::ControlChange, 7, volume_pot_value/4, MIDI_CHANNEL);
+  // }
+  // previous_volume_pot_value = volume_pot_value;
 
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
   int resonance = muxAnalogRead(FILTER_RES_POT);

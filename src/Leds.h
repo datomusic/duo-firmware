@@ -41,6 +41,11 @@ void led_init() {
   /* The 400ms delay introduced by this startup animation prevents
      an audible pop/click at startup
      */
+     
+  #ifdef DEV_MODE
+     physical_leds[0] = CRGB::Blue;
+  #endif
+
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[i];
     delay(40);

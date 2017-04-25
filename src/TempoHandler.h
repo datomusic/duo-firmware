@@ -38,17 +38,14 @@ class TempoHandler
       // Determine which source is selected for tempo
       if(digitalRead(SYNC_DETECT)) {
         if(_source != TEMPO_SOURCE_SYNC) {
-          Serial.println("Switching to SYNC as source");
           _source = TEMPO_SOURCE_SYNC;
         }
       } else if (midi_clock > 0) { // midi_clock is a global count of incoming midi clocks
         if(_source != TEMPO_SOURCE_MIDI) {
-          Serial.println("Switching to MIDI as source");
           _source = TEMPO_SOURCE_MIDI;
         }
       } else {
         if(_source != TEMPO_SOURCE_INTERNAL) {
-          Serial.println("Switching to INTERNAL as source");
           _source = TEMPO_SOURCE_INTERNAL;
         }
       }
@@ -70,6 +67,9 @@ class TempoHandler
         _midi_clock_block = 0;
         midi_clock = 11; // One less than our overflow, so the next MIDI clock tick triggers a callback
       }
+    }
+    bool is_clock_source_internal() {
+      return _source == TEMPO_SOURCE_INTERNAL;
     }
   private:
     void (*tTempoCallback)();

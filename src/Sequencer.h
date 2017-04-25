@@ -107,21 +107,29 @@ void sequencer_toggle_start() {
 }
 
 void sequencer_tick_clock() {
-  uint8_t divider = 12;
+  uint8_t sequencer_divider = 12;
   if(double_speed) {
-    divider = 6;
+    sequencer_divider = 6;
   }
-  if(sequencer_is_running && (sequencer_clock % divider)==0) {
+
+  if(!tempo_handler.is_clock_source_internal()) {
+    int potvalue = analogRead(TEMPO_POT);
+    if(potvalue < 127) {
+      sequencer_divider /= 2;
+    }
+  }
+
+  if(sequencer_is_running && (sequencer_clock % sequencer_divider)==0) {
     sequencer_advance();
   } 
   sequencer_clock++;
-  if(sequencer_clock >= 96) {
+  if(sequencer_clock >= 192) {
     sequencer_clock = 0;
   }
 }
 
 void sequencer_advance_without_play() {
-  static uint8_t a = 0;
+  static uint8_t arpeggio_index = 0;
 
   if(!note_is_done_playing) {
     sequencer_untrigger_note();
@@ -135,11 +143,18 @@ void sequencer_advance_without_play() {
   }
 
   // Sample keys
-  if(note_stack.size() > 0) {
+  uint8_t n = note_stack.size();
+
+  if(arpeggio_index >= n) {
+    arpeggio_index = 0;
+  }
+
+  if(n > 0) {
     if(!sequencer_is_running) {
       step_note[current_step] = note_stack.most_recent_note().note;
     } else {
-      step_note[current_step] = note_stack.sorted_note(++a % note_stack.size()).note;
+      step_note[current_step] = note_stack.sorted_note(arpeggio_index).note;
+      arpeggio_index++;
     }
     step_enable[current_step] = 1;
     step_velocity[current_step] = INITIAL_VELOCITY; 
@@ -183,10 +198,12 @@ static void sequencer_untrigger_note() {
 
 
 void keyboard_set_note(uint8_t note) {
+  // TODO: is note 1-based? If so, this could go wrong
   note_stack.NoteOn(note, INITIAL_VELOCITY);
 }
 
 void keyboard_unset_note(uint8_t note) {
+  // TODO: is note 1-based? If so, this could go wrong
   note_stack.NoteOff(note);
 }
 
@@ -201,7 +218,7 @@ void keyboard_to_note() {
         uint8_t k = note_stack.most_recent_note().note;
         if(k != n) {
           sequencer_advance_without_play();
-          note_on(SCALE[note_stack.most_recent_note().note]+transpose, INITIAL_VELOCITY, true);
+          note_on(SCALE[k]+transpose, INITIAL_VELOCITY, true);
           n = k;
         }
       } else {
