@@ -113,7 +113,7 @@ void audio_init() {
 
   // Amp envelope
   envelope1.delay(0);
-  envelope1.attack(2);
+  envelope1.attack(0);
   envelope1.hold(0);
   envelope1.decay(0);
   envelope1.sustain(1.0);

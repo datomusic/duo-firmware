@@ -101,24 +101,23 @@ void loop() {
   if(power_check()) {
     // Fast stuff
     keys_scan();
-    keyboard_to_note();      
-    sequencer_update();
+    keyboard_to_note();   
     midi_handle();
-    pitch_update();
+    pitch_update();   
 
-    // Slow stuff
+    sequencer_update();
+
     pots_read();
+
+    sequencer_update();
+
     drum_read();
 
-    // Fast stuff again
-    keys_scan();
-    keyboard_to_note();      
     sequencer_update();
-    midi_handle();
-    pitch_update();
 
-    // Slow stuff
     led_update();
+
+    sequencer_update();
   }
 }
 
@@ -306,7 +305,7 @@ void note_off() {
  * This signals the Kiibohd DFU bootloader that it should start in firmware update mode
  */
 void enter_dfu() {
-  #define VBAT                    *(volatile uint8_t *)0x4003E000 // Register available in all power states
+  #define VBAT *(volatile uint8_t *)0x4003E000 // Register available in all power states
   const uint8_t sys_reset_to_loader_magic[22] = "\xff\x00\x7fRESET TO LOADER\x7f\x00\xff";
 
   // Blank all leds and turn the power button blue before rebooting
