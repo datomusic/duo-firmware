@@ -72,6 +72,7 @@ else
     ifeq ($(TEENSY), 31)
         CPPFLAGS += -D__MK20DX256__ -mcpu=cortex-m4
         LDSCRIPT = $(CURDIR)/mk20dx256-dfu.ld
+        # LDSCRIPT = $(COREPATH)/mk20dx256.ld
         LDFLAGS += -mcpu=cortex-m4 -T$(LDSCRIPT)
     else
         ifeq ($(TEENSY), LC)
