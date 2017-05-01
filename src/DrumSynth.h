@@ -6,7 +6,7 @@
   // GUItool: begin automatically generated code
 AudioSynthNoiseWhite     hat_noise1;     //xy=378,191
 AudioSynthSimpleDrum     kick_drum1;     //xy=437,383
-AudioEffectEnvelope2     hat_envelope1;  //xy=546,191
+AudioEffectCustomEnvelope     hat_envelope1;  //xy=546,191
 AudioSynthSimpleDrum     hat_snappy;          //xy=590,250
 AudioFilterStateVariable hat_filter_bp;    //xy=713,197
 AudioFilterStateVariable hat_filter_hp;    
