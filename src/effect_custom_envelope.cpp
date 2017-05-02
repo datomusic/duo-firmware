@@ -55,6 +55,8 @@ void AudioEffectCustomEnvelope::noteOff(void) {
   __enable_irq();
 }
 
+int tmpBuffer[8];
+
 void AudioEffectCustomEnvelope::update(void) {
   audio_block_t *block;
   uint32_t *p, *end;
@@ -71,25 +73,25 @@ void AudioEffectCustomEnvelope::update(void) {
   p = (uint32_t *)(block->data);
   end = p + AUDIO_BLOCK_SAMPLES/2;
 
-
   while (p < end) {
     // process 8 samples
+    env.step(8, tmpBuffer);
     sample12 = *p++;
     sample34 = *p++;
     sample56 = *p++;
     sample78 = *p++;
     p -= 4;
-    tmp1 = signed_multiply_32x16b(env.step() , sample12);
-    tmp2 = signed_multiply_32x16t(env.step() , sample12);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[0], sample12);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[1], sample12);
     sample12 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(env.step() , sample34);
-    tmp2 = signed_multiply_32x16t(env.step() , sample34);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[2], sample34);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[3], sample34);
     sample34 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(env.step() , sample56);
-    tmp2 = signed_multiply_32x16t(env.step() , sample56);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[4], sample56);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[5], sample56);
     sample56 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(env.step() , sample78);
-    tmp2 = signed_multiply_32x16t(env.step() , sample78);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[6], sample78);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[7], sample78);
     sample78 = pack_16b_16b(tmp2, tmp1);
     *p++ = sample12;
     *p++ = sample34;
