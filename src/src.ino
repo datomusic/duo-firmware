@@ -49,6 +49,7 @@ void keys_scan();
 void pots_read();
 void drum_init();
 void drum_read();
+void print_log();
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled);
 void note_off();
@@ -171,7 +172,12 @@ void keys_scan() {
                   #else
                     power_off();
                   #endif
+                } 
+                #ifdef DEV_MODE
+                if (k == BTN_UP) {
+                  print_log();
                 }
+                #endif
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
@@ -298,6 +304,10 @@ void note_off() {
     }
     note_is_playing = 0;
   } 
+}
+
+void print_log() {
+  Serial.printf("Envelope1 cpu: %d", envelope1.processorUsageMax());
 }
 
 /*
