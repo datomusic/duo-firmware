@@ -48,14 +48,16 @@ struct Envelope{
     curVal = v;
   }
 
+  enum State{
+    Idle
+      ,Attack
+      ,Decay
+      ,Sustain
+      ,Release
+  };
+
+  State state = Idle;
   private:
-    enum State{
-      Idle
-        ,Attack
-        ,Decay
-        ,Sustain
-        ,Release
-    };
 
     struct Config{
       Config(int maxVal, int attack, int decay, int sustain, int release)
@@ -73,6 +75,8 @@ struct Envelope{
       static inline int calcRate(int val, int time) {
         if(time > 0){
           return static_cast<int>(static_cast<float>(val)/time);
+        }else{
+          return 0;
         }
       }
 
@@ -80,7 +84,6 @@ struct Envelope{
 
     const int maxValue = 0;
     int curVal = 0;
-    State state = Idle;
     Config conf;
 
 };

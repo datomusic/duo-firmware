@@ -55,48 +55,50 @@ void AudioEffectCustomEnvelope::noteOff(void) {
   __enable_irq();
 }
 
-int tmpBuffer[8];
+int tmpBuffer[AUDIO_BLOCK_SAMPLES];
 
 void AudioEffectCustomEnvelope::update(void) {
+  if (env.state == Envelope::Idle) {
+    return;
+  }
+
   audio_block_t *block;
   uint32_t *p, *end;
   uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
 
+
   block = receiveWritable();
   if (!block) return;
-  /*
-   * if (state == STATE_IDLE) {
-   *   release(block);
-   *   return;
-   * }
-   */
   p = (uint32_t *)(block->data);
   end = p + AUDIO_BLOCK_SAMPLES/2;
 
+  env.step(AUDIO_BLOCK_SAMPLES, tmpBuffer);
+  int offset = 0;
   while (p < end) {
     // process 8 samples
-    env.step(8, tmpBuffer);
     sample12 = *p++;
     sample34 = *p++;
     sample56 = *p++;
     sample78 = *p++;
     p -= 4;
-    tmp1 = signed_multiply_32x16b(tmpBuffer[0], sample12);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[1], sample12);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[offset], sample12);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+1], sample12);
     sample12 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(tmpBuffer[2], sample34);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[3], sample34);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[offset+2], sample34);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+3], sample34);
     sample34 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(tmpBuffer[4], sample56);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[5], sample56);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[offset+4], sample56);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+5], sample56);
     sample56 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(tmpBuffer[6], sample78);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[7], sample78);
+    tmp1 = signed_multiply_32x16b(tmpBuffer[offset+6], sample78);
+    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+7], sample78);
     sample78 = pack_16b_16b(tmp2, tmp1);
     *p++ = sample12;
     *p++ = sample34;
     *p++ = sample56;
     *p++ = sample78;
+
+    offset+=8;
   }
   transmit(block);
   release(block);
