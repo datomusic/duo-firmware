@@ -13,10 +13,10 @@ int milliseconds2count(float milliseconds) {
 
 void AudioEffectCustomEnvelope::updateEnv(){
   env.adsr(
-      milliseconds2count(attackMs)
-      ,milliseconds2count(decayMs)
+      static_cast<int>(milliseconds2count(attackMs)/8.0f)
+      ,static_cast<int>(milliseconds2count(decayMs)/8.0f)
       ,sustainVal
-      ,milliseconds2count(releaseMs)
+      ,static_cast<int>(milliseconds2count(releaseMs)/8.0f)
     );
 }
 
@@ -55,7 +55,6 @@ void AudioEffectCustomEnvelope::noteOff(void) {
   __enable_irq();
 }
 
-int tmpBuffer[AUDIO_BLOCK_SAMPLES];
 
 void AudioEffectCustomEnvelope::update(void) {
   if (env.state == Envelope::Idle) {
@@ -72,8 +71,7 @@ void AudioEffectCustomEnvelope::update(void) {
   p = (uint32_t *)(block->data);
   end = p + AUDIO_BLOCK_SAMPLES/2;
 
-  env.step(AUDIO_BLOCK_SAMPLES, tmpBuffer);
-  int offset = 0;
+
   while (p < end) {
     // process 8 samples
     sample12 = *p++;
@@ -81,24 +79,24 @@ void AudioEffectCustomEnvelope::update(void) {
     sample56 = *p++;
     sample78 = *p++;
     p -= 4;
-    tmp1 = signed_multiply_32x16b(tmpBuffer[offset], sample12);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+1], sample12);
+    const int v = env.step();
+    tmp1 = signed_multiply_32x16b(v, sample12);
+    tmp2 = signed_multiply_32x16t(v, sample12);
     sample12 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(tmpBuffer[offset+2], sample34);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+3], sample34);
+    tmp1 = signed_multiply_32x16b(v, sample34);
+    tmp2 = signed_multiply_32x16t(v, sample34);
     sample34 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(tmpBuffer[offset+4], sample56);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+5], sample56);
+    tmp1 = signed_multiply_32x16b(v, sample56);
+    tmp2 = signed_multiply_32x16t(v, sample56);
     sample56 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(tmpBuffer[offset+6], sample78);
-    tmp2 = signed_multiply_32x16t(tmpBuffer[offset+7], sample78);
+    tmp1 = signed_multiply_32x16b(v, sample78);
+    tmp2 = signed_multiply_32x16t(v, sample78);
     sample78 = pack_16b_16b(tmp2, tmp1);
     *p++ = sample12;
     *p++ = sample34;
     *p++ = sample56;
     *p++ = sample78;
 
-    offset+=8;
   }
   transmit(block);
   release(block);

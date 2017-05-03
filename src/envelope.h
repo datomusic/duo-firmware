@@ -13,39 +13,41 @@ struct Envelope{
   inline void on(){ state = Attack; }
   inline void off(){ state = Release; }
 
-  inline void step(int count, int out[]){
+  // inline void step(int count, int out[]){
+  inline int step(){
     const int sustainMax = conf.sustainLevel > maxValue ? maxValue : conf.sustainLevel;
-    int v = curVal;
-    for (int i = 0;  i < count; ++i) {
+    // int v = curVal;
+    // for (int i = 0;  i < count; ++i) {
       switch(state){
         case Idle:
         case Sustain:
           break;
         case Attack:
-          v += conf.attackRate;
-          if(v >= maxValue){
-            v = maxValue;
+          curVal += conf.attackRate;
+          if(curVal >= maxValue){
+            curVal = maxValue;
             state = Decay;
           }
           break;
         case Decay:
-          v -= conf.decayRate;
-          if(v <= sustainMax){
-            v = sustainMax;
+          curVal -= conf.decayRate;
+          if(curVal <= sustainMax){
+            curVal = sustainMax;
             state = Sustain;
           }
           break;
         case Release:
-          v -= conf.releaseRate;
-          if(v <= 0){
-            v = 0;
+          curVal -= conf.releaseRate;
+          if(curVal <= 0){
+            curVal = 0;
             state = Idle;
           }
           break;
       }
-      out[i] = v;
-    }
-    curVal = v;
+      // out[i] = v;
+    // }
+    // curVal = v;
+    return curVal;
   }
 
   enum State{
