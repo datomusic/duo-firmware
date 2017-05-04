@@ -13,11 +13,7 @@ struct Envelope{
   inline void on(){ state = Attack; }
   inline void off(){ state = Release; }
 
-  // inline void step(int count, int out[]){
   inline int step(){
-    const int sustainMax = conf.sustainLevel > maxValue ? maxValue : conf.sustainLevel;
-    // int v = curVal;
-    // for (int i = 0;  i < count; ++i) {
       switch(state){
         case Idle:
         case Sustain:
@@ -31,8 +27,8 @@ struct Envelope{
           break;
         case Decay:
           curVal -= conf.decayRate;
-          if(curVal <= sustainMax){
-            curVal = sustainMax;
+          if(curVal <= conf.sustainLevel){
+            curVal = conf.sustainLevel;
             state = Sustain;
           }
           break;
@@ -44,9 +40,6 @@ struct Envelope{
           }
           break;
       }
-      // out[i] = v;
-    // }
-    // curVal = v;
     return curVal;
   }
 
@@ -66,7 +59,7 @@ struct Envelope{
         :attackRate(calcRate(maxVal, attack))
          ,decayRate(calcRate(maxVal-sustain, decay))
          ,releaseRate(calcRate(sustain, release))
-         ,sustainLevel(sustain)
+         ,sustainLevel(sustain>maxVal?maxVal:sustain)
       {}
 
       int attackRate = 0;
