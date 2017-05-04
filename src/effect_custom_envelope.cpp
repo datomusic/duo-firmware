@@ -13,10 +13,10 @@ int milliseconds2count(float milliseconds) {
 
 void AudioEffectCustomEnvelope::updateEnv(){
   env.adsr(
-      static_cast<int>(milliseconds2count(attackMs)/8.0f)
-      ,static_cast<int>(milliseconds2count(decayMs)/8.0f)
+      static_cast<int>(milliseconds2count(attackMs))
+      ,static_cast<int>(milliseconds2count(decayMs))
       ,sustainVal
-      ,static_cast<int>(milliseconds2count(releaseMs)/8.0f)
+      ,static_cast<int>(milliseconds2count(releaseMs))
     );
 }
 
@@ -79,18 +79,17 @@ void AudioEffectCustomEnvelope::update(void) {
     sample56 = *p++;
     sample78 = *p++;
     p -= 4;
-    const int v = env.step();
-    tmp1 = signed_multiply_32x16b(v, sample12);
-    tmp2 = signed_multiply_32x16t(v, sample12);
+    tmp1 = signed_multiply_32x16b(env.step(), sample12);
+    tmp2 = signed_multiply_32x16t(env.step(), sample12);
     sample12 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(v, sample34);
-    tmp2 = signed_multiply_32x16t(v, sample34);
+    tmp1 = signed_multiply_32x16b(env.step(), sample34);
+    tmp2 = signed_multiply_32x16t(env.step(), sample34);
     sample34 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(v, sample56);
-    tmp2 = signed_multiply_32x16t(v, sample56);
+    tmp1 = signed_multiply_32x16b(env.step(), sample56);
+    tmp2 = signed_multiply_32x16t(env.step(), sample56);
     sample56 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(v, sample78);
-    tmp2 = signed_multiply_32x16t(v, sample78);
+    tmp1 = signed_multiply_32x16b(env.step(), sample78);
+    tmp2 = signed_multiply_32x16t(env.step(), sample78);
     sample78 = pack_16b_16b(tmp2, tmp1);
     *p++ = sample12;
     *p++ = sample34;
