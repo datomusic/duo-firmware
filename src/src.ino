@@ -18,6 +18,7 @@ const int MIDI_CHANNEL = 1;
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 };
+const uint8_t SCALE_OFFSET_FROM_C3[] { 1,3,6,8,10,13,15,18,20,22 };
 const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
 
 #define INITIAL_VELOCITY 100
@@ -60,6 +61,9 @@ int tempo_interval_msec();
 
 void enter_dfu();
 
+#include "note_stack.h"
+
+NoteStack note_stack;
 #include "pinmap.h"
 #include "MidiFunctions.h"
 #include "Buttons.h"
@@ -78,22 +82,24 @@ void setup() {
   sequencer_init();
   audio_init();
   led_init();
-  Serial.begin(57600);
 
   midi_init();
 
   MIDI.setHandleStart(sequencer_restart);
   MIDI.setHandleContinue(sequencer_restart);
   MIDI.setHandleStop(sequencer_stop);
+  MIDI.setHandleControlChange(midi_handle_cc);
 
   button_matrix_init();
   drum_init();
   touch_init();
   
   previous_note_on_time = millis();
-  
-  Serial.print("Dato DUO firmware ");
-  Serial.println(VERSION);
+  #ifdef DEV_MODE
+    Serial.begin(57600);
+    Serial.print("Dato DUO firmware ");
+    Serial.println(VERSION);
+  #endif
   headphone_enable();
 }
 
@@ -138,7 +144,7 @@ void keys_scan() {
         switch (button_matrix.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  keyboard_set_note(k - KEYB_0);
+                  keyboard_set_note(SCALE[k - KEYB_0]);
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
@@ -176,7 +182,7 @@ void keys_scan() {
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   // MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
-                  keyboard_unset_note(k - KEYB_0);
+                  keyboard_unset_note(SCALE[k - KEYB_0]);
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {

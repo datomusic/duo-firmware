@@ -2,9 +2,6 @@
 #define Sequencer_h
 
 #include "TempoHandler.h"
-#include "note_stack.h"
-
-NoteStack note_stack;
 
 // class Sequencer {
 //   public:
@@ -62,7 +59,7 @@ TempoHandler tempo_handler;
 void sequencer_init() {
   note_stack.Init();
   for(int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
-    step_note[i] = random(9);
+    step_note[i] = SCALE[random(9)];
   }
   tempo_handler.setHandleTempoEvent(sequencer_tick_clock);
   tempo_handler.setHandleResetEvent(sequencer_reset_clock);
@@ -186,7 +183,7 @@ static void sequencer_trigger_note() {
 
   step_velocity[current_step] = INITIAL_VELOCITY;
 
-  note_on(SCALE[step_note[current_step]]+transpose, step_velocity[current_step], step_enable[current_step]);
+  note_on(step_note[current_step]+transpose, step_velocity[current_step], step_enable[current_step]);
 }
 
 static void sequencer_untrigger_note() {
@@ -218,7 +215,7 @@ void keyboard_to_note() {
         uint8_t k = note_stack.most_recent_note().note;
         if(k != n) {
           sequencer_advance_without_play();
-          note_on(SCALE[k]+transpose, INITIAL_VELOCITY, true);
+          note_on(k+transpose, INITIAL_VELOCITY, true);
           n = k;
         }
       } else {

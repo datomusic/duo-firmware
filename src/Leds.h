@@ -13,18 +13,33 @@ CRGB physical_leds[NUM_LEDS];
 #define led_play physical_leds[0]
 const int LED_BRIGHTNESS = 32;
 
+// 1,3,6,8,10,13,15,18,20,22 
 // ALternate pin colors
 const CRGB COLORS[] = {
+  0x444444,
   0xFF0001,
+  0x444444,
   0xFFDD00,
+  0x444444,
+  0x444444,
   0x11FF00,
+  0x444444,
   0x0033DD,
+  0x444444,
   0xFF00FF,
+  0x444444,
+  0x444444,
   0xFF2209,
+  0x444444,
   0x99FF00,
+  0x444444,
+  0x444444,
   0x00EE22,
+  0x444444,
   0x0099CC,
-  0xBB33BB
+  0x444444,
+  0xBB33BB,
+  0x444444
 };
 
 void led_init();
@@ -47,7 +62,7 @@ void led_init() {
   #endif
 
   for(int i = 0; i < 10; i++) {
-    physical_leds[i+9] = COLORS[i];
+    physical_leds[i+9] = COLORS[SCALE[i]%24];
     delay(40);
     FastLED.show();
   }
@@ -57,7 +72,7 @@ void led_init() {
 void led_update() {
   for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
     if (step_enable[l]) {
-      leds(l) = COLORS[step_note[l]];
+      leds(l) = COLORS[step_note[l]%24];
     } else {
       leds(l) = CRGB::Black;
     }
@@ -72,7 +87,7 @@ void led_update() {
       if(!sequencer_is_running) {
         if(((sequencer_clock % 24) < 12)) {
           if(step_enable[next_step]) {
-            leds(next_step) = COLORS[step_note[next_step]];
+            leds(next_step) = COLORS[step_note[next_step]%24];
           } else {
             leds(next_step) = CRGB::Black;
           }

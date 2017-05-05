@@ -20,6 +20,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 void midi_init();
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
+void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value);
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle();
 void midi_handle_clock();
@@ -41,16 +42,26 @@ void midi_handle_clock() {
   midi_clock++;
 }
 
+void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value) {
+  if(channel == MIDI_CHANNEL) {
+
+  }
+}
+
 float midi_note_to_frequency(int x) {
   return MIDI_NOTE_FREQUENCY[x];
 }
 
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {
-  note_on(note, velocity, true);
+  if(channel == MIDI_CHANNEL) {
+    note_stack.NoteOn(note, velocity);
+  }
 }
 
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
-  note_off();
+  if(channel == MIDI_CHANNEL) {
+    note_stack.NoteOff(note);
+  }
 }
 
 #endif
