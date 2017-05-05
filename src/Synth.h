@@ -162,8 +162,9 @@ void audio_init() {
 void audio_volume(int volume) {
   mixer_output.gain(0, (volume/1023.)*MAIN_GAIN);
   mixer_output.gain(1, (volume/1023.)*DELAY_GAIN);
-  mixer_output.gain(2, (volume/1023.)*KICK_GAIN);
-  mixer_output.gain(3, (volume/1023.)*HAT_GAIN);
+
+  mixer_output.gain(2, (volume/2048.)*KICK_GAIN+0.5);
+  mixer_output.gain(3, (volume/2048.)*HAT_GAIN+0.5);
 }
 
 #endif
