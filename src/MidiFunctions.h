@@ -41,10 +41,40 @@ void midi_handle();
 void midi_handle_clock();
 float midi_note_to_frequency(int x);
 
+synth_parameters midi_parameters;
+
 void midi_handle() {
   MIDI.read();
   // Run through the parameters, see if they have changed and then send out CC's
   usbMIDI.read(MIDI_CHANNEL);
+
+  // Filter 40 - 380 CC 74
+  if(map(midi_parameters.filter,40,380,0,127) != map(synth.filter,40,380,0,127)) {
+    MIDI.sendControlChange(74, map(synth.filter,40,380,0,127), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(74, map(synth.filter,40,380,0,127), MIDI_CHANNEL);
+    midi_parameters.filter = synth.filter;
+  }
+
+  // Resonance 0.7 - 4.0 CC 71
+  if((uint8_t)((midi_parameters.resonance * 38)-25) != (uint8_t)((synth.resonance * 38)-25)) {
+    MIDI.sendControlChange(71, (uint8_t)((synth.resonance * 38)-25), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(71, (uint8_t)((synth.resonance * 38)-25), MIDI_CHANNEL);
+    midi_parameters.resonance = synth.resonance;
+  }
+
+  // Release time 30 - 500 CC 72
+  if(map(midi_parameters.release,30,500,0,127) != map(synth.release,30,500,0,127)) {
+    MIDI.sendControlChange(72, map(synth.release,30,500,0,127), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(72, map(synth.release,30,500,0,127), MIDI_CHANNEL);
+    midi_parameters.release = synth.release;
+  }
+
+  // Pulse width CC 70
+  if((uint8_t)(midi_parameters.pulseWidth*127.0f) != (uint8_t)(synth.pulseWidth*127.0f)) {
+    MIDI.sendControlChange(70, (uint8_t)(synth.pulseWidth*127.0f), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(70, (uint8_t)(synth.pulseWidth*127.0f), MIDI_CHANNEL);
+    midi_parameters.pulseWidth = synth.pulseWidth;
+  }
 }
 
 void midi_init() {
