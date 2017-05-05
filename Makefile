@@ -49,7 +49,7 @@ COMPILERPATH = $(TOOLSPATH)/arm/bin
 #************************************************************************
 
 # CPPFLAGS = compiler options for C and C++
-CPPFLAGS = -Wall -g -Os -mthumb -ffunction-sections -fdata-sections -nostdlib -MMD $(OPTIONS) -DTEENSYDUINO=124 -DF_CPU=$(TEENSY_CORE_SPEED) -Isrc -I$(COREPATH)
+CPPFLAGS = -Wall -g -O2 -mthumb -ffunction-sections -fdata-sections -nostdlib -MMD $(OPTIONS) -DTEENSYDUINO=124 -DF_CPU=$(TEENSY_CORE_SPEED) -Isrc -I$(COREPATH)
 
 # compiler options for C++ only
 CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
@@ -58,7 +58,7 @@ CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
 CFLAGS =
 
 # linker options
-LDFLAGS = -Os -Wl,--gc-sections,--defsym=__rtc_localtime=0 -mthumb
+LDFLAGS = -O2 -Wl,--gc-sections,--defsym=__rtc_localtime=0 -mthumb
 
 # additional libraries to link
 LIBS = -lm
