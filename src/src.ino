@@ -61,6 +61,20 @@ int tempo_interval_msec();
 
 void enter_dfu();
 
+typedef struct {
+  int detune;
+  float pulseWidth;
+  int filter;
+  float resonance;
+  int release;
+  int amplitude;
+  bool glide;
+  bool accent;
+  bool delay;
+  bool crush;
+} synth_parameters;
+
+synth_parameters synth;
 #include "note_stack.h"
 NoteStack note_stack;
 
@@ -134,9 +148,11 @@ void loop() {
 // Scans the button_matrix and handles step enable and keys
 void keys_scan() {
   if(muxDigitalRead(DELAY_PIN)) {
+    synth.delay = false;
     mixer_delay.gain(0, 0.0); // Delay input
     mixer_delay.gain(3, 0.0);
   } else {
+    synth.delay = true;
     mixer_delay.gain(0, 0.5); // Delay input
     mixer_delay.gain(3, 0.4); // Hat delay input
   }
@@ -218,23 +234,28 @@ void pots_read() {
 
   // static int previous_amp_env_release = 0;
   int amp_env_release = muxAnalogRead(AMP_ENV_POT);
+  synth.release = map(amp_env_release,0,1023,30,500);
   // if((previous_amp_env_release/4) - (amp_env_release/4)) {
   //   MIDI.send(midi::ControlChange, 72, amp_env_release/4, MIDI_CHANNEL);
   // }
   // previous_amp_env_release = amp_env_release;
 
   int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
-
+  synth.filter = ((filter_pot_value*filter_pot_value)/3072)+40;
   // static int previous_volume_pot_value = 0;
   int volume_pot_value = muxAnalogRead(FADE_POT);
-
+  synth.amplitude = volume_pot_value;
   // if((previous_volume_pot_value/4) != (volume_pot_value/4)) {
   //   MIDI.send(midi::ControlChange, 7, volume_pot_value/4, MIDI_CHANNEL);
   // }
   // previous_volume_pot_value = volume_pot_value;
 
+
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
+  synth.pulseWidth = map(pulse_pot_value,0,1023,1000,100)/1000.0;
+
   int resonance = muxAnalogRead(FILTER_RES_POT);
+  synth.resonance = map(resonance,0,1023,70,400)/100.0;
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
@@ -250,12 +271,12 @@ void pots_read() {
     osc_saw.amplitude(0.4);
   }
   osc_pulse.frequency(osc_pulse_frequency);
-  osc_pulse.pulseWidth(map(pulse_pot_value,0,1023,1000,100)/1000.0);
+  osc_pulse.pulseWidth(synth.pulseWidth);
 
-  filter1.frequency(((filter_pot_value*filter_pot_value)/3072)+40);
-  filter1.resonance(map(resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
+  filter1.frequency(synth.filter);
+  filter1.resonance(synth.resonance); // 0.7-5.0 range
 
-  envelope1.release(map(amp_env_release,0,1023,30,500));
+  envelope1.release(synth.release);
 
   if(digitalRead(BITC_PIN)) {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
@@ -263,7 +284,7 @@ void pots_read() {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
 
-  audio_volume(volume_pot_value);
+  audio_volume(synth.amplitude);
 
   AudioInterrupts(); 
 }
