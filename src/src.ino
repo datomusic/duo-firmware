@@ -35,7 +35,7 @@ float osc_pulse_frequency = 0.;
 float osc_pulse_target_frequency = 0.;
 float osc_saw_target_frequency = 0.;
 uint8_t osc_pulse_midi_note = 0;
-bool note_is_playing = 0;
+uint8_t note_is_playing = 0;
 bool note_is_triggered = false;
 int transpose = 0;
 bool next_step_is_random = false;
@@ -62,16 +62,20 @@ int tempo_interval_msec();
 void enter_dfu();
 
 #include "note_stack.h"
-
 NoteStack note_stack;
+
 #include "pinmap.h"
 #include "MidiFunctions.h"
 #include "Buttons.h"
 #include "Synth.h"
+#include "TempoHandler.h"
+TempoHandler tempo_handler;
+
 #include "Sequencer.h"
 #include "Leds.h"
 #include "DrumSynth.h"
 #include "Pitch.h"
+
 #include "Power.h"
 
 void setup() {
@@ -181,7 +185,6 @@ void keys_scan() {
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  // MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
                   keyboard_unset_note(SCALE[k - KEYB_0]);
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
@@ -286,6 +289,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     AudioInterrupts(); 
 
     MIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
+    usbMIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
@@ -295,7 +299,8 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
 
 void note_off() {
   if (note_is_playing) {
-    MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
+    MIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
+    usbMIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
     if(!step_enable[current_step]) {
       leds(current_step) = CRGB::Black;
     } else {

@@ -33,6 +33,9 @@ bool power_check() {
 
 void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
   sequencer_stop();
+  MIDI.sendControlChange(123,0,MIDI_CHANNEL);
+  tempo_handler.reset_clock_source();
+  transpose = 0;
   AudioNoInterrupts();
   amp_disable();
 

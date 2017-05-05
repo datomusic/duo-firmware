@@ -1,8 +1,5 @@
 #ifndef Sequencer_h
 #define Sequencer_h
-
-#include "TempoHandler.h"
-
 // class Sequencer {
 //   public:
 //     void init();
@@ -54,7 +51,6 @@ bool double_speed = false;
 
 const uint8_t SEQUENCER_NUM_STEPS = 8;
 
-TempoHandler tempo_handler;
 
 void sequencer_init() {
   note_stack.Init();

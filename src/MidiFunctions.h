@@ -1,6 +1,19 @@
 #ifndef MidiFunctions_h
 #define MidiFunctions_h
 #include <MIDI.h>
+/*
+  Dato DUO MIDI implementation chart
+
+  MIDI CC 7   Volume
+  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
+  MIDI CC 70  Pulse width
+  MIDI CC 71  Filter Resonance
+  MIDI CC 72  VCA Release Time
+  MIDI CC 74  Filter cutoff
+  MIDI CC 80  Delay 0 to 63 = Off, 64 to 127 = On
+  MIDI CC 81  Crush 0 to 63 = Off, 64 to 127 = On
+  MIDI CC 94  Detune amount
+  */
 
 const float MIDI_NOTE_FREQUENCY[127] = {
   8.1757989156, 8.6619572180, 9.1770239974, 9.7227182413, 10.3008611535, 10.9133822323, 11.5623257097, 12.2498573744, 12.9782717994, 13.7500000000, 14.5676175474, 15.4338531643, 16.3515978313,
@@ -18,6 +31,8 @@ const float MIDI_NOTE_FREQUENCY[127] = {
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
+#define MIDI_HIGHEST_NOTE 94
+
 void midi_init();
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value);
@@ -28,6 +43,8 @@ float midi_note_to_frequency(int x);
 
 void midi_handle() {
   MIDI.read();
+  // Run through the parameters, see if they have changed and then send out CC's
+  usbMIDI.read(MIDI_CHANNEL);
 }
 
 void midi_init() {
@@ -36,6 +53,9 @@ void midi_init() {
   MIDI.setHandleNoteOff(midi_note_off);
 
   MIDI.setHandleClock(midi_handle_clock);
+
+  usbMIDI.setHandleNoteOn(midi_note_on);
+  usbMIDI.setHandleNoteOff(midi_note_off);
 }
 
 void midi_handle_clock() {
@@ -44,11 +64,24 @@ void midi_handle_clock() {
 
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value) {
   if(channel == MIDI_CHANNEL) {
-
+    switch(number) {
+      case 123: // All notes off
+        note_off();
+        note_stack.Clear();
+        break;
+      default:
+        break;
+    }
   }
 }
 
 float midi_note_to_frequency(int x) {
+  if(x < 0) {
+    x = 0;
+  }
+  if(x > MIDI_HIGHEST_NOTE) {
+    x = MIDI_HIGHEST_NOTE;
+  }
   return MIDI_NOTE_FREQUENCY[x];
 }
 
