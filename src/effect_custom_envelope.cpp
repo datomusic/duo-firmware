@@ -1,5 +1,4 @@
 #include "./effect_custom_envelope.h"
-#include "utility/dspinst.h"
 
 static const int SAMPLES_PER_MSEC = (AUDIO_SAMPLE_RATE_EXACT/1000.0);
 
@@ -56,49 +55,5 @@ void AudioEffectCustomEnvelope::noteOff(void) {
 }
 
 
-void AudioEffectCustomEnvelope::update(void) {
-  if (env.state == Envelope::Idle) {
-    return;
-  }
-
-  audio_block_t *block;
-  uint32_t *p, *end;
-  uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;
-
-
-  block = receiveWritable();
-  if (!block) return;
-  p = (uint32_t *)(block->data);
-  end = p + AUDIO_BLOCK_SAMPLES/2;
-
-
-  while (p < end) {
-    // process 8 samples
-    sample12 = *p++;
-    sample34 = *p++;
-    sample56 = *p++;
-    sample78 = *p++;
-    p -= 4;
-    tmp1 = signed_multiply_32x16b(env.step(), sample12);
-    tmp2 = signed_multiply_32x16t(env.step(), sample12);
-    sample12 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(env.step(), sample34);
-    tmp2 = signed_multiply_32x16t(env.step(), sample34);
-    sample34 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(env.step(), sample56);
-    tmp2 = signed_multiply_32x16t(env.step(), sample56);
-    sample56 = pack_16b_16b(tmp2, tmp1);
-    tmp1 = signed_multiply_32x16b(env.step(), sample78);
-    tmp2 = signed_multiply_32x16t(env.step(), sample78);
-    sample78 = pack_16b_16b(tmp2, tmp1);
-    *p++ = sample12;
-    *p++ = sample34;
-    *p++ = sample56;
-    *p++ = sample78;
-
-  }
-  transmit(block);
-  release(block);
-}
 
 

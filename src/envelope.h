@@ -2,9 +2,11 @@
 #ifndef ENVELOPE_H
 #define ENVELOPE_H
 
+#include <stdio.h>
+
 
 struct Envelope{
-  Envelope(int maxValue) : maxValue(maxValue), conf(maxValue, 0,0,0,0){ }
+  Envelope(int maxValue, int pieceSize) : maxValue(maxValue), pieceSize(pieceSize), conf(maxValue, 0,0,0,0){ }
 
   inline void adsr(int attack, int decay, int sustain, int release){
     conf = Envelope::Config(maxValue, attack, decay, sustain, release);
@@ -14,33 +16,42 @@ struct Envelope{
   inline void off(){ state = Release; }
 
   inline int step(){
+      int curInc;
+      int oldVal = curVal;
       switch(state){
         case Idle:
         case Sustain:
+          return 0;
           break;
         case Attack:
-          curVal += conf.attackRate;
+          curInc = conf.attackRate;
+          curVal += curInc*pieceSize;
           if(curVal >= maxValue){
             curVal = maxValue;
+            curInc = Config::calcRate(curVal-oldVal, pieceSize);
             state = Decay;
           }
           break;
         case Decay:
-          curVal -= conf.decayRate;
+          curInc = conf.decayRate;
+          curVal += curInc*pieceSize;
           if(curVal <= conf.sustainLevel){
             curVal = conf.sustainLevel;
+            curInc = Config::calcRate(curVal-oldVal, pieceSize);
             state = Sustain;
           }
           break;
         case Release:
-          curVal -= conf.releaseRate;
+          curInc = conf.releaseRate;
+          curVal += curInc*pieceSize;
           if(curVal <= 0){
             curVal = 0;
+            curInc = Config::calcRate(oldVal, pieceSize);
             state = Idle;
           }
           break;
       }
-    return curVal;
+    return curInc;
   }
 
   enum State{
@@ -52,13 +63,11 @@ struct Envelope{
   };
 
   State state = Idle;
-  private:
-
     struct Config{
       Config(int maxVal, int attack, int decay, int sustain, int release)
         :attackRate(calcRate(maxVal, attack))
-         ,decayRate(calcRate(maxVal-sustain, decay))
-         ,releaseRate(calcRate(sustain, release))
+         ,decayRate(-calcRate(maxVal-sustain, decay))
+         ,releaseRate(-calcRate(sustain, release))
          ,sustainLevel(sustain>maxVal?maxVal:sustain)
       {}
 
@@ -78,6 +87,7 @@ struct Envelope{
     };
 
     const int maxValue = 0;
+    const int pieceSize = 0;
     int curVal = 0;
     Config conf;
 
