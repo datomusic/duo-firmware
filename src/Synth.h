@@ -58,10 +58,10 @@
 AudioSynthWaveform       osc_pulse;      //xy=78.10000610351562,97
 AudioSynthWaveform       osc_saw;        //xy=79.10000610351562,44
 AudioSynthWaveformDc     dc1;            //xy=88.10000610351562,149
-AudioEffectCustomEnvelope     envelope2;      //xy=227.10000610351562,149
+AudioEffectCustomEnvelope envelope2;      //xy=227.10000610351562,149
 AudioMixer4              mixer1;         //xy=255.10000610351562,83
 AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
-AudioEffectCustomEnvelope     envelope1;      //xy=560.1000061035156,81
+AudioEffectCustomEnvelope envelope1;      //xy=560.1000061035156,81
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
@@ -112,14 +112,14 @@ void audio_init() {
   filter1.octaveControl(4);
 
   // Amp envelope
-  envelope1.attack(10);
+  envelope1.attack(2);
   envelope1.decay(0);
   envelope1.sustain(1.0);
   envelope1.release(400);
 
   // Filter envelope
   dc1.amplitude(1.0); // Filter env needs an input signal
-  envelope2.attack(5);
+  envelope2.attack(15);
   envelope2.decay(0);
   envelope2.sustain(1.0);
   envelope2.release(300);
