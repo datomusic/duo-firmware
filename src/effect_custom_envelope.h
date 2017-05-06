@@ -20,10 +20,6 @@ public:
 
 	using AudioStream::release;
         virtual void update(void) {
-          if (env.state == Envelope::Idle) {
-            return;
-          }
-
           audio_block_t *block;
           uint32_t *p, *end;
           uint32_t sample12, sample34, sample56, sample78, tmp1, tmp2;

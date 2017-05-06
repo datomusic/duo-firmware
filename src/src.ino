@@ -307,7 +307,7 @@ void note_off() {
 }
 
 void print_log() {
-  Serial.printf("Envelope1 cpu: %d\n", envelope1.processorUsage());
+  Serial.printf("Envelope1 cpu: %d\n", envelope1.processorUsageMax());
 }
 
 /*
