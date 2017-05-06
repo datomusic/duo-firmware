@@ -68,6 +68,10 @@ class TempoHandler
         midi_clock = 11; // One less than our overflow, so the next MIDI clock tick triggers a callback
       }
     }
+    void reset_clock_source() {
+      midi_clock = 0;
+      _source = TEMPO_SOURCE_INTERNAL;
+    }
     bool is_clock_source_internal() {
       return _source == TEMPO_SOURCE_INTERNAL;
     }

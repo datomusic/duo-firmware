@@ -18,6 +18,7 @@ const int MIDI_CHANNEL = 1;
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 };
+const uint8_t SCALE_OFFSET_FROM_C3[] { 1,3,6,8,10,13,15,18,20,22 };
 const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
 
 #define INITIAL_VELOCITY 100
@@ -34,7 +35,7 @@ float osc_pulse_frequency = 0.;
 float osc_pulse_target_frequency = 0.;
 float osc_saw_target_frequency = 0.;
 uint8_t osc_pulse_midi_note = 0;
-bool note_is_playing = 0;
+uint8_t note_is_playing = 0;
 bool note_is_triggered = false;
 int transpose = 0;
 bool next_step_is_random = false;
@@ -61,14 +62,35 @@ int tempo_interval_msec();
 
 void enter_dfu();
 
+typedef struct {
+  int detune;
+  float pulseWidth;
+  int filter;
+  float resonance;
+  int release;
+  int amplitude;
+  bool glide;
+  bool accent;
+  bool delay;
+  bool crush;
+} synth_parameters;
+
+synth_parameters synth;
+#include "note_stack.h"
+NoteStack note_stack;
+
 #include "pinmap.h"
 #include "MidiFunctions.h"
 #include "Buttons.h"
 #include "Synth.h"
+#include "TempoHandler.h"
+TempoHandler tempo_handler;
+
 #include "Sequencer.h"
 #include "Leds.h"
 #include "DrumSynth.h"
 #include "Pitch.h"
+
 #include "Power.h"
 
 void setup() {
@@ -79,22 +101,24 @@ void setup() {
   sequencer_init();
   audio_init();
   led_init();
-  Serial.begin(57600);
 
   midi_init();
 
   MIDI.setHandleStart(sequencer_restart);
   MIDI.setHandleContinue(sequencer_restart);
   MIDI.setHandleStop(sequencer_stop);
+  MIDI.setHandleControlChange(midi_handle_cc);
 
   button_matrix_init();
   drum_init();
   touch_init();
   
   previous_note_on_time = millis();
-  
-  Serial.print("Dato DUO firmware ");
-  Serial.println(VERSION);
+  #ifdef DEV_MODE
+    Serial.begin(57600);
+    Serial.print("Dato DUO firmware ");
+    Serial.println(VERSION);
+  #endif
   headphone_enable();
 }
 
@@ -125,9 +149,11 @@ void loop() {
 // Scans the button_matrix and handles step enable and keys
 void keys_scan() {
   if(muxDigitalRead(DELAY_PIN)) {
+    synth.delay = false;
     mixer_delay.gain(0, 0.0); // Delay input
     mixer_delay.gain(3, 0.0);
   } else {
+    synth.delay = true;
     mixer_delay.gain(0, 0.5); // Delay input
     mixer_delay.gain(3, 0.4); // Hat delay input
   }
@@ -139,7 +165,7 @@ void keys_scan() {
         switch (button_matrix.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  keyboard_set_note(k - KEYB_0);
+                  keyboard_set_note(SCALE[k - KEYB_0]);
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
@@ -181,8 +207,7 @@ void keys_scan() {
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  // MIDI.sendNoteOff(SCALE[k-KEYB_0]+transpose,64,MIDI_CHANNEL);
-                  keyboard_unset_note(k - KEYB_0);
+                  keyboard_unset_note(SCALE[k - KEYB_0]);
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {
@@ -215,23 +240,28 @@ void pots_read() {
 
   // static int previous_amp_env_release = 0;
   int amp_env_release = muxAnalogRead(AMP_ENV_POT);
+  synth.release = map(amp_env_release,0,1023,30,500);
   // if((previous_amp_env_release/4) - (amp_env_release/4)) {
   //   MIDI.send(midi::ControlChange, 72, amp_env_release/4, MIDI_CHANNEL);
   // }
   // previous_amp_env_release = amp_env_release;
 
   int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
-
+  synth.filter = ((filter_pot_value*filter_pot_value)/3072)+40;
   // static int previous_volume_pot_value = 0;
   int volume_pot_value = muxAnalogRead(FADE_POT);
-
+  synth.amplitude = volume_pot_value;
   // if((previous_volume_pot_value/4) != (volume_pot_value/4)) {
   //   MIDI.send(midi::ControlChange, 7, volume_pot_value/4, MIDI_CHANNEL);
   // }
   // previous_volume_pot_value = volume_pot_value;
 
+
   int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
+  synth.pulseWidth = map(pulse_pot_value,0,1023,1000,100)/1000.0;
+
   int resonance = muxAnalogRead(FILTER_RES_POT);
+  synth.resonance = map(resonance,0,1023,70,400)/100.0;
 
   analogWrite(FILTER_LED, filter_pot_value>>2);
   analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
@@ -247,12 +277,12 @@ void pots_read() {
     osc_saw.amplitude(0.4);
   }
   osc_pulse.frequency(osc_pulse_frequency);
-  osc_pulse.pulseWidth(map(pulse_pot_value,0,1023,1000,100)/1000.0);
+  osc_pulse.pulseWidth(synth.pulseWidth);
 
-  filter1.frequency(((filter_pot_value*filter_pot_value)/3072)+40);
-  filter1.resonance(map(resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
+  filter1.frequency(synth.filter);
+  filter1.resonance(synth.resonance); // 0.7-5.0 range
 
-  envelope1.release(map(amp_env_release,0,1023,30,500));
+  envelope1.release(synth.release);
 
   if(digitalRead(BITC_PIN)) {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
@@ -260,7 +290,7 @@ void pots_read() {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
   }
 
-  audio_volume(volume_pot_value);
+  audio_volume(synth.amplitude);
 
   AudioInterrupts(); 
 }
@@ -286,6 +316,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     AudioInterrupts(); 
 
     MIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
+    usbMIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
@@ -295,7 +326,8 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
 
 void note_off() {
   if (note_is_playing) {
-    MIDI.sendNoteOff(note_is_playing, 64, MIDI_CHANNEL);
+    MIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
+    usbMIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
     if(!step_enable[current_step]) {
       leds(current_step) = CRGB::Black;
     } else {

@@ -123,11 +123,11 @@ const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
 #define SW_SYN3  2
 #define POT_SYN3 3
 
-#define SW_SYN4  4
+#define SW_SYN4  4 
 
-#define POT_SYN4 5
-#define POT_SYN5 6
-#define POT_SYN6 7
+#define POT_SYN4 5 
+#define POT_SYN5 6 
+#define POT_SYN6 7 
 
 const int SLIDE_PIN = 1;
 const int DELAY_PIN = 2;
@@ -143,26 +143,28 @@ const int OSC_PW_POT = 7;
 const int FADE_POT = 6; 
 
 int muxAnalogRead(uint8_t channel) { 
-  pinMode(MUX_IO, INPUT);
-  digitalWrite(SYN_ADDR0, bitRead(channel,0));
-  digitalWrite(SYN_ADDR1, bitRead(channel,1));
-  digitalWrite(SYN_ADDR2, bitRead(channel,2));
+  // Any call to pinMode sets the port mux to GPIO mode.
+  // We want to force it back to analog mode
+  volatile uint32_t *config;
+  config = portConfigRegister(MUX_IO);
+  *config = PORT_PCR_MUX(0);
+
+  digitalWriteFast(SYN_ADDR0, bitRead(channel,0));
+  digitalWriteFast(SYN_ADDR1, bitRead(channel,1));
+  digitalWriteFast(SYN_ADDR2, bitRead(channel,2));
   //do we need to wait a few nanoseconds?
-  delayMicroseconds(4);
+  delayMicroseconds(5);
   return analogRead(MUX_IO);
 }
 
 uint8_t muxDigitalRead(uint8_t channel) { 
   pinMode(MUX_IO, INPUT_PULLUP);
-  digitalWrite(SYN_ADDR0, bitRead(channel,0));
-  digitalWrite(SYN_ADDR1, bitRead(channel,1));
-  digitalWrite(SYN_ADDR2, bitRead(channel,2));
-  delayMicroseconds(4);
-  //Wait a few microseconds for the selection to propagate. 
-  //Less than 3 seems not to work so let's take 4 to be sure
-  uint8_t p = digitalRead(MUX_IO);
-  pinMode(MUX_IO, INPUT);
+  digitalWriteFast(SYN_ADDR0, bitRead(channel,0));
+  digitalWriteFast(SYN_ADDR1, bitRead(channel,1));
+  digitalWriteFast(SYN_ADDR2, bitRead(channel,2));
   delayMicroseconds(10);
+  //Wait a few microseconds for the selection to propagate. 
+  uint8_t p = digitalRead(MUX_IO);
   return p;
 }
 
