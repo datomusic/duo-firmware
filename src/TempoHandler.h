@@ -86,18 +86,14 @@ class TempoHandler
     uint32_t _previous_sync_time;
     uint16_t _tempo_interval;
     bool _midi_clock_block = false;
-    uint8_t _midi_divider;
+    uint32_t _previous_midi_clock = 0;
     uint8_t _clock = 0;
 
     void update_midi() { 
-      if(midi_clock % _midi_divider == 0) {
-        if (!_midi_clock_block) {
-          _midi_clock_block = 1; // Block callback from triggering multiple times
-          _previous_clock_time = micros();
-          trigger();
-        }
-      } else {
-        _midi_clock_block = 0;
+      if(midi_clock != _previous_midi_clock) {
+        _previous_midi_clock = midi_clock;
+        _previous_clock_time = micros();
+        trigger();
       }
     }
     void update_sync() {
