@@ -62,11 +62,12 @@ int tempo_interval_msec();
 
 void enter_dfu();
 
+// 10 bit representation of full scale parameters
 typedef struct {
   int detune;
-  float pulseWidth;
+  int pulseWidth;
   int filter;
-  float resonance;
+  int resonance;
   int release;
   int amplitude;
   bool glide;
@@ -81,6 +82,7 @@ NoteStack note_stack;
 
 #include "pinmap.h"
 #include "MidiFunctions.h"
+#include "MathFunctions.h"
 #include "Buttons.h"
 #include "Synth.h"
 #include "TempoHandler.h"
@@ -233,38 +235,17 @@ void keys_scan() {
 }
 
 void pots_read() {
-  // Read out the pots/switches
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
   
-  detune_amount = muxAnalogRead(OSC_DETUNE_POT);
+  synth.detune = muxAnalogRead(OSC_DETUNE_POT);
+  synth.release = muxAnalogRead(AMP_ENV_POT);
+  synth.filter = muxAnalogRead(FILTER_FREQ_POT);
+  synth.amplitude = muxAnalogRead(FADE_POT);
+  synth.pulseWidth = muxAnalogRead(OSC_PW_POT);
+  synth.resonance = muxAnalogRead(FILTER_RES_POT);
 
-  // static int previous_amp_env_release = 0;
-  int amp_env_release = muxAnalogRead(AMP_ENV_POT);
-  synth.release = map(amp_env_release,0,1023,30,500);
-  // if((previous_amp_env_release/4) - (amp_env_release/4)) {
-  //   MIDI.send(midi::ControlChange, 72, amp_env_release/4, MIDI_CHANNEL);
-  // }
-  // previous_amp_env_release = amp_env_release;
-
-  int filter_pot_value = muxAnalogRead(FILTER_FREQ_POT);
-  synth.filter = ((filter_pot_value*filter_pot_value)/3072)+40;
-  // static int previous_volume_pot_value = 0;
-  int volume_pot_value = muxAnalogRead(FADE_POT);
-  synth.amplitude = volume_pot_value;
-  // if((previous_volume_pot_value/4) != (volume_pot_value/4)) {
-  //   MIDI.send(midi::ControlChange, 7, volume_pot_value/4, MIDI_CHANNEL);
-  // }
-  // previous_volume_pot_value = volume_pot_value;
-
-
-  int pulse_pot_value = muxAnalogRead(OSC_PW_POT);
-  synth.pulseWidth = map(pulse_pot_value,0,1023,1000,100)/1000.0;
-
-  int resonance = muxAnalogRead(FILTER_RES_POT);
-  synth.resonance = map(resonance,0,1023,70,400)/100.0;
-
-  analogWrite(FILTER_LED, filter_pot_value>>2);
-  analogWrite(OSC_LED, 255-(pulse_pot_value>>2));
+  analogWrite(FILTER_LED, synth.filter>>2);
+  analogWrite(OSC_LED, 255-(synth.pulseWidth>>2));
 
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
@@ -277,12 +258,12 @@ void pots_read() {
     osc_saw.amplitude(0.4);
   }
   osc_pulse.frequency(osc_pulse_frequency);
-  osc_pulse.pulseWidth(synth.pulseWidth);
+  osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,1000,100)/1000.0);
 
-  filter1.frequency(synth.filter);
-  filter1.resonance(synth.resonance); // 0.7-5.0 range
+  filter1.frequency(((synth.filter*synth.filter) >> 11)+40);
+  filter1.resonance(map(synth.resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
 
-  envelope1.release(synth.release);
+  envelope1.release(((synth.release*synth.release) >> 11)+30);
 
   if(digitalRead(BITC_PIN)) {
     bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
@@ -339,7 +320,7 @@ void note_off() {
 }
 
 void print_log() {
-  Serial.printf("Envelope1 cpu: %d\n", envelope1.processorUsageMax());
+  Serial.printf("Release: %d\n", synth.release);
 }
 
 /*

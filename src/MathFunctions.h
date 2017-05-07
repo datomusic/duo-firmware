@@ -1,71 +1,20 @@
-/* fscale
- Floating Point Autoscale Function V0.1
- Paul Badger 2007
- Modified from code by Greg Shakar
+#ifndef MathFunctions_h
+#define MathFunctions_h
 
- This function will scale one set of floating point numbers (range) to another set of floating point numbers (range)
- It has a "curve" parameter so that it can be made to favor either the end of the output. (Logarithmic mapping)
+/*
+ Based on Pichenettes pseudocode https://gist.github.com/pichenettes/7453b3d6e3a0e252124f
+ See https://mutable-instruments.net/forum/discussion/6005/the-dsp-g1-analog-modeling-synth-source-code/p1
+ */
+const uint16_t coarse_table[] = { 33, 50, 78, 120, 184, 284, 437, 673, 1036, 1596, 2457, 3784, 5827, 8973, 13818, 21279 };
+const uint16_t fine_table[] = { 32768, 33664, 34585, 35531, 36503, 37501, 38527, 39580, 40663, 41775, 42918, 44092, 45298, 46536, 47809, 49117, 50460 };
 
- It takes 6 parameters
+// Feed in a uint16_t from 0 to 65536 and receive a value between 32 and 32768 with a log response
+uint16_t log_map(uint16_t value) {
+ uint16_t coarse = coarse_table[(value >> 12) & 0xf];
+ uint16_t fine_integral = (value >> 8) & 0xf;
+ uint16_t fine_fractional = value & 0xff;
+ uint16_t fine = fine_table[fine_integral] + ((fine_table[fine_integral + 1] - fine_table[fine_integral]) * fine_fractional >> 8);
+ return coarse * fine >> 15;
+}
 
- originalMin - the minimum value of the original range - this MUST be less than origninalMax
- originalMax - the maximum value of the original range - this MUST be greater than orginalMin
-
- newBegin - the end of the new range which maps to orginalMin - it can be smaller, or larger, than newEnd, to facilitate inverting the ranges
- newEnd - the end of the new range which maps to originalMax  - it can be larger, or smaller, than newBegin, to facilitate inverting the ranges
-
- in - the variable for input that will mapped to the given ranges, this variable is constrained to originaMin <= in <= originalMax
- curve - curve is the curve which can be made to favor either end of the output scale in the mapping. Parameters are from -10 to 10 with 0 being
-          a linear mapping (which basically takes curve out of the equation)
-
-*/
-float fscale(float in, float inMin, float inMax, float outBegin, float outEnd, float curve){
-  float OriginalRange = 0;
-  float NewRange = 0;
-  float zeroRefCurVal = 0;
-  float normalizedCurVal = 0;
-  float rangedValue = 0;
-  boolean invFlag = 0;
-
-  // condition curve parameter
-  // limit range
-  if (curve > 10) curve = 10;
-  if (curve < -10) curve = -10;
-
-  curve = (curve * -.1) ; // - invert and scale - this seems more intuitive - postive numbers give more weight to high end on output 
-  curve = pow(10, curve); // convert linear scale into lograthimic exponent for other pow function
-
-  // Check for out of range ins
-  if (in < originalMin) {
-    in = originalMin;
-  }
-  if (in > originalMax) {
-    in = originalMax;
-  }
-
-  // Zero Refference the values
-  OriginalRange = originalMax - originalMin;
-
-  if (newEnd > newBegin) { 
-    NewRange = newEnd - newBegin;
-  }
-  else {
-    NewRange = newBegin - newEnd; 
-    invFlag = 1;
-  }
-
-  zeroRefCurVal = in - originalMin;
-  normalizedCurVal  =  zeroRefCurVal / OriginalRange;   // normalize to 0 - 1 float
-
-  // Check for originalMin > originalMax  - the math for all other cases i.e. negative numbers seems to work out fine 
-  if (originalMin > originalMax ) {
-    return 0;
-  }
-
-  if (invFlag == 0){
-    rangedValue =  (pow(normalizedCurVal, curve) * NewRange) + newBegin;
-  } else {   
-    rangedValue =  newBegin - (pow(normalizedCurVal, curve) * NewRange); 
-  }
-  return rangedValue;
-} 
+#endif
