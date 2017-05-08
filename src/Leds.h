@@ -4,7 +4,7 @@
 #include <FastLED.h>
 
 #define CORRECTION_SK6812 0xFFF1E0
-#define LED_WHITE CRGB(230,255,150);
+#define LED_WHITE CRGB(230,255,150)
 
 #define leds(A) physical_leds[led_order[A]]
 #define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
@@ -13,8 +13,6 @@ CRGB physical_leds[NUM_LEDS];
 #define led_play physical_leds[0]
 const int LED_BRIGHTNESS = 32;
 
-// 1,3,6,8,10,13,15,18,20,22 
-// ALternate pin colors
 const CRGB COLORS[] = {
   0x444444,
   0xFF0001,
@@ -95,8 +93,12 @@ void led_update() {
           led_play.fadeLightBy((sequencer_clock % 12)*16);
         } else {
           physical_leds[0] = CRGB::Black;
-          leds(next_step) = LED_WHITE;
-          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
+          if(step_enable[next_step]) {
+            leds(next_step) = blend(LED_WHITE, COLORS[step_note[next_step]%24], (sequencer_clock % 12)*16);
+          } else {
+            leds(next_step) = LED_WHITE;
+            leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
+          }
         }
       } else {
         led_play = LED_WHITE;
@@ -104,7 +106,9 @@ void led_update() {
     }
   }
   FastLED.show();
-  analogWrite(ENV_LED, 255-((int)(peak1.read()*255.)));
+  analogWrite(ENV_LED, (peak1.read()*127.0f));
+  analogWrite(FILTER_LED, 1 + ((synth.filter*synth.filter) >> 13));
+  analogWrite(OSC_LED, synth.pulseWidth/8);
   //TODO: filter and pulse led should be set here as well
 }
 
