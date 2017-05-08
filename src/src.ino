@@ -260,7 +260,7 @@ void pots_read() {
   osc_pulse.frequency(osc_pulse_frequency);
   osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,1000,100)/1000.0);
 
-  filter1.frequency(((synth.filter*synth.filter) >> 11)+40);
+  filter1.frequency((synth.filter/2)+30);
   filter1.resonance(map(synth.resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
 
   envelope1.release(((synth.release*synth.release) >> 11)+30);
