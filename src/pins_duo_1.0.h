@@ -140,11 +140,12 @@ const int OSC_DETUNE_POT = 3;
 
 const int OSC_PW_POT = 7;
 
-const int FADE_POT = 6; 
+const int AMP_POT = 6; 
 
 int muxAnalogRead(uint8_t channel) { 
   // Any call to pinMode sets the port mux to GPIO mode.
   // We want to force it back to analog mode
+  // Might be equivalent to pinMode(MUX_IO, INPUT_DISABLE);
   volatile uint32_t *config;
   config = portConfigRegister(MUX_IO);
   *config = PORT_PCR_MUX(0);

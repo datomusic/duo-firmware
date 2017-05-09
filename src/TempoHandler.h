@@ -125,7 +125,7 @@ class TempoHandler
     void update_internal() {
       int potvalue = analogRead(TEMPO_POT);
       _tempo_interval = map(potvalue,0,1023,TEMPO_MIN_INTERVAL_USEC,TEMPO_MAX_INTERVAL_USEC);
-
+      
       if((micros() - _previous_clock_time) > _tempo_interval)  {
         _previous_clock_time = micros();
         trigger();
@@ -137,6 +137,8 @@ class TempoHandler
      */
     void trigger() {
       MIDI.sendRealTime(midi::Clock);
+      usbMIDI.sendRealTime(0xF8);
+
       if((_clock % 24) == 0) {
         if (tResetCallback != 0) {
           tResetCallback();

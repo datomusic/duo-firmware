@@ -15,6 +15,12 @@
 //   private:
 // };
 
+
+/*
+ The sequencer holds a number of notes
+ Note timing is divided into 24 steps per quarter note
+ */
+
 //Initial sequencer values
 uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
 uint8_t step_enable[] = { 1,0,1,1,1,1,0,1 };

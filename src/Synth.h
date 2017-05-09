@@ -93,6 +93,7 @@ AudioConnection          patchCord15(mixer_output, peak2);
 
 void audio_init();
 void audio_volume(uint8_t volume);
+void synth_update();
 
 void audio_init() {
   AudioMemory(128); // 260 bytes per block, 2.9ms per block
@@ -163,4 +164,33 @@ void audio_volume(int volume) {
   mixer_output.gain(3, (volume/2048.)*HAT_GAIN+0.5);
 }
 
+void synth_update() {
+  // Audio interrupts have to be off to apply settings
+  AudioNoInterrupts();
+
+  osc_saw.frequency(osc_saw_frequency);
+
+  if(synth.detune > 800) {
+    osc_saw.amplitude(map(synth.detune,800,1023,400,0)/1000.);
+  } else {
+    osc_saw.amplitude(0.4);
+  }
+  osc_pulse.frequency(osc_pulse_frequency);
+  osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,1000,100)/1000.0);
+
+  filter1.frequency((synth.filter/2)+30);
+  filter1.resonance(map(synth.resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
+
+  envelope1.release(((synth.release*synth.release) >> 11)+30);
+
+  if(!synth.crush) {
+    bitcrusher1.sampleRate(HIGH_SAMPLE_RATE);
+  } else {
+    bitcrusher1.sampleRate(LOW_SAMPLE_RATE);
+  }
+
+  audio_volume(synth.amplitude);
+
+  AudioInterrupts(); 
+}
 #endif

@@ -23,7 +23,7 @@ bool power_check() {
     if(keys_scan_powerbutton()) {
       power_on();
     } else {
-      delay(100);
+      delay(100); // TODO: low power sleep
     }
   } else {
     amp_update();
@@ -31,7 +31,7 @@ bool power_check() {
   return power_flag;
 }
 
-void power_off() { // TODO: this is super crude and doesn't work, but it shows the effect
+void power_off() {
   sequencer_stop();
   MIDI.sendControlChange(123,0,MIDI_CHANNEL);
   tempo_handler.reset_clock_source();

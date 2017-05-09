@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.6.6"
+#define VERSION "0.7.0"
 
 /*
   DEV mode does the following:
@@ -19,7 +19,9 @@ const int MIDI_CHANNEL = 1;
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 };
 const uint8_t SCALE_OFFSET_FROM_C3[] { 1,3,6,8,10,13,15,18,20,22 };
-const float   SAMPLERATE_STEPS[] = { 44100,4435,2489,1109 }; 
+
+#define HIGH_SAMPLE_RATE 44100
+#define LOW_SAMPLE_RATE 2489
 
 #define INITIAL_VELOCITY 100
 
@@ -78,7 +80,7 @@ typedef struct {
 
 synth_parameters synth;
 #include "note_stack.h"
-NoteStack note_stack;
+NoteStack<10> note_stack;
 
 #include "pinmap.h"
 #include "MidiFunctions.h"
@@ -122,27 +124,35 @@ void setup() {
     Serial.println(VERSION);
   #endif
   headphone_enable();
+
 }
 
 void loop() {
   if(power_check()) {
     // Fast stuff
-    keys_scan();
+    keys_scan(); // 14 or 175us (depending on debounce)
+
     keyboard_to_note();   
+
     midi_handle();
-    pitch_update();   
+
+    pitch_update();  // ~30us 
 
     sequencer_update();
 
-    pots_read();
+    pots_read(); // ~ 100us
 
     sequencer_update();
 
-    drum_read();
+    synth_update(); // ~ 100us
 
     sequencer_update();
 
-    led_update();
+    drum_read(); // ~ 700us
+
+    sequencer_update();
+
+    led_update(); // ~ 2ms
 
     sequencer_update();
   }
@@ -159,6 +169,8 @@ void keys_scan() {
     mixer_delay.gain(0, 0.5); // Delay input
     mixer_delay.gain(3, 0.4); // Hat delay input
   }
+
+  synth.crush = !digitalRead(BITC_PIN);
 
   if (button_matrix.getKeys())  {
     for (int i=0; i<LIST_MAX; i++) {
@@ -240,40 +252,14 @@ void pots_read() {
   synth.detune = muxAnalogRead(OSC_DETUNE_POT);
   synth.release = muxAnalogRead(AMP_ENV_POT);
   synth.filter = muxAnalogRead(FILTER_FREQ_POT);
-  synth.amplitude = muxAnalogRead(FADE_POT);
+  synth.amplitude = muxAnalogRead(AMP_POT);
   synth.pulseWidth = muxAnalogRead(OSC_PW_POT);
   synth.resonance = muxAnalogRead(FILTER_RES_POT);
 
-  analogWrite(FILTER_LED, synth.filter>>2);
-  analogWrite(OSC_LED, 255-(synth.pulseWidth>>2));
+  analogWrite(FILTER_LED, 1 + ((synth.filter*synth.filter)>>13));
+  analogWrite(OSC_LED, 1 + ((synth.pulseWidth*synth.pulseWidth)>>13));
 
   // Audio interrupts have to be off to apply settings
-  AudioNoInterrupts();
-
-  osc_saw.frequency(osc_saw_frequency);
-
-  if(detune_amount > 800) {
-    osc_saw.amplitude(map(detune_amount,800,1023,400,0)/1000.);
-  } else {
-    osc_saw.amplitude(0.4);
-  }
-  osc_pulse.frequency(osc_pulse_frequency);
-  osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,1000,100)/1000.0);
-
-  filter1.frequency((synth.filter/2)+30);
-  filter1.resonance(map(synth.resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
-
-  envelope1.release(((synth.release*synth.release) >> 11)+30);
-
-  if(digitalRead(BITC_PIN)) {
-    bitcrusher1.sampleRate(SAMPLERATE_STEPS[0]);
-  } else {
-    bitcrusher1.sampleRate(SAMPLERATE_STEPS[2]);
-  }
-
-  audio_volume(synth.amplitude);
-
-  AudioInterrupts(); 
 }
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {

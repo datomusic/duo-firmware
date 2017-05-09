@@ -88,6 +88,7 @@ public:
     a.updateBaseline();
     b.updateBaseline();
     numTouches = 0;
+    updateInterval = 100;
   }
   inline void setHandleTouchEvent(void (*fptr)(uint8_t event, int value)) {
     tTouchCallback  = fptr;
@@ -97,7 +98,7 @@ public:
     a.update();
     b.update();
     
-    if(sysTick > lastUpdate + 100) {
+    if(sysTick > lastUpdate + updateInterval) {
       lastUpdate = sysTick;
       a.updateBaseline();
       b.updateBaseline();
@@ -135,6 +136,7 @@ public:
   int _sliderValue;
   unsigned long _lastTouch;
   unsigned long lastUpdate;
+  int updateInterval;
 };
 
 #endif
