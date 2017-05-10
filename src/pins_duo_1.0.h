@@ -116,7 +116,6 @@ const int NUM_LEDS = 19;
 const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
 
 // Multiplexer channels.
-// TODO: a gpio abstraction function would probably be a good idea
 #define POT_SYN1 0
 #define POT_SYN2 1
 

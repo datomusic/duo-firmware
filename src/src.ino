@@ -8,12 +8,6 @@
 
 #define VERSION "0.8.0"
 
-/*
-  DEV mode does the following:
-  - Reset the DUO to DFU mode when long pressing the Play button
- */
-#define DEV_MODE
-
 const int MIDI_CHANNEL = 1;
 
 // Musical settings
@@ -30,7 +24,7 @@ int gate_length_msec = 40;
 
 uint32_t sequencer_clock = 0;
 // Sequencer settings
-uint8_t current_step; // TODO: should be sequencer_num_steps
+uint8_t current_step;
 int tempo = 0;
 uint8_t set_key = 9;
 float osc_saw_frequency = 0.;
@@ -96,6 +90,8 @@ TempoHandler tempo_handler;
 #include "Pitch.h"
 
 #include "Power.h"
+
+#include "debug.h"
 
 void setup() {
 
@@ -245,9 +241,9 @@ void keys_scan() {
                   #endif
                 } 
                 #ifdef DEV_MODE
-                if (k == BTN_UP) {
-                  print_log();
-                }
+                  if (k == BTN_UP) {
+                    print_log();
+                  }
                 #endif
                 break;
             case RELEASED:
@@ -319,6 +315,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     envelope2.noteOn();
   } else {
     leds(current_step) = LED_WHITE;
+
   }
 }
 
@@ -334,10 +331,6 @@ void note_off() {
     }
     note_is_playing = 0;
   } 
-}
-
-void print_log() {
-  Serial.printf("Release: %d\n", synth.release);
 }
 
 /*

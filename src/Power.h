@@ -29,7 +29,7 @@ bool power_check() {
     if(keys_scan_powerbutton()) {
       power_on();
     } else {
-      delay(100); // TODO: low power sleep
+      delay(100);
     }
   } else {
     amp_update();

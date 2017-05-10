@@ -77,9 +77,11 @@ void led_update() {
      
     if(note_is_playing) {
       leds(current_step) = LED_WHITE;
+      // led_play = COLORS[note_is_playing%24];
     } else {
       if(!step_enable[current_step]) {
         leds(current_step) = CRGB::Black;
+        // led_play = CRGB::Black;
       }
 
       if(!sequencer_is_running) {
@@ -92,7 +94,7 @@ void led_update() {
           led_play = LED_WHITE;
           led_play.fadeLightBy((sequencer_clock % 12)*16);
         } else {
-          physical_leds[0] = CRGB::Black;
+          led_play = CRGB::Black;
           if(step_enable[next_step]) {
             leds(next_step) = blend(LED_WHITE, COLORS[step_note[next_step]%24], (sequencer_clock % 12)*16);
           } else {
@@ -109,7 +111,6 @@ void led_update() {
   analogWrite(ENV_LED, (peak1.read()*127.0f));
   analogWrite(FILTER_LED, 1 + ((synth.filter*synth.filter) >> 13));
   analogWrite(OSC_LED, synth.pulseWidth/8);
-  //TODO: filter and pulse led should be set here as well
 }
 
 #endif

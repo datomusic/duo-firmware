@@ -56,7 +56,6 @@ void sequencer_init() {
 
 void sequencer_restart() {
   MIDI.sendRealTime(midi::Start);
-  // TODO: According to MIDI specs, we should wait at least a millisecond before sending timer packets
   delay(1);
   current_step = SEQUENCER_NUM_STEPS - 1;
   tempo_handler.midi_clock_reset();
@@ -66,7 +65,6 @@ void sequencer_restart() {
 
 void sequencer_align_clock() {
   //round sequencer_clock to the nearest 12
-
   sequencer_clock -= (sequencer_clock%12);
 }
 
@@ -83,12 +81,12 @@ void sequencer_start() {
 
 void sequencer_stop() {
   if(sequencer_is_running) {
-    // TODO: usbMIDI all notes off
+
     usbMIDI.sendControlChange(123,0,MIDI_CHANNEL);
     MIDI.sendControlChange(123,0,MIDI_CHANNEL);
     usbMIDI.sendRealTime(midi::Stop);
     MIDI.sendRealTime(midi::Stop);
-    //TODO usbMIDI send stop
+
     sequencer_is_running = false;
     sequencer_untrigger_note();
   }
@@ -113,6 +111,8 @@ void sequencer_tick_clock() {
     int potvalue = analogRead(TEMPO_POT);
     if(potvalue < 127) {
       sequencer_divider /= 2;
+    } else if(potvalue > 900) {
+      sequencer_divider *= 2;
     }
   }
 
