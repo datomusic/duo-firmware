@@ -102,6 +102,7 @@ void power_on() {
 
 void amp_enable() {
   if(amp_enabled == 0) {
+    pop_suppressor.fadeIn(5.0);
     pinMode(AMP_ENABLE, OUTPUT);
     digitalWrite(AMP_ENABLE, LOW);
     amp_enabled = 1;
@@ -110,6 +111,7 @@ void amp_enable() {
 
 void amp_disable() {
   if(amp_enabled == 1) {
+    pop_suppressor.fadeOut(5.0);
     pinMode(AMP_ENABLE, INPUT);
     amp_enabled = 0;
   }

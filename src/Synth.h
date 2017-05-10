@@ -67,6 +67,7 @@ AudioEffectDelay         delay1;         //xy=712.0999755859375,174.100006103515
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
 AudioMixer4              mixer_delay;     //xy=728.0999755859375,279.1000061035156
 AudioMixer4              mixer_output;         //xy=861.1000061035156,100
+AudioEffectFade          pop_suppressor;          //xy=1062,292
 AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
 AudioOutputAnalog        dac1;           //xy=988.1000061035156,100
 AudioConnection          patchCord1(osc_pulse, 0, mixer1, 1);
@@ -82,8 +83,9 @@ AudioConnection          patchCord10(delay1, 0, mixer_delay, 1);
 AudioConnection          patchCord11(bitcrusher1, 0, mixer_output, 0);
 AudioConnection          patchCord12(bitcrusher1, 0, mixer_delay, 0);
 AudioConnection          patchCord13(mixer_delay, delay1);
-AudioConnection          patchCord14(mixer_output, dac1);
+AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
+AudioConnection          patchCord16(pop_suppressor, dac1);
 // GUItool: end automatically generated code
 
 #define MAIN_GAIN 0.8
