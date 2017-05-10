@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "0.7.0"
+#define VERSION "0.8.0"
 
 /*
   DEV mode does the following:
@@ -28,6 +28,7 @@ const uint8_t SCALE_OFFSET_FROM_C3[] { 1,3,6,8,10,13,15,18,20,22 };
 // Globals that should not be globals
 int gate_length_msec = 40;
 
+uint32_t sequencer_clock = 0;
 // Sequencer settings
 uint8_t current_step; // TODO: should be sequencer_num_steps
 int tempo = 0;
@@ -45,8 +46,7 @@ int tempo_interval;
 bool random_flag = 0;
 
 uint32_t midi_clock = 0;
-uint16_t audio_peak_values;
-uint16_t peak_update_time;
+uint16_t audio_peak_values = 0UL;
 
 void keys_scan();
 void pots_read();
@@ -113,11 +113,14 @@ void setup() {
   MIDI.setHandleStop(sequencer_stop);
   MIDI.setHandleControlChange(midi_handle_cc);
 
+  usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
+
   button_matrix_init();
   drum_init();
   touch_init();
   
   previous_note_on_time = millis();
+
   #ifdef DEV_MODE
     Serial.begin(57600);
     Serial.print("Dato DUO firmware ");
@@ -131,31 +134,59 @@ void loop() {
   if(power_check()) {
     // Fast stuff
     keys_scan(); // 14 or 175us (depending on debounce)
-
-    keyboard_to_note();   
-
-    midi_handle();
-
+    keyboard_to_note();  
     pitch_update();  // ~30us 
 
+    midi_handle();
     sequencer_update();
 
     pots_read(); // ~ 100us
 
+    midi_handle();
     sequencer_update();
 
     synth_update(); // ~ 100us
+    midi_send_cc();
 
+    midi_handle();
     sequencer_update();
 
     drum_read(); // ~ 700us
 
+    midi_handle();
     sequencer_update();
 
     led_update(); // ~ 2ms
 
+    midi_handle();
     sequencer_update();
   }
+}
+
+void midi_handle_clock() {
+  tempo_handler.midi_clock_received();
+  midi_clock++;
+}
+
+void midi_handle_realtime(uint8_t type) {
+  switch(type) {
+      case 0xF8: // Clock
+        midi_handle_clock();
+        break;
+      case 0xFA: // Start
+        sequencer_reset_clock();
+        sequencer_start();
+        break;
+      case 0xFC: // Stop
+        sequencer_stop();
+        break;
+      case 0xFB: // Continue
+        sequencer_start();
+        break;
+      case 0xFE: // ActiveSensing
+      case 0xFF: // SystemReset
+        break;
+    }
 }
 
 // Scans the button_matrix and handles step enable and keys

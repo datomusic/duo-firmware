@@ -1,25 +1,13 @@
 #ifndef Sequencer_h
 #define Sequencer_h
-// class Sequencer {
-//   public:
-//     void init();
-//     void restart();
-//     void start();
-//     void stop();
-//     void advance();
-//     void advance_without_play();
-//     void clock_tick();
-//     void clock_reset();
-//     void reset();
-//     void update();
-//   private:
-// };
-
-
 /*
  The sequencer holds a number of notes
  Note timing is divided into 24 steps per quarter note
  */
+
+#define PULSES_PER_QUARTER_NOTE 24
+#define PULSES_PER_EIGHT_NOTE   PULSES_PER_QUARTER_NOTE / 2
+const uint8_t SEQUENCER_NUM_STEPS = 8;
 
 //Initial sequencer values
 uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
@@ -37,15 +25,14 @@ void sequencer_update();
 void keyboard_to_note();
 int keyboard_get_highest_note();
 int keyboard_get_latest_note();
+void sequencer_align_clock();
 
-void sequencer_reset_clock();
 static void sequencer_advance_without_play();
 static void sequencer_trigger_note();
 static void sequencer_untrigger_note();
 bool sequencer_is_running = false;
 bool note_is_done_playing = false;
 
-uint8_t sequencer_clock = 0;
 
 uint32_t next_step_time = 0;
 uint32_t gate_off_time = 0;
@@ -55,16 +42,14 @@ uint32_t note_off_time;
 
 bool double_speed = false;
 
-const uint8_t SEQUENCER_NUM_STEPS = 8;
-
-
 void sequencer_init() {
   note_stack.Init();
   for(int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
     step_note[i] = SCALE[random(9)];
   }
   tempo_handler.setHandleTempoEvent(sequencer_tick_clock);
-  tempo_handler.setHandleResetEvent(sequencer_reset_clock);
+  tempo_handler.setHandleAlignEvent(sequencer_align_clock);
+  tempo_handler.setPPQN(PULSES_PER_QUARTER_NOTE);
   sequencer_stop();
   current_step = SEQUENCER_NUM_STEPS - 1;
 }
@@ -72,25 +57,38 @@ void sequencer_init() {
 void sequencer_restart() {
   MIDI.sendRealTime(midi::Start);
   // TODO: According to MIDI specs, we should wait at least a millisecond before sending timer packets
+  delay(1);
   current_step = SEQUENCER_NUM_STEPS - 1;
   tempo_handler.midi_clock_reset();
   sequencer_is_running = true;
   sequencer_clock = 0;
 }
 
-void sequencer_reset_clock() {
+void sequencer_align_clock() {
+  //round sequencer_clock to the nearest 12
+
   sequencer_clock -= (sequencer_clock%12);
+}
+
+void sequencer_reset_clock() {
+  sequencer_clock = 0;
 }
 
 void sequencer_start() {
   MIDI.sendRealTime(midi::Continue);
+  usbMIDI.sendRealTime(midi::Continue);
   tempo_handler.midi_clock_reset();
   sequencer_is_running = true;
 }
 
 void sequencer_stop() {
   if(sequencer_is_running) {
+    // TODO: usbMIDI all notes off
+    usbMIDI.sendControlChange(123,0,MIDI_CHANNEL);
+    MIDI.sendControlChange(123,0,MIDI_CHANNEL);
+    usbMIDI.sendRealTime(midi::Stop);
     MIDI.sendRealTime(midi::Stop);
+    //TODO usbMIDI send stop
     sequencer_is_running = false;
     sequencer_untrigger_note();
   }
@@ -106,9 +104,9 @@ void sequencer_toggle_start() {
 }
 
 void sequencer_tick_clock() {
-  uint8_t sequencer_divider = 12;
+  uint8_t sequencer_divider = PULSES_PER_EIGHT_NOTE;
   if(double_speed) {
-    sequencer_divider = 6;
+    sequencer_divider = PULSES_PER_EIGHT_NOTE / 2;
   }
 
   if(!tempo_handler.is_clock_source_internal()) {
@@ -122,9 +120,6 @@ void sequencer_tick_clock() {
     sequencer_advance();
   } 
   sequencer_clock++;
-  if(sequencer_clock >= 192) {
-    sequencer_clock = 0;
-  }
 }
 
 void sequencer_advance_without_play() {
@@ -197,12 +192,10 @@ static void sequencer_untrigger_note() {
 
 
 void keyboard_set_note(uint8_t note) {
-  // TODO: is note 1-based? If so, this could go wrong
   note_stack.NoteOn(note, INITIAL_VELOCITY);
 }
 
 void keyboard_unset_note(uint8_t note) {
-  // TODO: is note 1-based? If so, this could go wrong
   note_stack.NoteOff(note);
 }
 

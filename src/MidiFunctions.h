@@ -38,6 +38,7 @@ void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value);
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle();
+void midi_send_cc();
 void midi_handle_clock();
 void midi_handle_realtime(uint8_t type);
 float midi_note_to_frequency(int x);
@@ -48,7 +49,9 @@ void midi_handle() {
   MIDI.read();
   // Run through the parameters, see if they have changed and then send out CC's
   usbMIDI.read(MIDI_CHANNEL);
+}
 
+void midi_send_cc() {
   // Filter 40 - 380 CC 74
   if(midi_parameters.filter != (synth.filter >> 3)) {
     MIDI.sendControlChange(74, (synth.filter >> 3), MIDI_CHANNEL);
@@ -87,12 +90,6 @@ void midi_init() {
 
   usbMIDI.setHandleNoteOn(midi_note_on);
   usbMIDI.setHandleNoteOff(midi_note_off);
-
-  usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
-}
-
-void midi_handle_clock() {
-  midi_clock++;
 }
 
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value) {
@@ -115,26 +112,6 @@ void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value) {
         break;
     }
   }
-}
-
-void midi_handle_realtime(uint8_t type) {
-  switch(type) {
-      case 0xF8: // Clock
-        midi_handle_clock();
-        break;
-      case 0xFA: // Start
-        // TODO: sequencer start
-        break;
-      case 0xFC: // Stop
-        // TODO: sequencer stop
-        break;
-      case 0xFB: // Continue
-        // TODO: sequencer start
-        break;
-      case 0xFE: // ActiveSensing
-      case 0xFF: // SystemReset
-        break;
-    }
 }
 
 float midi_note_to_frequency(int x) {

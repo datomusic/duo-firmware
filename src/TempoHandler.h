@@ -24,6 +24,7 @@
 #define TEMPO_SOURCE_MIDI     1
 #define TEMPO_SOURCE_SYNC     2
 #define TEMPO_SYNC_DIVIDER   12
+#define TEMPO_SYNC_PULSE_MS  12
  
 class TempoHandler 
 {
@@ -31,8 +32,11 @@ class TempoHandler
     inline void setHandleTempoEvent(void (*fptr)()) {
       tTempoCallback = fptr;
     }
-    inline void setHandleResetEvent(void (*fptr)()) {
-      tResetCallback = fptr;
+    inline void setHandleAlignEvent(void (*fptr)()) {
+      tAlignCallback = fptr;
+    }
+    void setPPQN(int ppqn) {
+      _ppqn = ppqn;
     }
     void update() {
       // Determine which source is selected for tempo
@@ -40,7 +44,8 @@ class TempoHandler
         if(_source != TEMPO_SOURCE_SYNC) {
           _source = TEMPO_SOURCE_SYNC;
         }
-      } else if (midi_clock > 0) { // midi_clock is a global count of incoming midi clocks
+        _midi_clock_received_flag = 0;
+      } else if (_midi_clock_received_flag) { 
         if(_source != TEMPO_SOURCE_MIDI) {
           _source = TEMPO_SOURCE_MIDI;
         }
@@ -61,23 +66,29 @@ class TempoHandler
           update_sync();
           break;
       }
-    }
-    void midi_clock_reset() {
-      if(_source == TEMPO_SOURCE_MIDI) {
-        _midi_clock_block = 0;
-        midi_clock = 11; // One less than our overflow, so the next MIDI clock tick triggers a callback
+
+      if(syncStart >= TEMPO_SYNC_PULSE_MS) {
+        digitalWrite(SYNC_OUT_PIN, LOW);
       }
     }
-    void reset_clock_source() {
+    void midi_clock_received() {
+      _midi_clock_received_flag = 1;
+    }
+    void midi_clock_reset() {
       midi_clock = 0;
+      _previous_midi_clock = 0;
+    }
+    void reset_clock_source() {
+      _midi_clock_received_flag = 0;
       _source = TEMPO_SOURCE_INTERNAL;
     }
     bool is_clock_source_internal() {
       return _source == TEMPO_SOURCE_INTERNAL;
     }
   private:
+    elapsedMillis syncStart;
     void (*tTempoCallback)();
-    void (*tResetCallback)();
+    void (*tAlignCallback)();
     int pot_pin;
     uint8_t _source = 0;
     const unsigned int TEMPO_MAX_INTERVAL_USEC = 48000;
@@ -87,7 +98,9 @@ class TempoHandler
     uint16_t _tempo_interval;
     bool _midi_clock_block = false;
     uint32_t _previous_midi_clock = 0;
-    uint8_t _clock = 0;
+    bool _midi_clock_received_flag = 0;
+    uint16_t _clock = 0;
+    uint16_t _ppqn = 24;
 
     void update_midi() { 
       if(midi_clock != _previous_midi_clock) {
@@ -105,7 +118,9 @@ class TempoHandler
         _clock = 0;
         _previous_sync_time = micros();
         _previous_clock_time = micros();
-
+        if (tAlignCallback != 0) {
+          tAlignCallback();
+        }
         if (tTempoCallback != 0) {
           trigger();
         }
@@ -137,23 +152,17 @@ class TempoHandler
      */
     void trigger() {
       MIDI.sendRealTime(midi::Clock);
-      usbMIDI.sendRealTime(0xF8);
+      usbMIDI.sendRealTime(midi::Clock);
 
-      if((_clock % 24) == 0) {
-        if (tResetCallback != 0) {
-          tResetCallback();
-        }
+      if((_clock % _ppqn) == 0) {
+        _clock = 0;
       }
       if((_clock % TEMPO_SYNC_DIVIDER) == 0) {
         digitalWrite(SYNC_OUT_PIN, HIGH);
-      } else if((_clock % TEMPO_SYNC_DIVIDER) == 1) {
-        digitalWrite(SYNC_OUT_PIN, LOW);
-      }
+        syncStart = 0;
+      } 
       if (tTempoCallback != 0) {
         tTempoCallback();
-      }
-      if(_clock >= 24) { 
-        _clock = 0;
       }
       _clock++;
     }

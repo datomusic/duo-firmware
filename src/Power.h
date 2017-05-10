@@ -14,6 +14,12 @@ bool power_check();
 bool power_flag = 1;
 bool amp_enabled = 0;
 
+elapsedMillis peak_update_time;
+const unsigned int peak_interval = 5;
+
+void power_init() {
+
+}
 
 bool power_check() {
   if(!power_flag) {
@@ -64,28 +70,24 @@ void power_off() {
   This prevents idle noise from the speaker
  */
 void amp_update() {
-  if(power_flag) {
-    if(peak_update_time < millis()) {
+  if(peak_update_time > peak_interval) {
 
-      audio_peak_values <<= 1;
-      
-      if(peak2.available()) {
-        if(peak2.read() > 0.001f) {
-          audio_peak_values |= 1UL;
-        } else {
-          audio_peak_values &= ~1UL;
-        }
+    audio_peak_values <<= 1;
+    
+    if(peak2.available()) {
+      if(peak2.read() > 0.001f) {
+        audio_peak_values |= 1UL;
       } else {
         audio_peak_values &= ~1UL;
       }
+    } else {
+      audio_peak_values &= ~1UL;
+    }
 
-      if((audio_peak_values == 0UL || digitalRead(JACK_DETECT))) {
-        amp_disable();
-        peak_update_time = millis() + 5; // We want to wake up quickly
-      } else {
-        amp_enable();
-        peak_update_time = millis() + 200; // We don't want to go to sleep too fast
-      }
+    if((audio_peak_values == 0UL || digitalRead(JACK_DETECT))) {
+      amp_disable();
+    } else {
+      amp_enable();
     }
   }
 }
