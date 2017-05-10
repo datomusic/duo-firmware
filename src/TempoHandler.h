@@ -91,11 +91,9 @@ class TempoHandler
     void (*tAlignCallback)();
     int pot_pin;
     uint8_t _source = 0;
-    const unsigned int TEMPO_MAX_INTERVAL_USEC = 48000;
-    const unsigned int TEMPO_MIN_INTERVAL_USEC = 3600;
     uint32_t _previous_clock_time;
     uint32_t _previous_sync_time;
-    uint16_t _tempo_interval;
+    uint32_t _tempo_interval;
     bool _midi_clock_block = false;
     uint32_t _previous_midi_clock = 0;
     bool _midi_clock_received_flag = 0;
@@ -138,8 +136,17 @@ class TempoHandler
     }
 
     void update_internal() {
-      int potvalue = analogRead(TEMPO_POT);
-      _tempo_interval = map(potvalue,0,1023,TEMPO_MIN_INTERVAL_USEC,TEMPO_MAX_INTERVAL_USEC);
+      int potvalue = 1023-analogRead(TEMPO_POT);
+      int tbpm = 240; // 2 x beats per minute
+
+      if(potvalue < 128) {
+        tbpm = map(potvalue,0,128,60,120);
+      } else if(potvalue < 895) {
+        tbpm = map(potvalue, 128,895,120,400);
+      } else {
+        tbpm = map(potvalue, 895,1023,400,1200);
+      }
+      _tempo_interval = 5000000/tbpm;
       
       if((micros() - _previous_clock_time) > _tempo_interval)  {
         _previous_clock_time = micros();
