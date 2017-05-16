@@ -75,7 +75,7 @@ private:
         void updateEnv();
 
 	audio_block_t *inputQueueArray[1];
-        Envelope env;
+        LinearEnvelope env;
         int attackMs;
         int decayMs;
         int sustainVal;
