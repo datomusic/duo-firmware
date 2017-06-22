@@ -81,7 +81,7 @@ void kick_noteon(uint8_t velocity) {
 }
 
 void kick_noteoff() {
-  kick_playing = 0;
+  kick_value = 0;
 }
 
 void hat_noteon(uint8_t velocity) {
@@ -90,5 +90,5 @@ void hat_noteon(uint8_t velocity) {
 }
 
 void hat_noteoff() {
-
+  hat_value = 0;
 }
