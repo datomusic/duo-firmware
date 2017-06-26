@@ -65,7 +65,11 @@ void sequencer_restart() {
 
 void sequencer_align_clock() {
   //round sequencer_clock to the nearest 12
-  sequencer_clock -= (sequencer_clock%12);
+  if(sequencer_clock%12 > 6) {
+    sequencer_clock += 12-(sequencer_clock%12);
+  } else {
+    sequencer_clock -= (sequencer_clock%12);
+  }
 }
 
 void sequencer_reset_clock() {
