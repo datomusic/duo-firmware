@@ -141,6 +141,13 @@ const int OSC_PW_POT = 7;
 
 const int AMP_POT = 6; 
 
+ const uint8_t powerbutton_col = 1;
+ const uint8_t powerbutton_row = 1;
+ const uint8_t ROWS = 4;
+ const uint8_t COLS = 6; 
+ 
+ uint8_t col_pins[COLS] = {COL_1,COL_2,COL_3,COL_4,COL_5,COL_6}; 
+ uint8_t row_pins[ROWS] = {ROW_1, ROW_2, ROW_3, ROW_4};
 int muxAnalogRead(uint8_t channel) { 
   // Any call to pinMode sets the port mux to GPIO mode.
   // We want to force it back to analog mode
