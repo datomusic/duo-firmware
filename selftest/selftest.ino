@@ -6,9 +6,9 @@
 #include "../src/Buttons.h"
 #include "Leds.h"
 #include "Audio.h"
-#include <Midi.h>
+#include <MIDI.h>
 
-#define VERSION "0.2.0"
+#define VERSION "0.3.0"
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -23,7 +23,7 @@ void potRead();
 void top_leds(CRGB c);
 void touch_read();
 void led_chaser();
-void sync_duplicate();
+void sync_pulse();
 
 int pot_low_values[] = {900,900,900,900,900,900,900,900};
 int pot_high_values[] = {100,100,100,100,100,100,100,100};
@@ -46,21 +46,18 @@ void setup() {
   Serial.println(VERSION);
 
   audio_init();
-
+  attachInterrupt(SYNC_IN,sync_pulse,CHANGE);
 }
 
 void loop() {
   keys_scan(); // 14 or 175us (depending on debounce)
-  sync_duplicate();
   MIDI.read();
-
   if(start_flag) {
     drum_read();
     audio_stop();
     pots_read(); // ~ 100us
     touch_read();
     led_update(); // ~ 2ms
-    delay(10);
   } else {
     led_chaser();
     if(digitalRead(JACK_DETECT)) {
@@ -115,18 +112,30 @@ void pots_read() {
   analogWrite(OSC_LED, potRead(7));
 }
 
+#define TOUCH_THRESHOLD 15
 void touch_read() {
-  if(touchRead(TOUCH_1) < 1000) {
-     physical_leds[NUM_LEDS-1] = CRGB::Red;
-  } else {
-    physical_leds[NUM_LEDS-1].setHue((touchRead(TOUCH_1)%200)+32);
+
+  static int previous_touch1 = (touchRead(TOUCH_1));
+  int touch1 = (touchRead(TOUCH_1));
+
+  if(touch1 > previous_touch1+TOUCH_THRESHOLD || touch1+TOUCH_THRESHOLD < previous_touch1) {
+    physical_leds[NUM_LEDS-2].setHue(touch1%200+32);
   }
 
-   if(touchRead(TOUCH_3) < 1100) {
+  if(touchRead(TOUCH_1) < 1000) {
      physical_leds[NUM_LEDS-2] = CRGB::Red;
-  } else {
-    physical_leds[NUM_LEDS-2].setHue((touchRead(TOUCH_3)%200)+32);
+  } 
+
+  static int previous_touch3 = (touchRead(TOUCH_3)%200);
+  int touch3 = (touchRead(TOUCH_3)%200);
+
+  if(touch3 > previous_touch3+TOUCH_THRESHOLD || touch3+TOUCH_THRESHOLD < previous_touch3) {
+    physical_leds[NUM_LEDS-1].setHue(touch3%200+32);
   }
+
+  if(touchRead(TOUCH_3) < 1100) {
+     physical_leds[NUM_LEDS-1] = CRGB::Red;
+  } 
 }
 
 void top_leds(CRGB c) {
@@ -212,7 +221,9 @@ void keys_scan() {
                 if (k == SEQ_START) {
                   start_flag = 1-start_flag;
                 } else if (k <= KEYB_9 && k >= KEYB_0) {
-                  
+                  physical_leds[k-KEYB_0+9] = CRGB::HotPink;
+                } else if (k <= STEP_8 && k >= STEP_1) {
+                  physical_leds[k-STEP_1+1] = CRGB::HotPink;
                 } else if (k == BTN_SEQ1) {
                   seq_left_leds(CRGB::Yellow);
                 } else if(k == BTN_SEQ2) {
@@ -251,7 +262,7 @@ void midi_init() {
   // MIDI loopback from in to out (soft THRU) is enabled by default
 }
 
-void sync_duplicate() {
+void sync_pulse() {
   if(digitalRead(SYNC_DETECT)) {
     digitalWrite(SYNC_OUT, digitalRead(SYNC_IN));
   }
