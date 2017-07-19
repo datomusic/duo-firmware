@@ -80,13 +80,6 @@
 #define SW2          30
 #define PROG         31
 
-// const int FILTER_RES_POT = A8;
-// const int OSC_DETUNE_POT = A13;  
-// const int OSC_PW_POT = A9;
-// const int AMP_ENV_POT = A10;
-// const int FILTER_FREQ_POT = A12;
-// const int FADE_POT = A11; 
-
 const int BTN_SYN1 = SW1;
 const int BTN_SYN2 = SW2;
 
@@ -101,9 +94,6 @@ const int BITC_PIN = BTN_SYN2;
 const int OSC_LED = LED_1;
 const int FILTER_LED = LED_2;
 const int ENV_LED = LED_3;
-
-const int TEMPO_POT = POT_1;
-const int GATE_POT = POT_2;
 
 const int SYNC_OUT_PIN = SYNC_OUT;
 //const int AMP_ENABLE = 31;
@@ -141,6 +131,9 @@ const int OSC_PW_POT = 7;
 
 const int AMP_POT = 6; 
 
+const int TEMPO_POT = 1;
+const int GATE_POT = 2;
+
 int muxAnalogRead(uint8_t channel) { 
   // Any call to pinMode sets the port mux to GPIO mode.
   // We want to force it back to analog mode
@@ -155,6 +148,16 @@ int muxAnalogRead(uint8_t channel) {
   //do we need to wait a few nanoseconds?
   delayMicroseconds(5);
   return analogRead(MUX_IO);
+}
+
+int potRead(uint8_t num) {
+  if(num == 1) {
+    return 1023-analogRead(A10);
+  }
+  if(num == 2) {
+    return 1023-analogRead(A11);
+  }
+  return muxAnalogRead(num);
 }
 
 uint8_t muxDigitalRead(uint8_t channel) { 

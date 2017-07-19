@@ -136,7 +136,7 @@ class TempoHandler
     }
 
     void update_internal() {
-      int potvalue = 1023-analogRead(TEMPO_POT);
+      int potvalue = potRead(TEMPO_POT);
       int tbpm = 240; // 2 x beats per minute
 
       if(potvalue < 128) {
