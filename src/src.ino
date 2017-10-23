@@ -6,7 +6,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "1.0.0-rc.1"
+#define VERSION "1.0.0-rc.4"
 
 const int MIDI_CHANNEL = 1;
 
@@ -276,17 +276,12 @@ void keys_scan() {
 void pots_read() {
   gate_length_msec = map(analogRead(GATE_POT),1023,0,10,200);
   
-  synth.detune = potRead(OSC_DETUNE_POT);
-  synth.release = potRead(AMP_ENV_POT);
-  synth.filter = potRead(FILTER_FREQ_POT);
-  synth.amplitude = potRead(AMP_POT);
-  synth.pulseWidth = potRead(OSC_PW_POT);
-  synth.resonance = potRead(FILTER_RES_POT);
-
-  analogWrite(FILTER_LED, 1 + ((synth.filter*synth.filter)>>13));
-  analogWrite(OSC_LED, 1 + ((synth.pulseWidth*synth.pulseWidth)>>13));
-
-  // Audio interrupts have to be off to apply settings
+  synth.detune = muxAnalogRead(OSC_DETUNE_POT);
+  synth.release = muxAnalogRead(AMP_ENV_POT);
+  synth.filter = muxAnalogRead(FILTER_FREQ_POT);
+  synth.amplitude = muxAnalogRead(AMP_POT);
+  synth.pulseWidth = muxAnalogRead(OSC_PW_POT);
+  synth.resonance = muxAnalogRead(FILTER_RES_POT);
 }
 
 void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {

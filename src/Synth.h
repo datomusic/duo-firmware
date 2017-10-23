@@ -90,7 +90,7 @@ AudioConnection          patchCord16(pop_suppressor, dac1);
 
 #define MAIN_GAIN 0.8
 #define DELAY_GAIN 0.6
-#define KICK_GAIN 1.0
+#define KICK_GAIN 0.8
 #define HAT_GAIN 0.9
 
 void audio_init();
@@ -105,9 +105,9 @@ void audio_init() {
   osc_pulse.pulseWidth(0.5);
   osc_pulse.begin(0.4, 220, WAVEFORM_PULSE);
   
-  // Mixer mixes the oscillators
-  mixer1.gain(0, 0.45); // OSC1
-  mixer1.gain(1, 0.45); // OSC2
+  // Mixer mixes the oscillators - don't add up to more than 0.8 or the output will clip
+  mixer1.gain(0, 0.4); // OSC1
+  mixer1.gain(1, 0.4); // OSC2
 
   // Filter
   filter1.resonance(0.7); // range 0.7-5.0
@@ -181,7 +181,7 @@ void synth_update() {
   osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,1000,100)/1000.0);
 
   filter1.frequency((synth.filter/2)+30);
-  filter1.resonance(map(synth.resonance,0,1023,70,400)/100.0); // 0.7-5.0 range
+  filter1.resonance(map(synth.resonance,0,1023,70,320)/100.0); // 0.7-3.2 range
 
   envelope1.release(((synth.release*synth.release) >> 11)+30);
 

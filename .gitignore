@@ -7,6 +7,6 @@ tools/
 .project
 .cproject
 .settings/
-*.d
 *.o
 *.bin
+*.d

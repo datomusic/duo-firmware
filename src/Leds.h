@@ -110,7 +110,7 @@ void led_update() {
   FastLED.show();
   analogWrite(ENV_LED, (peak1.read()*127.0f));
   analogWrite(FILTER_LED, 1 + ((synth.filter*synth.filter) >> 13));
-  analogWrite(OSC_LED, synth.pulseWidth/8);
+  analogWrite(OSC_LED, 128 - ((synth.pulseWidth*synth.pulseWidth)>>13));
 }
 
 #endif
