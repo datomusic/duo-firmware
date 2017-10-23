@@ -30,6 +30,7 @@ int pot_high_values[] = {100,100,100,100,100,100,100,100};
 
 uint8_t current_pot = 10;
 bool start_flag = 0;
+bool dfu_flag = 0;
 
 void setup() {
 
@@ -236,7 +237,10 @@ void keys_scan() {
                 break;
             case HOLD:
                 if (k == SEQ_START) {
-                  enter_dfu();
+                  FastLED.clear();
+                  physical_leds[0] = CRGB::Blue;
+                  FastLED.show();
+                  dfu_flag = 1;                  
                 } 
                 break;
             case RELEASED:
@@ -244,7 +248,11 @@ void keys_scan() {
                  
                 } else if (k == BTN_SEQ2) {
                   
-                } 
+                } else if (k == SEQ_START) {
+                  if(dfu_flag == 1) {
+                    enter_dfu();
+                  }
+                }
                 break;
             case IDLE:
                 if (k <= KEYB_9 && k >= KEYB_0) {
