@@ -10,3 +10,4 @@ tools/
 *.o
 *.bin
 *.d
+*.bin

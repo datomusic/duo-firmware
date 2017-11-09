@@ -15,6 +15,9 @@
   MIDI CC 94  Detune amount
   */
 
+#define DATO_SYSEX_ID 0x7D // TODO: Reserved for non-commercial entities
+#define SYSEX_REBOOT_BOOTLOADER 0x87
+
 const float MIDI_NOTE_FREQUENCY[127] = {
   8.1757989156, 8.6619572180, 9.1770239974, 9.7227182413, 10.3008611535, 10.9133822323, 11.5623257097, 12.2498573744, 12.9782717994, 13.7500000000, 14.5676175474, 15.4338531643, 16.3515978313,
  17.3239144361, 18.3540479948, 19.4454364826, 20.6017223071, 21.8267644646, 23.1246514195, 24.4997147489, 25.9565435987, 27.5000000000, 29.1352350949, 30.8677063285,  32.7031956626,
@@ -42,6 +45,7 @@ void midi_send_cc();
 void midi_handle_clock();
 void midi_handle_realtime(uint8_t type);
 float midi_note_to_frequency(int x);
+void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete);
 
 synth_parameters midi_parameters;
 
@@ -90,6 +94,8 @@ void midi_init() {
 
   usbMIDI.setHandleNoteOn(midi_note_on);
   usbMIDI.setHandleNoteOff(midi_note_off);
+
+  usbMIDI.setHandleSysEx(midi_usb_sysex);
 }
 
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value) {
@@ -133,6 +139,15 @@ void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
   if(channel == MIDI_CHANNEL) {
     note_stack.NoteOff(note);
+  }
+}
+
+void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
+
+  if(data[1] == DATO_SYSEX_ID) { 
+    if(data[2] == SYSEX_REBOOT_BOOTLOADER) {
+      enter_dfu();
+    }
   }
 }
 

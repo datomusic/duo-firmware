@@ -146,7 +146,7 @@ int muxAnalogRead(uint8_t channel) {
   digitalWriteFast(SYN_ADDR1, bitRead(channel,1));
   digitalWriteFast(SYN_ADDR2, bitRead(channel,2));
   //do we need to wait a few nanoseconds?
-  delayMicroseconds(5);
+  delayMicroseconds(50);
   return analogRead(MUX_IO);
 }
 
@@ -165,7 +165,7 @@ uint8_t muxDigitalRead(uint8_t channel) {
   digitalWriteFast(SYN_ADDR0, bitRead(channel,0));
   digitalWriteFast(SYN_ADDR1, bitRead(channel,1));
   digitalWriteFast(SYN_ADDR2, bitRead(channel,2));
-  delayMicroseconds(10);
+  delayMicroseconds(50);
   //Wait a few microseconds for the selection to propagate. 
   uint8_t p = digitalRead(MUX_IO);
   return p;
