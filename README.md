@@ -1,7 +1,7 @@
 #Dato DUO
 The Dato DUO is a musical instrument that is designed to be played by two people. 
 
-The firmware is open source, although changing it is not recommended for beginners. Steps below are tested on Mac OS X.
+The firmware is open source, although changing it is not recommended for beginners. Steps below are tested on Mac OS X. We're welcoming contributors who want to help us get this working on other platforms.
 
 ##Firmware/software
 The electronic heart of the Dato DUO is the NXP Kinetis K20 microcontroller, the same as used in the [Teensy 3.2](https://www.pjrc.com/teensy/). Audio is generated using the [Audio Library](https://github.com/PaulStoffregen/Audio).
@@ -24,7 +24,9 @@ Connect the Dato DUO to your computer using a micro USB cable. Put your Dato DUO
 On your computer, type `make dfu` to upload the firmware to the DUO.
 
 ###Troubleshooting
-If you're getting compilation errors related to missing libraries, make sure you have copied all libraries from the duo-firmware/libraries directory to your Arduino/libraries directory. Please file a GitHub issue with as much detail as you can so that we can troubleshoot the issue.
+If you cloned this repository without the submodules, go to the duo-firmware folder and type `git submodule update --init --recursive` to fetch all required submodules.
+
+If that doesn't help, please file a GitHub issue with as much detail as you can so that we can troubleshoot the issue.
 
 
 ##Where everything came from
