@@ -1,39 +1,31 @@
 #Dato DUO
-The Dato DUO is a musical instrument that is designed to be played by two people.
+The Dato DUO is a musical instrument that is designed to be played by two people. 
+
+The firmware is open source, although changing it is not recommended for beginners. Steps below are tested on Mac OS X.
 
 ##Firmware/software
 The electronic heart of the Dato DUO is the NXP Kinetis K20 microcontroller, the same as used in the [Teensy 3.2](https://www.pjrc.com/teensy/). Audio is generated using the [Audio Library](https://github.com/PaulStoffregen/Audio).
 
 ###Installing
-For beginners, we recommend using the Arduino IDE for modifying and uploading the firmware. Advanced users can use the supplied makefile, but following the steps below is necessary in both cases.
+For now, it's not possible to upload firmware using the Arduino IDE. You will need to download and install it, though, in order to get all required tools and libraries. Advanced users can use the supplied makefile.
 
 1. Download and install the Arduino IDE from [Arduino.cc](https://www.arduino.cc/en/Main/Software)
 
 2. Download and install Teensyduino from [PJRC.com](https://www.pjrc.com/teensy/teensyduino.html). In the install wizard, enable the Audio, FastLED and Keypad libraries
 ![Teensyduino installer with Audio library checked](/img/teensyduino-installer-audio-library.png?raw=true)
 
-3. Clone this repository including submodules `git clone --recursive https://github.com/datomusic/duo-firmware`
+3. From a command line window, clone this repository including submodules `git clone --recursive https://github.com/datomusic/duo-firmware`
+
+###Compiling and uploading
+Go to the duo-firmware folder and type `make`.
+
+Connect the Dato DUO to your computer using a micro USB cable. Put your Dato DUO into firmware update mode by gently pressing a pointy object into the little hole next to the headphone output. The lights will stop flashing and the Play button will become blue (early DUO's with a serial number below 350 will not show a blue button).
+
+On your computer, type `make dfu` to upload the firmware to the DUO.
 
 ###Troubleshooting
 If you're getting compilation errors related to missing libraries, make sure you have copied all libraries from the duo-firmware/libraries directory to your Arduino/libraries directory. Please file a GitHub issue with as much detail as you can so that we can troubleshoot the issue.
 
-###Connecting and uploading
-Connect the Dato DUO to your computer using a micro USB cable.
-
-Arduino IDE:
-- Pick the correct board by choosing `Tools` -> `Boards` -> `Teensy 3.2 / 3.1`
-- Set the clock speed to 72 MHz from `Tools` -> `CPU Speed` -> `72 MHz optimized`
-- Open the .ino file in the firmware/src folder
-- Press upload and wait until compilation finishes. After this, Teensyduino will automatically upload the code to your Dato DUO.
-
-Makefile method:
-```
-make clean; make upload
-```
-Currently, this is only tested on Mac.
-
-##Hardware
-Circuit schematics will be added to this repository once the final hardware is available.
 
 ##Where everything came from
 
