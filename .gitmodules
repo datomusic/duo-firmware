@@ -1,6 +1,3 @@
-[submodule "libraries/Keypad"]
-	path = libraries/Keypad
-	url = https://github.com/Chris--A/Keypad
 [submodule "libraries/FastLED"]
 	path = libraries/FastLED
 	url = git://github.com/FastLED/FastLED
