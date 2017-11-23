@@ -1,10 +1,6 @@
 [submodule "libraries/FastLED"]
 	path = libraries/FastLED
 	url = git://github.com/FastLED/FastLED
-[submodule "teensy3"]
-	path = teensy3
-	url = https://github.com/datomusic/teensy3
-	branch = teensy3-only
 [submodule "libraries/Audio"]
 	path = libraries/Audio
 	url = git://github.com/datomusic/Audio
