@@ -58,6 +58,7 @@ int transpose = 0;
 bool next_step_is_random = false;
 int tempo_interval;
 bool random_flag = 0;
+bool dfu_flag = 0;
 
 uint32_t midi_clock = 0;
 uint16_t audio_peak_values = 0UL;
@@ -255,7 +256,10 @@ void keys_scan() {
             case HOLD:
                 if (k == SEQ_START) {
                   #ifdef DEV_MODE
-                    enter_dfu();
+                    FastLED.clear();
+                    physical_leds[0] = CRGB::Blue;
+                    FastLED.show();
+                    dfu_flag = 1;                  
                   #else
                     power_off();
                   #endif
@@ -280,7 +284,13 @@ void keys_scan() {
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = false;
                   random_flag = false;
-                } 
+                } else if (k == SEQ_START) {
+                  #ifdef DEV_MODE
+                    if(dfu_flag == 1) {
+                      enter_dfu();
+                    }
+                  #endif
+                }
                 break;
             case IDLE:
                 if (k <= KEYB_9 && k >= KEYB_0) {
