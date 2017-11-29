@@ -172,8 +172,10 @@ void synth_update() {
 
   osc_saw.frequency(osc_saw_frequency);
 
-  if(synth.detune > 800) {
-    osc_saw.amplitude(map(synth.detune,800,1023,400,0)/1000.);
+  if(synth.detune > 850) {
+    osc_saw.amplitude(map(synth.detune,850,1023,400,0)/1000.);
+  } else if(synth.detune < 200) {
+    osc_saw.amplitude(map(synth.detune,0,200,200,400)/1000.);
   } else {
     osc_saw.amplitude(0.4);
   }

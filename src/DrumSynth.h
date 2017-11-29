@@ -3,22 +3,22 @@
   (c) 2017, Benjamin Brandenburg <bnjmn7@gmail.com>
 */
 
-  // GUItool: begin automatically generated code
-AudioSynthNoiseWhite     hat_noise1;     //xy=378,191
-AudioSynthSimpleDrum     kick_drum1;     //xy=437,383
-AudioEffectCustomEnvelope     hat_envelope1;  //xy=546,191
-AudioSynthSimpleDrum     hat_snappy;          //xy=590,250
-AudioFilterStateVariable hat_filter_bp;    //xy=713,197
-AudioFilterStateVariable hat_filter_hp;    
-AudioMixer4              hat_mixer;         //xy=872,257
-AudioConnection          hatkick_patchCord1(hat_noise1, hat_envelope1);
-AudioConnection          hatkick_patchCord3(hat_envelope1, 0, hat_filter_hp, 0);
-AudioConnection          hatkick_patchCord4(hat_snappy, 0, hat_mixer, 1);
-AudioConnection          hatkick_patchCord6(hat_filter_bp, 1, hat_mixer, 0);
-AudioConnection          hatkick_patchCord7(hat_mixer, 0, mixer_delay, 3);
-AudioConnection          hatkick_patchCord8(kick_drum1, 0, mixer_output, 2);
-AudioConnection          hatkick_patchCord9(hat_mixer, 0, mixer_output, 3);
-AudioConnection          hatkick_patchCord10(hat_filter_hp, 2, hat_filter_bp, 0);
+// GUItool: begin automatically generated code
+AudioSynthNoiseWhite     hat_noise1;
+AudioSynthSimpleDrum     kick_drum1;
+AudioEffectCustomEnvelope hat_envelope1;
+AudioSynthSimpleDrum     hat_snappy;
+AudioFilterStateVariable hat_filter_bp;
+AudioFilterStateVariable hat_filter_hp;
+AudioMixer4              hat_mixer;
+AudioConnection          patchCord20(hat_noise1, hat_envelope1);
+AudioConnection          patchCord21(hat_envelope1, 0, hat_filter_hp, 0);
+AudioConnection          patchCord22(hat_filter_hp, 2, hat_filter_bp, 0);
+AudioConnection          patchCord23(hat_filter_bp, 1, hat_mixer, 0);
+AudioConnection          patchCord24(hat_snappy, 0, hat_mixer, 1);
+AudioConnection          patchCord25(hat_mixer, 0, mixer_delay, 3);
+AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
+AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
 // GUItool: end automatically generated code
 
 int kick_duration = 100;
@@ -112,9 +112,11 @@ void drum_read() {
 void kick_noteon(uint8_t velocity) {
   kick_duration = 200 - velocity;
   AudioNoInterrupts();
+  //sidechain on the pulse osc
+  osc_pulse.amplitude(0.35);
   //change Kick parameters here
   kick_drum1.length(kick_duration);
-  kick_drum1.frequency(velocity/4+50);
+  kick_drum1.frequency(velocity/4+40);
   AudioInterrupts();
   kick_drum1.noteOn();
   kick_playing = 1;
@@ -122,6 +124,10 @@ void kick_noteon(uint8_t velocity) {
 }
 
 void kick_noteoff() {
+  AudioNoInterrupts();
+  //sidechain on the pulse osc
+  osc_pulse.amplitude(0.4);
+  AudioInterrupts();
   kick_playing = 0;
 }
 
