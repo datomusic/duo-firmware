@@ -70,6 +70,13 @@ AudioMixer4              mixer_output;         //xy=861.1000061035156,100
 AudioEffectFade          pop_suppressor;          //xy=1062,292
 AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
 AudioOutputAnalog        dac1;           //xy=988.1000061035156,100
+AudioSynthNoiseWhite     hat_noise1;
+AudioSynthSimpleDrum     kick_drum1;
+AudioEffectCustomEnvelope hat_envelope1;
+AudioSynthSimpleDrum     hat_snappy;
+AudioFilterStateVariable hat_filter_bp;
+AudioFilterStateVariable hat_filter_hp;
+AudioMixer4              hat_mixer;
 AudioConnection          patchCord1(osc_pulse, 0, mixer1, 1);
 AudioConnection          patchCord2(osc_saw, 0, mixer1, 0);
 AudioConnection          patchCord3(dc1, envelope2);
@@ -83,6 +90,14 @@ AudioConnection          patchCord10(delay1, 0, mixer_delay, 1);
 AudioConnection          patchCord11(bitcrusher1, 0, mixer_output, 0);
 AudioConnection          patchCord12(bitcrusher1, 0, mixer_delay, 0);
 AudioConnection          patchCord13(mixer_delay, delay1);
+AudioConnection          patchCord20(hat_noise1, hat_envelope1);
+AudioConnection          patchCord21(hat_envelope1, 0, hat_filter_hp, 0);
+AudioConnection          patchCord22(hat_filter_hp, 2, hat_filter_bp, 0);
+AudioConnection          patchCord23(hat_filter_bp, 1, hat_mixer, 0);
+AudioConnection          patchCord24(hat_snappy, 0, hat_mixer, 1);
+AudioConnection          patchCord25(hat_mixer, 0, mixer_delay, 3);
+AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
+AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
 AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
 AudioConnection          patchCord16(pop_suppressor, dac1);

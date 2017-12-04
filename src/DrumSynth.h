@@ -3,24 +3,6 @@
   (c) 2017, Benjamin Brandenburg <bnjmn7@gmail.com>
 */
 
-// GUItool: begin automatically generated code
-AudioSynthNoiseWhite     hat_noise1;
-AudioSynthSimpleDrum     kick_drum1;
-AudioEffectCustomEnvelope hat_envelope1;
-AudioSynthSimpleDrum     hat_snappy;
-AudioFilterStateVariable hat_filter_bp;
-AudioFilterStateVariable hat_filter_hp;
-AudioMixer4              hat_mixer;
-AudioConnection          patchCord20(hat_noise1, hat_envelope1);
-AudioConnection          patchCord21(hat_envelope1, 0, hat_filter_hp, 0);
-AudioConnection          patchCord22(hat_filter_hp, 2, hat_filter_bp, 0);
-AudioConnection          patchCord23(hat_filter_bp, 1, hat_mixer, 0);
-AudioConnection          patchCord24(hat_snappy, 0, hat_mixer, 1);
-AudioConnection          patchCord25(hat_mixer, 0, mixer_delay, 3);
-AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
-AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
-// GUItool: end automatically generated code
-
 int kick_duration = 100;
 unsigned long kick_on_time, hat_on_time;
 bool kick_playing = 0;

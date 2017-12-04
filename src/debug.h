@@ -1,3 +1,4 @@
 void print_log() {
-  Serial.printf("Release: %d\n", synth.release);
+  Serial.printf("Audio CPU: %d\n", AudioProcessorUsage());
+  Serial.printf("Audio RAM: %d\n", AudioMemoryUsage());
 }

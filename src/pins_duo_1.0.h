@@ -96,8 +96,6 @@ const int FILTER_LED = LED_2;
 const int ENV_LED = LED_3;
 
 const int SYNC_OUT_PIN = SYNC_OUT;
-//const int AMP_ENABLE = 31;
-//const int LED_DATA = 5;
 
 #define COLOR_ORDER GRB
 #define LED_TYPE SK6812
@@ -152,10 +150,10 @@ int muxAnalogRead(uint8_t channel) {
 
 int potRead(uint8_t num) {
   if(num == 1) {
-    return 1023-analogRead(A10);
+    return 1023-analogRead(POT_1);
   }
   if(num == 2) {
-    return 1023-analogRead(A11);
+    return 1023-analogRead(POT_2);
   }
   return muxAnalogRead(num);
 }
