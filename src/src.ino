@@ -26,7 +26,7 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "1.0.0-rc.6"
+#define VERSION "1.0.0-rc.7"
 #define DEV_MODE
 
 const int MIDI_CHANNEL = 1;

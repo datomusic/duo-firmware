@@ -4,15 +4,18 @@
 /*
   Dato DUO MIDI implementation chart
 
-  MIDI CC 7   Volume
-  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
   MIDI CC 70  Pulse width
   MIDI CC 71  Filter Resonance
   MIDI CC 72  VCA Release Time
   MIDI CC 74  Filter cutoff
+  
+  TODO
+  MIDI CC 7   Volume
+  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
   MIDI CC 80  Delay 0 to 63 = Off, 64 to 127 = On
   MIDI CC 81  Crush 0 to 63 = Off, 64 to 127 = On
-  MIDI CC 94  Detune amount
+  MIDI CC 94  Detune amount 
+
   */
 
 #define DATO_SYSEX_ID 0x7D // TODO: Reserved for non-commercial entities
@@ -57,31 +60,31 @@ void midi_handle() {
 
 void midi_send_cc() {
   // Filter 40 - 380 CC 74
-  if(midi_parameters.filter != (synth.filter >> 3)) {
+  if((midi_parameters.filter > (synth.filter >> 3) + 1) || (midi_parameters.filter < (synth.filter >> 3) - 1)) {
     MIDI.sendControlChange(74, (synth.filter >> 3), MIDI_CHANNEL);
     usbMIDI.sendControlChange(74, (synth.filter >> 3), MIDI_CHANNEL);
-    midi_parameters.filter = (synth.filter >> 3);
+    midi_parameters.filter = ((synth.filter >> 3) + midi_parameters.filter) / 2;
   }
 
   // Resonance 0.7 - 4.0 CC 71
-  if(midi_parameters.resonance != (synth.resonance >> 3)) {
+  if((midi_parameters.resonance > (synth.resonance >> 3) + 1) || (midi_parameters.resonance < (synth.resonance >> 3) - 1)) {
     MIDI.sendControlChange(71, (synth.resonance >> 3), MIDI_CHANNEL);
     usbMIDI.sendControlChange(71, (synth.resonance >> 3), MIDI_CHANNEL);
-    midi_parameters.resonance = (synth.resonance >> 3);
+    midi_parameters.resonance = ((synth.resonance >> 3) + midi_parameters.resonance) / 2;
   }
 
   // Release time 30 - 500 CC 72
-  if(midi_parameters.release != (synth.release >> 3)) {
+  if((midi_parameters.release > (synth.release >> 3) + 1) || (midi_parameters.release < (synth.release >> 3) - 1)) {
     MIDI.sendControlChange(72, (synth.release >> 3), MIDI_CHANNEL);
     usbMIDI.sendControlChange(72, (synth.release >> 3), MIDI_CHANNEL);
-    midi_parameters.release = (synth.release >> 3);
+    midi_parameters.release = ((synth.release >> 3) + midi_parameters.release) / 2;
   }
 
   // Pulse width CC 70
-  if(midi_parameters.pulseWidth != (synth.pulseWidth >> 3)) {
+  if((midi_parameters.pulseWidth > (synth.pulseWidth >> 3) + 1) || (midi_parameters.pulseWidth < (synth.pulseWidth >> 3) - 1)) {
     MIDI.sendControlChange(70, (synth.pulseWidth >> 3), MIDI_CHANNEL);
     usbMIDI.sendControlChange(70, (synth.pulseWidth >> 3), MIDI_CHANNEL);
-    midi_parameters.pulseWidth = (synth.pulseWidth >> 3);
+    midi_parameters.pulseWidth = ((synth.pulseWidth >> 3) + midi_parameters.pulseWidth) / 2;
   }
 }
 
