@@ -59,9 +59,15 @@ void led_init() {
      physical_leds[0] = CRGB::Blue;
   #endif
 
+  // The key of the current MIDI channel lights up
+  physical_leds[MIDI_CHANNEL+8] = COLORS[SCALE[MIDI_CHANNEL-1]%24];
+
+  FastLED.show();
+  delay(500);
+
   for(int i = 0; i < 10; i++) {
     physical_leds[i+9] = COLORS[SCALE[i]%24];
-    delay(40);
+    delay(20);
     FastLED.show();
   }
 }

@@ -29,7 +29,7 @@
 #define VERSION "1.0.0-rc.7"
 #define DEV_MODE
 
-const int MIDI_CHANNEL = 1;
+int MIDI_CHANNEL = 1;
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 };
@@ -125,6 +125,11 @@ void setup() {
   audio_init();
   led_init();
 
+  // TODO: we want to scan the keyboard once to see if one 
+  // of the keys is pressed and set the MIDI channel to that
+  // 
+  // 1. We might want to run through the keys manually
+  // 2. Or we might want to use a function pointer to change the behavior of keypad functionality
   midi_init();
 
   MIDI.setHandleStart(sequencer_restart);
@@ -146,7 +151,6 @@ void setup() {
     Serial.println(VERSION);
   #endif
   headphone_enable();
-
 }
 
 void loop() {
@@ -175,7 +179,9 @@ void loop() {
     midi_handle();
     sequencer_update();
 
-    led_update(); // ~ 2ms
+    if(!dfu_flag) {
+      led_update(); // ~ 2ms
+    }
 
     midi_handle();
     sequencer_update();
@@ -220,6 +226,7 @@ void keys_scan() {
     mixer_delay.gain(3, 0.4); // Hat delay input
   }
 
+  synth.glide = !muxDigitalRead(SLIDE_PIN);
   synth.crush = !digitalRead(BITC_PIN);
 
   if (button_matrix.getKeys())  {
@@ -258,6 +265,7 @@ void keys_scan() {
             case HOLD:
                 if (k == SEQ_START) {
                   #ifdef DEV_MODE
+                    sequencer_stop();
                     FastLED.clear();
                     physical_leds[0] = CRGB::Blue;
                     FastLED.show();

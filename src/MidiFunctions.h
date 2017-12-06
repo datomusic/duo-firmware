@@ -2,16 +2,16 @@
 #define MidiFunctions_h
 #include <MIDI.h>
 /*
+
   Dato DUO MIDI implementation chart
 
+  Out only:
+  MIDI CC 7   Volume
+  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
   MIDI CC 70  Pulse width
   MIDI CC 71  Filter Resonance
   MIDI CC 72  VCA Release Time
   MIDI CC 74  Filter cutoff
-  
-  TODO
-  MIDI CC 7   Volume
-  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
   MIDI CC 80  Delay 0 to 63 = Off, 64 to 127 = On
   MIDI CC 81  Crush 0 to 63 = Off, 64 to 127 = On
   MIDI CC 94  Detune amount 
@@ -59,6 +59,13 @@ void midi_handle() {
 }
 
 void midi_send_cc() {
+    // Volume CC 7
+  if((midi_parameters.amplitude > (synth.amplitude >> 3) + 1) || (midi_parameters.amplitude < (synth.amplitude >> 3) - 1)) {
+    MIDI.sendControlChange(7, (synth.amplitude >> 3), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(7, (synth.amplitude >> 3), MIDI_CHANNEL);
+    midi_parameters.amplitude = ((synth.amplitude >> 3) + midi_parameters.amplitude) / 2;
+  }
+
   // Filter 40 - 380 CC 74
   if((midi_parameters.filter > (synth.filter >> 3) + 1) || (midi_parameters.filter < (synth.filter >> 3) - 1)) {
     MIDI.sendControlChange(74, (synth.filter >> 3), MIDI_CHANNEL);
@@ -85,6 +92,34 @@ void midi_send_cc() {
     MIDI.sendControlChange(70, (synth.pulseWidth >> 3), MIDI_CHANNEL);
     usbMIDI.sendControlChange(70, (synth.pulseWidth >> 3), MIDI_CHANNEL);
     midi_parameters.pulseWidth = ((synth.pulseWidth >> 3) + midi_parameters.pulseWidth) / 2;
+  }
+
+  // Detune CC 94
+  if((midi_parameters.detune > (synth.detune >> 3) + 1) || (midi_parameters.detune < (synth.detune >> 3) - 1)) {
+    MIDI.sendControlChange(94, (synth.detune >> 3), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(94, (synth.detune >> 3), MIDI_CHANNEL);
+    midi_parameters.detune = ((synth.detune >> 3) + midi_parameters.detune) / 2;
+  }
+
+  // Glide CC 65
+  if(midi_parameters.glide != synth.glide) {
+    MIDI.sendControlChange(65, (synth.glide ? 127 : 0), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(65, (synth.glide ? 127 : 0), MIDI_CHANNEL);
+    midi_parameters.glide = synth.glide;
+  }
+
+  // Glide CC 80
+  if(midi_parameters.delay != synth.delay) {
+    MIDI.sendControlChange(80, (synth.delay ? 127 : 0), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(80, (synth.delay ? 127 : 0), MIDI_CHANNEL);
+    midi_parameters.delay = synth.delay;
+  }
+
+  // Glide CC 81
+  if(midi_parameters.crush != synth.crush) {
+    MIDI.sendControlChange(81, (synth.crush ? 127 : 0), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(81, (synth.crush ? 127 : 0), MIDI_CHANNEL);
+    midi_parameters.crush = synth.crush;
   }
 }
 
