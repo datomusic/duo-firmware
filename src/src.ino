@@ -61,6 +61,7 @@ int tempo_interval;
 bool random_flag = 0;
 bool dfu_flag = 0;
 
+int random_offset = 0;
 uint32_t midi_clock = 0;
 uint16_t audio_peak_values = 0UL;
 
@@ -340,7 +341,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
-    leds(current_step) = LED_WHITE;
+    leds(current_step+random_offset) = LED_WHITE;
 
   }
 }

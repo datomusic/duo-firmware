@@ -33,7 +33,6 @@ static void sequencer_untrigger_note();
 bool sequencer_is_running = false;
 bool note_is_done_playing = false;
 
-
 uint32_t next_step_time = 0;
 uint32_t gate_off_time = 0;
 uint32_t note_on_time;
@@ -132,12 +131,15 @@ void sequencer_advance_without_play() {
   if(!note_is_done_playing) {
     sequencer_untrigger_note();
   }
+  current_step++;
+  current_step%=SEQUENCER_NUM_STEPS;
+
   if (!next_step_is_random && !random_flag) {
-    current_step++;
-    current_step%=SEQUENCER_NUM_STEPS;
+    random_offset = 0;
   } else {
     random_flag = false;
-    current_step = ((current_step + random(2, SEQUENCER_NUM_STEPS))%SEQUENCER_NUM_STEPS);
+    random_offset = random(1,(SEQUENCER_NUM_STEPS - 2));
+    //current_step = ((current_step + random(2, SEQUENCER_NUM_STEPS))%SEQUENCER_NUM_STEPS);
   }
 
   // Sample keys
@@ -184,7 +186,7 @@ static void sequencer_trigger_note() {
 
   step_velocity[current_step] = INITIAL_VELOCITY;
 
-  note_on(step_note[current_step]+transpose, step_velocity[current_step], step_enable[current_step]);
+  note_on(step_note[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]+transpose, step_velocity[((current_step+random_offset)%SEQUENCER_NUM_STEPS)], step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]);
 }
 
 static void sequencer_untrigger_note() {
