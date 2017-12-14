@@ -40,6 +40,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define MIDI_HIGHEST_NOTE 94
 
 void midi_init();
+void midi_set_channel(uint8_t channel);
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value);
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
@@ -186,6 +187,12 @@ void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
     if(data[2] == SYSEX_REBOOT_BOOTLOADER) {
       enter_dfu();
     }
+  }
+}
+
+void midi_set_channel(uint8_t channel) {
+  if(channel > 0 && channel <= 16) {
+    MIDI_CHANNEL = channel;
   }
 }
 

@@ -26,8 +26,8 @@
 #include <Keypad.h>
 #include "TouchSlider.h"
 
-#define VERSION "1.0.0-rc.7"
-#define DEV_MODE
+#define VERSION "1.1.0-rc.1"
+// #define DEV_MODE
 
 int MIDI_CHANNEL = 1;
 
@@ -60,6 +60,7 @@ bool next_step_is_random = false;
 int tempo_interval;
 bool random_flag = 0;
 bool dfu_flag = 0;
+bool in_setup = true;
 
 int random_offset = 0;
 uint32_t midi_clock = 0;
@@ -123,14 +124,13 @@ void setup() {
   headphone_disable();
   sequencer_init();
   audio_init();
-  led_init();
 
-  // TODO: we want to scan the keyboard once to see if one 
-  // of the keys is pressed and set the MIDI channel to that
-  // 
-  // 1. We might want to run through the keys manually
-  // 2. Or we might want to use a function pointer to change the behavior of keypad functionality
+  // The order sequencer_init, button_matrix_init, led_init and midi_init is important
+  // Hold a button of the keyboard at startup to select MIDI channel
+  button_matrix_init();
+  keys_scan();
   midi_init();
+  led_init();
 
   MIDI.setHandleStart(sequencer_restart);
   MIDI.setHandleContinue(sequencer_restart);
@@ -138,8 +138,7 @@ void setup() {
   MIDI.setHandleControlChange(midi_handle_cc);
 
   usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
-
-  button_matrix_init();
+  
   drum_init();
   touch_init();
   
@@ -151,6 +150,8 @@ void setup() {
     Serial.println(VERSION);
   #endif
   headphone_enable();
+
+  in_setup = false;
 }
 
 void loop() {
@@ -236,7 +237,11 @@ void keys_scan() {
         switch (button_matrix.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  keyboard_set_note(SCALE[k - KEYB_0]);
+                  if(in_setup) {
+                    midi_set_channel((k - KEYB_0) + 1);
+                  } else {
+                    keyboard_set_note(SCALE[k - KEYB_0]);
+                  }
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
@@ -263,7 +268,11 @@ void keys_scan() {
                 }
                 break;
             case HOLD:
-                if (k == SEQ_START) {
+                if (k <= KEYB_9 && k >= KEYB_0) {
+                  if(in_setup) {
+                    midi_set_channel((k - KEYB_0) + 1);
+                  }
+                } else if (k == SEQ_START) {
                   #ifdef DEV_MODE
                     sequencer_stop();
                     FastLED.clear();

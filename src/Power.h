@@ -112,7 +112,11 @@ void amp_disable() {
 }
 
 void power_on() {
+  amp_disable();
   midi_clock = 0;
+  in_setup = true;
+  keys_scan();
+  in_setup = false;
   led_init();
   AudioInterrupts();
   amp_enable();

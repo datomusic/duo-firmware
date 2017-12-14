@@ -13,6 +13,7 @@ CRGB physical_leds[NUM_LEDS];
 #define led_play physical_leds[0]
 const int LED_BRIGHTNESS = 32;
 
+/* The black keys have assigned colors. The white keys are shown in gray */
 const CRGB COLORS[] = {
   0x444444,
   0xFF0001,
@@ -66,6 +67,10 @@ void led_init() {
   delay(500);
 
   for(int i = 0; i < 10; i++) {
+    analogWrite(ENV_LED,i*8);
+    analogWrite(FILTER_LED,i*8);
+    analogWrite(OSC_LED,i*8);
+
     physical_leds[i+9] = COLORS[SCALE[i]%24];
     delay(20);
     FastLED.show();
