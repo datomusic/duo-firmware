@@ -100,7 +100,7 @@ OBJCOPY = $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
 SIZE = $(abspath $(COMPILERPATH))/arm-none-eabi-size
 
 # automatically create lists of the sources and objects
-LC_FILES := $(wildcard $(LIBRARYPATH)/*/*.c) $(wildcard $(LIBRARYPATH)/*/*/*.c)
+LC_FILES := $(wildcard $(LIBRARYPATH)/*/*.c) $(wildcard $(LIBRARYPATH)/*/*/*.c) $(wildcard $(LIBRARYPATH)/*/*/*/*.c)
 LCPP_FILES := $(wildcard $(LIBRARYPATH)/*/*.cpp) $(wildcard $(LIBRARYPATH)/*/*/*.cpp)
 TC_FILES := $(wildcard $(COREPATH)/*.c)
 TCPP_FILES := $(wildcard $(COREPATH)/*.cpp)

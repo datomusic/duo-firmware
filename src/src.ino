@@ -25,8 +25,9 @@
 #include "Arduino.h"
 #include <Keypad.h>
 #include "TouchSlider.h"
+#include <eeprom.h>
 
-#define VERSION "1.1.0-rc.1"
+#define VERSION "1.1.0-rc.2"
 // #define DEV_MODE
 
 int MIDI_CHANNEL = 1;
@@ -39,6 +40,8 @@ const uint8_t SCALE_OFFSET_FROM_C3[] { 1,3,6,8,10,13,15,18,20,22 };
 #define LOW_SAMPLE_RATE 2489
 
 #define INITIAL_VELOCITY 100
+
+#define EEPROM_MIDI_CHANNEL 0
 
 // Globals that should not be globals
 int gate_length_msec = 40;
@@ -125,12 +128,21 @@ void setup() {
   sequencer_init();
   audio_init();
 
+  // Read the MIDI channel from EEPROM. Lowest four bits
+  uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL & 0xf00);
+  midi_set_channel(stored_midi_channel);
+
   // The order sequencer_init, button_matrix_init, led_init and midi_init is important
   // Hold a button of the keyboard at startup to select MIDI channel
   button_matrix_init();
   keys_scan();
   midi_init();
   led_init();
+
+  if(midi_get_channel() != stored_midi_channel) {
+    uint8_t eeprom_value = eeprom_read_byte(EEPROM_MIDI_CHANNEL) & B11110000;
+    eeprom_write_byte(EEPROM_MIDI_CHANNEL, eeprom_value | midi_get_channel());
+  }
 
   MIDI.setHandleStart(sequencer_restart);
   MIDI.setHandleContinue(sequencer_restart);

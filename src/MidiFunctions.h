@@ -196,4 +196,7 @@ void midi_set_channel(uint8_t channel) {
   }
 }
 
+uint8_t midi_get_channel() {
+  return MIDI_CHANNEL;
+}
 #endif
