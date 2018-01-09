@@ -15,11 +15,20 @@
   MIDI CC 80  Delay 0 to 63 = Off, 64 to 127 = On
   MIDI CC 81  Crush 0 to 63 = Off, 64 to 127 = On
   MIDI CC 94  Detune amount 
-
+  
+  Sysex:
+  Send f0 7d 64 0b f7 to reboot into bootloader mode
+  Send f0 7d 64 0a f7 to reboot into test mode
+  Send f0 7d 64 01 f7 to retrieve firmware version
+  firmware name/version   0x79  major version   minor version   char *name ...
   */
 
-#define DATO_SYSEX_ID 0x7D // TODO: Reserved for non-commercial entities
-#define SYSEX_REBOOT_BOOTLOADER 0x87
+#define SYSEX_DATO_ID 0x7D
+#define SYSEX_DUO_ID 0x64
+
+#define SYSEX_FIRMWARE_VERSION 0x01
+#define SYSEX_REBOOT_BOOTLOADER 0x0B
+#define SYSEX_SELFTEST 0x0A
 
 const float MIDI_NOTE_FREQUENCY[127] = {
   8.1757989156, 8.6619572180, 9.1770239974, 9.7227182413, 10.3008611535, 10.9133822323, 11.5623257097, 12.2498573744, 12.9782717994, 13.7500000000, 14.5676175474, 15.4338531643, 16.3515978313,
@@ -48,6 +57,7 @@ void midi_handle();
 void midi_send_cc();
 void midi_handle_clock();
 void midi_handle_realtime(uint8_t type);
+void midi_print_firmware_version();
 float midi_note_to_frequency(int x);
 void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete);
 
@@ -183,8 +193,14 @@ void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
 
 void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
 
-  if(data[1] == DATO_SYSEX_ID) { 
-    if(data[2] == SYSEX_REBOOT_BOOTLOADER) {
+  if(data[1] == SYSEX_DATO_ID && data[2] == SYSEX_DUO_ID) {
+    if(data[3] == SYSEX_FIRMWARE_VERSION) {
+      midi_print_firmware_version();
+    }
+    if(data[3] == SYSEX_SELFTEST) {
+      // enter_selftest();
+    }
+    if(data[3] == SYSEX_REBOOT_BOOTLOADER) {
       enter_dfu();
     }
   }
@@ -198,5 +214,10 @@ void midi_set_channel(uint8_t channel) {
 
 uint8_t midi_get_channel() {
   return MIDI_CHANNEL;
+}
+
+void midi_print_firmware_version() {
+  uint8_t sysex[] = { 0xf0, SYSEX_DATO_ID, SYSEX_DUO_ID, FIRMWARE_VERSION[0], FIRMWARE_VERSION[1], FIRMWARE_VERSION[2], 0xf7 };
+  usbMIDI.sendSysEx(7, sysex);
 }
 #endif

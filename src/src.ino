@@ -28,6 +28,8 @@
 #include <eeprom.h>
 
 #define VERSION "1.1.0-rc.2"
+const uint8_t FIRMWARE_VERSION[] = { 1, 1, 0 };
+
 // #define DEV_MODE
 
 int MIDI_CHANNEL = 1;
