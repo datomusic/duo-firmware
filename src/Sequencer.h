@@ -111,10 +111,10 @@ void sequencer_tick_clock() {
   }
 
   if(!tempo_handler.is_clock_source_internal()) {
-    int potvalue = analogRead(TEMPO_POT);
-    if(potvalue < 127) {
+    int potvalue = potRead(TEMPO_POT);
+    if(potvalue > 900) {
       sequencer_divider /= 2;
-    } else if(potvalue > 900) {
+    } else if(potvalue < 127) {
       sequencer_divider *= 2;
     }
   }

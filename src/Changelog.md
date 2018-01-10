@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [1.1.0-rc.2] - 2018-01-09 
+### Changed
+- Fixed bug where tempo pot didn't do anything when syncing to MIDI/sync
+
+## [1.1.0-rc.2] - 2018-01-09 
 ### Added
 - MIDI channel is stored even when DUO is turned off
 - Sysex functions: reboot to bootloader and firmware version
