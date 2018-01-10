@@ -25,11 +25,14 @@
 #include "Arduino.h"
 #include <Keypad.h>
 #include "TouchSlider.h"
+#include <eeprom.h>
 
-#define VERSION "1.0.0-rc.7"
-#define DEV_MODE
+#define VERSION "1.1.0-rc.2"
+const uint8_t FIRMWARE_VERSION[] = { 1, 1, 0 };
 
-const int MIDI_CHANNEL = 1;
+// #define DEV_MODE
+
+int MIDI_CHANNEL = 1;
 
 // Musical settings
 const uint8_t SCALE[] = { 49,51,54,56,58,61,63,66,68,70 };
@@ -39,6 +42,8 @@ const uint8_t SCALE_OFFSET_FROM_C3[] { 1,3,6,8,10,13,15,18,20,22 };
 #define LOW_SAMPLE_RATE 2489
 
 #define INITIAL_VELOCITY 100
+
+#define EEPROM_MIDI_CHANNEL 0
 
 // Globals that should not be globals
 int gate_length_msec = 40;
@@ -60,7 +65,9 @@ bool next_step_is_random = false;
 int tempo_interval;
 bool random_flag = 0;
 bool dfu_flag = 0;
+bool in_setup = true;
 
+int random_offset = 0;
 uint32_t midi_clock = 0;
 uint16_t audio_peak_values = 0UL;
 
@@ -122,9 +129,22 @@ void setup() {
   headphone_disable();
   sequencer_init();
   audio_init();
+
+  // Read the MIDI channel from EEPROM. Lowest four bits
+  uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL & 0xf00);
+  midi_set_channel(stored_midi_channel);
+
+  // The order sequencer_init, button_matrix_init, led_init and midi_init is important
+  // Hold a button of the keyboard at startup to select MIDI channel
+  button_matrix_init();
+  keys_scan();
+  midi_init();
   led_init();
 
-  midi_init();
+  if(midi_get_channel() != stored_midi_channel) {
+    uint8_t eeprom_value = eeprom_read_byte(EEPROM_MIDI_CHANNEL) & B11110000;
+    eeprom_write_byte(EEPROM_MIDI_CHANNEL, eeprom_value | midi_get_channel());
+  }
 
   MIDI.setHandleStart(sequencer_restart);
   MIDI.setHandleContinue(sequencer_restart);
@@ -132,8 +152,7 @@ void setup() {
   MIDI.setHandleControlChange(midi_handle_cc);
 
   usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
-
-  button_matrix_init();
+  
   drum_init();
   touch_init();
   
@@ -146,6 +165,7 @@ void setup() {
   #endif
   headphone_enable();
 
+  in_setup = false;
 }
 
 void loop() {
@@ -174,7 +194,9 @@ void loop() {
     midi_handle();
     sequencer_update();
 
-    led_update(); // ~ 2ms
+    if(!dfu_flag) {
+      led_update(); // ~ 2ms
+    }
 
     midi_handle();
     sequencer_update();
@@ -219,6 +241,7 @@ void keys_scan() {
     mixer_delay.gain(3, 0.4); // Hat delay input
   }
 
+  synth.glide = !muxDigitalRead(SLIDE_PIN);
   synth.crush = !digitalRead(BITC_PIN);
 
   if (button_matrix.getKeys())  {
@@ -228,7 +251,11 @@ void keys_scan() {
         switch (button_matrix.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
             case PRESSED:   
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  keyboard_set_note(SCALE[k - KEYB_0]);
+                  if(in_setup) {
+                    midi_set_channel((k - KEYB_0) + 1);
+                  } else {
+                    keyboard_set_note(SCALE[k - KEYB_0]);
+                  }
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
@@ -255,8 +282,13 @@ void keys_scan() {
                 }
                 break;
             case HOLD:
-                if (k == SEQ_START) {
+                if (k <= KEYB_9 && k >= KEYB_0) {
+                  if(in_setup) {
+                    midi_set_channel((k - KEYB_0) + 1);
+                  }
+                } else if (k == SEQ_START) {
                   #ifdef DEV_MODE
+                    sequencer_stop();
                     FastLED.clear();
                     physical_leds[0] = CRGB::Blue;
                     FastLED.show();
@@ -340,7 +372,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
-    leds(current_step) = LED_WHITE;
+    leds(current_step+random_offset) = LED_WHITE;
 
   }
 }

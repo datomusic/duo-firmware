@@ -2,24 +2,36 @@
 #define MidiFunctions_h
 #include <MIDI.h>
 /*
+
   Dato DUO MIDI implementation chart
 
+  Out only:
+  MIDI CC 7   Volume
+  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
   MIDI CC 70  Pulse width
   MIDI CC 71  Filter Resonance
   MIDI CC 72  VCA Release Time
   MIDI CC 74  Filter cutoff
-  
-  TODO
-  MIDI CC 7   Volume
-  MIDI CC 65  Glide 0 to 63 = Off, 64 to 127 = On
   MIDI CC 80  Delay 0 to 63 = Off, 64 to 127 = On
   MIDI CC 81  Crush 0 to 63 = Off, 64 to 127 = On
   MIDI CC 94  Detune amount 
+  
+  Sysex:
+  Send f0 7d 64 0b f7 to reboot into bootloader mode
+
+  Send f0 7d 64 0a f7 to reboot into test mode
+
+  Send    f0 7d 64 01 f7 to retrieve firmware version
+  Returns f0 7d 64 major_version minor_version patch f7
 
   */
 
-#define DATO_SYSEX_ID 0x7D // TODO: Reserved for non-commercial entities
-#define SYSEX_REBOOT_BOOTLOADER 0x87
+#define SYSEX_DATO_ID 0x7D
+#define SYSEX_DUO_ID 0x64
+
+#define SYSEX_FIRMWARE_VERSION 0x01
+#define SYSEX_REBOOT_BOOTLOADER 0x0B
+#define SYSEX_SELFTEST 0x0A
 
 const float MIDI_NOTE_FREQUENCY[127] = {
   8.1757989156, 8.6619572180, 9.1770239974, 9.7227182413, 10.3008611535, 10.9133822323, 11.5623257097, 12.2498573744, 12.9782717994, 13.7500000000, 14.5676175474, 15.4338531643, 16.3515978313,
@@ -40,6 +52,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define MIDI_HIGHEST_NOTE 94
 
 void midi_init();
+void midi_set_channel(uint8_t channel);
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity);
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value);
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity);
@@ -47,6 +60,7 @@ void midi_handle();
 void midi_send_cc();
 void midi_handle_clock();
 void midi_handle_realtime(uint8_t type);
+void midi_print_firmware_version();
 float midi_note_to_frequency(int x);
 void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete);
 
@@ -59,6 +73,13 @@ void midi_handle() {
 }
 
 void midi_send_cc() {
+    // Volume CC 7
+  if((midi_parameters.amplitude > (synth.amplitude >> 3) + 1) || (midi_parameters.amplitude < (synth.amplitude >> 3) - 1)) {
+    MIDI.sendControlChange(7, (synth.amplitude >> 3), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(7, (synth.amplitude >> 3), MIDI_CHANNEL);
+    midi_parameters.amplitude = ((synth.amplitude >> 3) + midi_parameters.amplitude) / 2;
+  }
+
   // Filter 40 - 380 CC 74
   if((midi_parameters.filter > (synth.filter >> 3) + 1) || (midi_parameters.filter < (synth.filter >> 3) - 1)) {
     MIDI.sendControlChange(74, (synth.filter >> 3), MIDI_CHANNEL);
@@ -85,6 +106,34 @@ void midi_send_cc() {
     MIDI.sendControlChange(70, (synth.pulseWidth >> 3), MIDI_CHANNEL);
     usbMIDI.sendControlChange(70, (synth.pulseWidth >> 3), MIDI_CHANNEL);
     midi_parameters.pulseWidth = ((synth.pulseWidth >> 3) + midi_parameters.pulseWidth) / 2;
+  }
+
+  // Detune CC 94
+  if((midi_parameters.detune > (synth.detune >> 3) + 1) || (midi_parameters.detune < (synth.detune >> 3) - 1)) {
+    MIDI.sendControlChange(94, (synth.detune >> 3), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(94, (synth.detune >> 3), MIDI_CHANNEL);
+    midi_parameters.detune = ((synth.detune >> 3) + midi_parameters.detune) / 2;
+  }
+
+  // Glide CC 65
+  if(midi_parameters.glide != synth.glide) {
+    MIDI.sendControlChange(65, (synth.glide ? 127 : 0), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(65, (synth.glide ? 127 : 0), MIDI_CHANNEL);
+    midi_parameters.glide = synth.glide;
+  }
+
+  // Glide CC 80
+  if(midi_parameters.delay != synth.delay) {
+    MIDI.sendControlChange(80, (synth.delay ? 127 : 0), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(80, (synth.delay ? 127 : 0), MIDI_CHANNEL);
+    midi_parameters.delay = synth.delay;
+  }
+
+  // Glide CC 81
+  if(midi_parameters.crush != synth.crush) {
+    MIDI.sendControlChange(81, (synth.crush ? 127 : 0), MIDI_CHANNEL);
+    usbMIDI.sendControlChange(81, (synth.crush ? 127 : 0), MIDI_CHANNEL);
+    midi_parameters.crush = synth.crush;
   }
 }
 
@@ -147,11 +196,31 @@ void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
 
 void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
 
-  if(data[1] == DATO_SYSEX_ID) { 
-    if(data[2] == SYSEX_REBOOT_BOOTLOADER) {
+  if(data[1] == SYSEX_DATO_ID && data[2] == SYSEX_DUO_ID) {
+    if(data[3] == SYSEX_FIRMWARE_VERSION) {
+      midi_print_firmware_version();
+    }
+    if(data[3] == SYSEX_SELFTEST) {
+      // enter_selftest();
+    }
+    if(data[3] == SYSEX_REBOOT_BOOTLOADER) {
       enter_dfu();
     }
   }
 }
 
+void midi_set_channel(uint8_t channel) {
+  if(channel > 0 && channel <= 16) {
+    MIDI_CHANNEL = channel;
+  }
+}
+
+uint8_t midi_get_channel() {
+  return MIDI_CHANNEL;
+}
+
+void midi_print_firmware_version() {
+  uint8_t sysex[] = { 0xf0, SYSEX_DATO_ID, SYSEX_DUO_ID, FIRMWARE_VERSION[0], FIRMWARE_VERSION[1], FIRMWARE_VERSION[2], 0xf7 };
+  usbMIDI.sendSysEx(7, sysex);
+}
 #endif

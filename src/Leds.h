@@ -13,6 +13,7 @@ CRGB physical_leds[NUM_LEDS];
 #define led_play physical_leds[0]
 const int LED_BRIGHTNESS = 32;
 
+/* The black keys have assigned colors. The white keys are shown in gray */
 const CRGB COLORS[] = {
   0x444444,
   0xFF0001,
@@ -59,9 +60,19 @@ void led_init() {
      physical_leds[0] = CRGB::Blue;
   #endif
 
+  // The key of the current MIDI channel lights up
+  physical_leds[MIDI_CHANNEL+8] = COLORS[SCALE[MIDI_CHANNEL-1]%24];
+
+  FastLED.show();
+  delay(500);
+
   for(int i = 0; i < 10; i++) {
+    analogWrite(ENV_LED,i*8);
+    analogWrite(FILTER_LED,i*8);
+    analogWrite(OSC_LED,i*8);
+
     physical_leds[i+9] = COLORS[SCALE[i]%24];
-    delay(40);
+    delay(20);
     FastLED.show();
   }
 }
@@ -76,11 +87,11 @@ void led_update() {
     }
      
     if(note_is_playing) {
-      leds(current_step) = LED_WHITE;
+      leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = LED_WHITE;
       // led_play = COLORS[note_is_playing%24];
     } else {
-      if(!step_enable[current_step]) {
-        leds(current_step) = CRGB::Black;
+      if(!step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]) {
+        leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = CRGB::Black;
         // led_play = CRGB::Black;
       }
 
