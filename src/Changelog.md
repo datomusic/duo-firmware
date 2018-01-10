@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.1.0-rc.2] - 2018-01-09 
 ### Added
 - MIDI channel is stored even when DUO is turned off
+- Sysex functions: reboot to bootloader and firmware version
 
 ## [1.1.0-rc.1] - 2017-12-14 
 ### Added

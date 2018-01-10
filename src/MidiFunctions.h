@@ -18,9 +18,12 @@
   
   Sysex:
   Send f0 7d 64 0b f7 to reboot into bootloader mode
+
   Send f0 7d 64 0a f7 to reboot into test mode
-  Send f0 7d 64 01 f7 to retrieve firmware version
-  firmware name/version   0x79  major version   minor version   char *name ...
+
+  Send    f0 7d 64 01 f7 to retrieve firmware version
+  Returns f0 7d 64 major_version minor_version patch f7
+
   */
 
 #define SYSEX_DATO_ID 0x7D
