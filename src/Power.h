@@ -120,8 +120,7 @@ void power_on() {
   midi_set_channel(stored_midi_channel);
   keys_scan();
   if(midi_get_channel() != stored_midi_channel) {
-    uint8_t eeprom_value = eeprom_read_byte(EEPROM_MIDI_CHANNEL) & B11110000;
-    eeprom_write_byte(EEPROM_MIDI_CHANNEL, eeprom_value | midi_get_channel());
+    eeprom_write_byte(EEPROM_MIDI_CHANNEL, midi_get_channel());
   }
   in_setup = false;
   led_init();
