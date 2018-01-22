@@ -195,15 +195,11 @@ float midi_note_to_frequency(int x) {
 }
 
 void midi_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {
-  if(channel == MIDI_CHANNEL) {
-    note_stack.NoteOn(note, velocity);
-  }
+  note_stack.NoteOn(note, velocity);
 }
 
 void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
-  if(channel == MIDI_CHANNEL) {
-    note_stack.NoteOff(note);
-  }
+  note_stack.NoteOff(note);
 }
 
 void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
