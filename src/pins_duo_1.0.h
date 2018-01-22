@@ -143,7 +143,7 @@ int muxAnalogRead(uint8_t channel) {
   digitalWriteFast(SYN_ADDR0, bitRead(channel,0));
   digitalWriteFast(SYN_ADDR1, bitRead(channel,1));
   digitalWriteFast(SYN_ADDR2, bitRead(channel,2));
-  //do we need to wait a few nanoseconds?
+  //do we need to wait a few microseconds?
   delayMicroseconds(50);
   return analogRead(MUX_IO);
 }

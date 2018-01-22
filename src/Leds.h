@@ -88,11 +88,9 @@ void led_update() {
      
     if(note_is_playing) {
       leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = LED_WHITE;
-      // led_play = COLORS[note_is_playing%24];
     } else {
       if(!step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]) {
         leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = CRGB::Black;
-        // led_play = CRGB::Black;
       }
 
       if(!sequencer_is_running) {

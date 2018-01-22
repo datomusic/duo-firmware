@@ -27,7 +27,7 @@
 #include "TouchSlider.h"
 #include <eeprom.h>
 
-#define VERSION "1.1.0-rc.4"
+#define VERSION "1.1.0-rc.5"
 const uint8_t FIRMWARE_VERSION[] = { 1, 1, 0 };
 
 // #define DEV_MODE
@@ -144,23 +144,26 @@ void setup() {
   if(midi_get_channel() != stored_midi_channel) {
     eeprom_write_byte(EEPROM_MIDI_CHANNEL, midi_get_channel());
   }
+  
+  drum_init();
+  touch_init();
 
   MIDI.setHandleStart(sequencer_restart);
   MIDI.setHandleContinue(sequencer_restart);
   MIDI.setHandleStop(sequencer_stop);
-  MIDI.setHandleControlChange(midi_handle_cc);
 
-  usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
-  
-  drum_init();
-  touch_init();
-  
   previous_note_on_time = millis();
 
   #ifdef DEV_MODE
     Serial.begin(57600);
     Serial.print("Dato DUO firmware ");
     Serial.println(VERSION);
+
+    // Set PTA2 (TDO) and PTA1 (TDI) as output for benchmarking pulse
+    GPIOA_PDDR |= (1<<2) | (1<<1);
+    PORTA_PCR1 = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
+    PORTA_PCR2 = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
+    GPIOA_PCOR |= (1<<2) | (1<<1);
   #endif
   headphone_enable();
 
@@ -168,37 +171,46 @@ void setup() {
 }
 
 void loop() {
+  #ifdef DEV_MODE
+    GPIOA_PSOR |= (1<<2); // Toggle benchmark pin
+  #endif
   if(power_check()) {
+    #ifdef DEV_MODE
+      GPIOA_PSOR |= (1<<1); // Toggle benchmark pin
+    #endif
+    midi_handle();
+    sequencer_update();
+    #ifdef DEV_MODE
+      GPIOA_PCOR |= (1<<1); // Toggle benchmark pin
+    #endif
+
     // Crude hard coded task switching
     keys_scan(); // 14 or 175us (depending on debounce)
     keyboard_to_note();  
     pitch_update();  // ~30us 
-
-    midi_handle();
-    sequencer_update();
-
     pots_read(); // ~ 100us
-
-    midi_handle();
-    sequencer_update();
 
     synth_update(); // ~ 100us
     midi_send_cc();
 
-    midi_handle();
-    sequencer_update();
-
     drum_read(); // ~ 700us
 
+    #ifdef DEV_MODE
+      GPIOA_PSOR |= (1<<1); // Toggle benchmark pin
+    #endif
     midi_handle();
     sequencer_update();
+    #ifdef DEV_MODE
+      GPIOA_PCOR |= (1<<1); // Toggle benchmark pin
+    #endif
+
+    #ifdef DEV_MODE
+      GPIOA_PCOR |= (1<<2); // Toggle benchmark pin
+    #endif
 
     if(!dfu_flag) {
       led_update(); // ~ 2ms
     }
-
-    midi_handle();
-    sequencer_update();
   }
 }
 
