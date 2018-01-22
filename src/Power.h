@@ -115,6 +115,8 @@ void power_on() {
   amp_disable();
   midi_clock = 0;
   in_setup = true;
+  // Clear note stack
+  note_stack.clear();
   // Read the MIDI channel from EEPROM. Lowest four bits
   uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL & 0xf00);
   midi_set_channel(stored_midi_channel);

@@ -32,3 +32,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 - Call midi_handle and sequencer_update only twice per loop
+- Clear held notes on power up
