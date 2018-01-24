@@ -76,7 +76,7 @@ void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete);
 synth_parameters midi_parameters;
 
 void midi_handle() {
-  MIDI.read();
+  MIDI.read(MIDI_CHANNEL);
   // Run through the parameters, see if they have changed and then send out CC's
   usbMIDI.read(MIDI_CHANNEL);
 }
