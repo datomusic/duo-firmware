@@ -8,7 +8,27 @@
 #include "Audio.h"
 #include <MIDI.h>
 
-#define VERSION "0.3.0"
+#define VERSION "0.5.0"
+const uint8_t FIRMWARE_VERSION[] = { 0, 5, 0 };
+/*
+ changelog:
+ 0.5.0:
+ - added sysex handling to reboot to bootloader
+
+ 0.4.0:
+ - changed sine frequency from 170 to 233Hz
+ - changed sine amplitude on speaker from .3 to .5
+*/
+#define SYSEX_DATO_ID 0x7D
+#define SYSEX_UNIVERSAL_NONREALTIME_ID 0x7e
+#define SYSEX_UNIVERSAL_REALTIME_ID 0x7f
+#define SYSEX_DUO_ID 0x64
+#define SYSEX_ALL_ID 0x7f
+
+#define SYSEX_FIRMWARE_VERSION 0x01
+#define SYSEX_SERIAL_NUMBER 0x02
+#define SYSEX_REBOOT_BOOTLOADER 0x0B
+#define SYSEX_SELFTEST 0x0A
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
@@ -24,6 +44,9 @@ void top_leds(CRGB c);
 void touch_read();
 void led_chaser();
 void sync_pulse();
+void midi_print_serial_number();
+void midi_print_identity();
+void midi_print_firmware_version();
 
 int pot_low_values[] = {900,900,900,900,900,900,900,900};
 int pot_high_values[] = {100,100,100,100,100,100,100,100};
@@ -65,7 +88,7 @@ void loop() {
       sine1.amplitude(1.0);
       amp_disable();
     } else {
-      sine1.amplitude(0.3);
+      sine1.amplitude(.5);
       amp_enable();
     }
 
@@ -274,6 +297,89 @@ void sync_pulse() {
   if(digitalRead(SYNC_DETECT)) {
     digitalWrite(SYNC_OUT, digitalRead(SYNC_IN));
   }
+}
+
+void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
+
+  if(data[1] == SYSEX_DATO_ID && data[2] == SYSEX_DUO_ID) {
+    switch(data[3]) {
+      case SYSEX_FIRMWARE_VERSION:
+        midi_print_firmware_version();
+        break;
+      case SYSEX_SERIAL_NUMBER:
+        midi_print_serial_number();
+        break;
+      case SYSEX_SELFTEST:
+        // enter_selftest();
+        break;
+      case SYSEX_REBOOT_BOOTLOADER:
+        enter_dfu();
+        break;
+    }
+  }
+  if(data[1] == SYSEX_UNIVERSAL_NONREALTIME_ID) {
+    if(data[2] == SYSEX_DUO_ID || data[2] == SYSEX_ALL_ID) {
+      if(data[3] == 06 && data[4] == 01) { // General Information Identity Request
+        midi_print_identity();
+      }
+    }
+  }
+}
+
+void midi_print_identity() {
+
+  uint8_t sysex[] = { 
+    0xf0,
+    0x7e,
+    SYSEX_DUO_ID,
+    0x06, // General Information (sub-ID#1)
+    0x02, // Identity Reply (sub-ID#2)
+    SYSEX_DATO_ID, // Manufacturers System Exclusive id code
+    0x00, 0x00, // Device family code (14 bits, LSB first)
+    0x00, 0x00, // Device family member code (14 bits, LSB first)
+    FIRMWARE_VERSION[0], // Software revision level. Major version
+    FIRMWARE_VERSION[1], // Software revision level. Minor version
+    FIRMWARE_VERSION[2], // Software revision level. Revision
+    0xf7 };
+
+  usbMIDI.sendSysEx(sizeof(sysex), sysex);
+}
+
+void midi_print_serial_number() {
+  // Serial number is sent as 4 groups of 5 7bit values, right aligned
+  uint8_t sysex[24];
+
+  sysex[0] = 0xf0;
+  sysex[1] = SYSEX_DATO_ID;
+  sysex[2] = SYSEX_DUO_ID;
+
+  sysex[3] = (SIM_UIDH >> 28) & 0x7f;
+  sysex[4] = (SIM_UIDH >> 21) & 0x7f;
+  sysex[5] = (SIM_UIDH >> 14) & 0x7f;
+  sysex[6] = (SIM_UIDH >> 7) & 0x7f;
+  sysex[7] = (SIM_UIDH) & 0x7f;
+
+  sysex[8]  = (SIM_UIDMH >> 28) & 0x7f;
+  sysex[9]  = (SIM_UIDMH >> 21) & 0x7f;
+  sysex[10] = (SIM_UIDMH >> 14) & 0x7f;
+  sysex[11] = (SIM_UIDMH >> 7) & 0x7f;
+  sysex[12] = (SIM_UIDMH) & 0x7f;
+
+  sysex[13] = (SIM_UIDML >> 28) & 0x7f;
+  sysex[14] = (SIM_UIDML >> 21) & 0x7f;
+  sysex[15] = (SIM_UIDML >> 14) & 0x7f;
+  sysex[16] = (SIM_UIDML >> 7) & 0x7f;
+  sysex[17] = (SIM_UIDML) & 0x7f;
+
+  sysex[18] = (SIM_UIDL >> 28) & 0x7f;
+  sysex[19] = (SIM_UIDL >> 21) & 0x7f;
+  sysex[20] = (SIM_UIDL >> 14) & 0x7f;
+  sysex[21] = (SIM_UIDL >> 7) & 0x7f;
+  sysex[22] = (SIM_UIDL) & 0x7f;
+
+  sysex[23]= 0xf7;
+
+  usbMIDI.sendSysEx(24, sysex);
 }
 
 /*

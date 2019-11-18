@@ -32,17 +32,20 @@ void setup() {
     analogWrite(A14, i);
     delay(1);
   }
-
+  FastLED.clear();
+  FastLED.show();
 }
 
 void loop() {
-  while(!keys_scan_powerbutton()) {
-    FastLED.clear();
+  unsigned long timeout = millis() + 1000;
+
+  while(!keys_scan_powerbutton() && (millis() < timeout)) {
+    physical_leds[0] = CRGB::Black;
     FastLED.show();
-    delay(100);
+    delay(120);
     physical_leds[0] = CRGB::Yellow;
     FastLED.show();
-    delay(100);
+    delay(120);
 
     if(!digitalRead(BITC_PIN) && !digitalRead(ACCENT_PIN)) {
       enter_dfu();

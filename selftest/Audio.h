@@ -52,7 +52,7 @@ void amp_disable();
 void audio_init() {
   AudioMemory(32);
   headphone_enable();
-  sine1.frequency(170);
+  sine1.frequency(233);
   sine1.amplitude(1.0);
 }
 
