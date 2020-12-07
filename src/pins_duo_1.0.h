@@ -100,8 +100,9 @@ const int SYNC_OUT_PIN = SYNC_OUT;
 #define COLOR_ORDER GRB
 #define LED_TYPE SK6812
 
-const int NUM_LEDS = 19;
-const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8};
+// One more LED than the physical number of leds for loopback testing
+const int NUM_LEDS = 19+1;
+const int led_order[NUM_LEDS] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 
 // Multiplexer channels.
 #define POT_SYN1 0
@@ -187,6 +188,9 @@ void pins_init() {
   pinMode(SYN_ADDR0, OUTPUT);
   pinMode(SYN_ADDR1, OUTPUT);
   pinMode(SYN_ADDR2, OUTPUT);
+
+  // LED_CLK pin is connected to the last LED in the string for loopback testing
+  pinMode(LED_CLK, INPUT_PULLUP);
 
   randomSeed(analogRead(UNCONNECTED_ANALOG));
 }

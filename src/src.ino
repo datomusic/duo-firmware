@@ -27,8 +27,8 @@
 #include "TouchSlider.h"
 #include <eeprom.h>
 
-#define VERSION "1.1.0-rc.5"
-const uint8_t FIRMWARE_VERSION[] = { 1, 1, 0 };
+#define VERSION "1.2.0-beta1"
+const uint8_t FIRMWARE_VERSION[] = { 1, 2, 0 };
 
 // #define DEV_MODE
 

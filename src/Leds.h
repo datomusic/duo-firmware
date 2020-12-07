@@ -4,6 +4,7 @@
 #include <FastLED.h>
 
 #define CORRECTION_SK6812 0xFFF1E0
+#define CORRECTION_SK6805 0xFFD3AA
 #define LED_WHITE CRGB(230,255,150)
 
 #define leds(A) physical_leds[led_order[A]]
@@ -11,7 +12,9 @@
 
 CRGB physical_leds[NUM_LEDS];
 #define led_play physical_leds[0]
-const int LED_BRIGHTNESS = 32;
+
+#define SK6812_BRIGHTNESS 32
+#define SK6805_BRIGHTNESS 140
 
 /* The black keys have assigned colors. The white keys are shown in gray */
 const CRGB COLORS[] = {
@@ -43,13 +46,26 @@ const CRGB COLORS[] = {
 
 void led_init();
 void led_update();
+void led_data_received();
+
+void led_data_received() {
+    FastLED.setBrightness(SK6805_BRIGHTNESS); 
+    FastLED.setCorrection(CORRECTION_SK6805);
+    detachInterrupt(LED_CLK);
+}
 
 void led_init() {
   FastLED.addLeds<LED_TYPE, LED_DATA, COLOR_ORDER>(physical_leds, NUM_LEDS);
   
-  FastLED.setBrightness(LED_BRIGHTNESS); 
- 
+  FastLED.setBrightness(SK6812_BRIGHTNESS); 
   FastLED.setCorrection(CORRECTION_SK6812);
+
+  // We're going to do a loopback test first to determine brightness
+  attachInterrupt(LED_CLK, led_data_received, CHANGE);
+  FastLED.clear();
+  physical_leds[NUM_LEDS] = CRGB(0xff6805);
+  FastLED.show();
+  
   FastLED.clear();
   FastLED.show();
   /* The 400ms delay introduced by this startup animation prevents
