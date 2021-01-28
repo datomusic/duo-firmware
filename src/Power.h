@@ -118,7 +118,7 @@ void power_on() {
   // Clear note stack
   note_stack.Clear();
   // Read the MIDI channel from EEPROM. Lowest four bits
-  uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL & 0xf00);
+  uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL) & 0xf00;
   midi_set_channel(stored_midi_channel);
   keys_scan();
   if(midi_get_channel() != stored_midi_channel) {
