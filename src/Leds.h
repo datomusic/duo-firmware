@@ -3,8 +3,11 @@
 
 #include <FastLED.h>
 
+#define COLOR_ORDER GRB
+
+#define LED_TYPE SK6812
 #define CORRECTION_SK6812 0xFFF1E0
-#define CORRECTION_SK6805 0xFFD3AA
+#define CORRECTION_SK6805 0xFFD3E0
 #define LED_WHITE CRGB(230,255,150)
 
 #define leds(A) physical_leds[led_order[A]]

@@ -97,8 +97,7 @@ const int ENV_LED = LED_3;
 
 const int SYNC_OUT_PIN = SYNC_OUT;
 
-#define COLOR_ORDER GRB
-#define LED_TYPE SK6812
+
 
 // One more LED than the physical number of leds for loopback testing
 const int NUM_LEDS = 19+1;

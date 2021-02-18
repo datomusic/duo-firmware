@@ -383,7 +383,7 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     envelope1.noteOn();
     envelope2.noteOn();
   } else {
-    leds(current_step+random_offset) = LED_WHITE;
+    leds((current_step+random_offset)%SEQUENCER_NUM_STEPS) = LED_WHITE;
 
   }
 }
