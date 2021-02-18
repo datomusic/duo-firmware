@@ -10,3 +10,6 @@ tools/
 *.o
 *.bin
 *.d
+duo-firmware.bin
+libraries/Audio
+libraries/MIDI

@@ -31,7 +31,7 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
-        TOOLSPATH = /Applications/Arduino.app/Contents/Java/hardware/tools/
+        TOOLSPATH = $(CURDIR)/tools
     endif
 endif
 
@@ -42,7 +42,8 @@ COREPATH = teensy3/teensy3
 LIBRARYPATH = $(CURDIR)/libraries
 
 # path location for the arm-none-eabi compiler
-COMPILERPATH = $(TOOLSPATH)/arm/bin
+#COMPILERPATH = $(TOOLSPATH)/arm/bin
+COMPILERPATH = /opt/homebrew/bin
 
 #************************************************************************
 # Settings below this point usually do not need to be edited

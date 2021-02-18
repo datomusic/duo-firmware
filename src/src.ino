@@ -131,7 +131,7 @@ void setup() {
   audio_init();
 
   // Read the MIDI channel from EEPROM. Lowest four bits
-  uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL & 0xf00);
+  uint8_t stored_midi_channel = eeprom_read_byte(EEPROM_MIDI_CHANNEL) & 0xf00;
   midi_set_channel(stored_midi_channel);
 
   // The order sequencer_init, button_matrix_init, led_init and midi_init is important
