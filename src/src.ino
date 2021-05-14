@@ -61,6 +61,9 @@ uint8_t osc_pulse_midi_note = 0;
 uint8_t note_is_playing = 0;
 bool note_is_triggered = false;
 int transpose = 0;
+int key_down = 0;
+int key_up = 0;
+uint8_t key_note[10] = { 0 };
 bool next_step_is_random = false;
 int tempo_interval;
 bool random_flag = 0;
@@ -264,8 +267,13 @@ void keys_scan() {
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   if(in_setup) {
                     midi_set_channel((k - KEYB_0) + 1);
+                  } else if (key_down && key_up) {
+                    transpose = SCALE[k - KEYB_0] - 61;
                   } else {
-                    keyboard_set_note(SCALE[k - KEYB_0]);
+                    key_note[k - KEYB_0] = SCALE[k - KEYB_0] - (key_down&1) + (key_up&1);
+                    keyboard_set_note(key_note[k - KEYB_0]);
+                    if (key_down == 1) {key_down = 3;}
+                    if (key_up == 1) {key_up = 3;}
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
                   step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
@@ -277,11 +285,9 @@ void keys_scan() {
                   }
                   double_speed = true;
                 } else if (k == BTN_DOWN) {
-                  transpose--;
-                  if(transpose<-12){transpose = -24;}
+                  key_down = 1;
                 } else if (k == BTN_UP) {
-                  transpose++;
-                  if(transpose>12){transpose = 24;}
+                  key_up = 1;
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = true;
                   if(!sequencer_is_running) {
@@ -316,15 +322,21 @@ void keys_scan() {
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  keyboard_unset_note(SCALE[k - KEYB_0]);
+                  keyboard_unset_note(key_note[k - KEYB_0]);
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {
-                  if(transpose<-12){transpose = -12;}
-                  if(transpose>12){transpose = 12;}
+                  if (key_down == 1) {
+                    transpose--;
+                    if (transpose < -12) {transpose = -12;}
+                  }
+                  key_down = 0;
                 } else if (k == BTN_UP) {
-                  if(transpose<-12){transpose = -12;}
-                  if(transpose>12){transpose = 12;}
+                  if (key_up == 1) {
+                    transpose++;
+                    if (transpose > 12) {transpose = 12;}
+                  }
+                  key_up = 0;
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = false;
                   random_flag = false;

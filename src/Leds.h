@@ -19,32 +19,32 @@ CRGB physical_leds[NUM_LEDS];
 #define SK6812_BRIGHTNESS 32
 #define SK6805_BRIGHTNESS 140
 
-/* The black keys have assigned colors. The white keys are shown in gray */
+/* The black keys have most primary colors. The white keys are inbetween */
 const CRGB COLORS[] = {
-  0x444444,
-  0xFF0001,
-  0x444444,
-  0xFFDD00,
-  0x444444,
-  0x444444,
-  0x11FF00,
-  0x444444,
-  0x0033DD,
-  0x444444,
-  0xFF00FF,
-  0x444444,
-  0x444444,
-  0xFF2209,
-  0x444444,
-  0x99FF00,
-  0x444444,
-  0x444444,
-  0x00EE22,
-  0x444444,
-  0x0099CC,
-  0x444444,
-  0xBB33BB,
-  0x444444
+  0xEE0033, // C
+  0xFF0001, // C#
+  0xFF4400, // D
+  0xFFDD00, // D#
+  0xBBEE00, // E
+  0x66EE00, // F
+  0x11FF00, // F#
+  0x006644, // G
+  0x0033DD, // G#
+  0x4411EE, // A
+  0xFF00FF, // A#
+  0xFF1166, // B
+  0xFF1122, // C
+  0xFF2209, // C#
+  0xFF8811, // D
+  0xFFEE22, // D#
+  0x99DD22, // E
+  0x44BB22, // F
+  0x00EE22, // F#
+  0x00CC44, // G
+  0x0099CC, // G#
+  0x4455CC, // A
+  0xBB33BB, // A#
+  0xFF6666  // B
 };
 
 void led_init();
