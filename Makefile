@@ -31,7 +31,13 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
-        TOOLSPATH = $(CURDIR)/tools
+        # path location for the arm-none-eabi compiler (include trailing /!)
+        COMPILERPATH = /opt/homebrew/bin/
+        #COMPILERPATH = $(abspath $(TOOLSPATH))/arm/bin/
+    endif
+    ifeq ($(UNAME_S),Linux)
+        # path location for the arm-none-eabi compiler
+        COMPILERPATH =  # empty = on system path
     endif
 endif
 
@@ -40,10 +46,6 @@ COREPATH = teensy3/teensy3
 
 # path location for Arduino libraries
 LIBRARYPATH = $(CURDIR)/libraries
-
-# path location for the arm-none-eabi compiler
-#COMPILERPATH = $(TOOLSPATH)/arm/bin
-COMPILERPATH = /opt/homebrew/bin
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
@@ -95,10 +97,10 @@ else
 endif
 
 # names for the compiler programs
-CC = $(abspath $(COMPILERPATH))/arm-none-eabi-gcc
-CXX = $(abspath $(COMPILERPATH))/arm-none-eabi-g++
-OBJCOPY = $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
-SIZE = $(abspath $(COMPILERPATH))/arm-none-eabi-size
+CC = $(COMPILERPATH)arm-none-eabi-gcc
+CXX = $(COMPILERPATH)arm-none-eabi-g++
+OBJCOPY = $(COMPILERPATH)arm-none-eabi-objcopy
+SIZE = $(COMPILERPATH)arm-none-eabi-size
 
 # automatically create lists of the sources and objects
 LC_FILES := $(wildcard $(LIBRARYPATH)/*/*.c) $(wildcard $(LIBRARYPATH)/*/*/*.c)
