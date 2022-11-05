@@ -158,7 +158,7 @@ class TempoHandler
      * Calls the callback, updates the clock and sends out MIDI/Sync pulses
      */
     void trigger() {
-      MIDI.sendRealTime(midi::Clock);
+      /* MIDI.sendRealTime(midi::Clock); */
       usbMIDI.sendRealTime(midi::Clock);
 
       if((_clock % _ppqn) == 0) {
