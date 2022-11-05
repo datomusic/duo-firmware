@@ -156,10 +156,10 @@ void midi_init() {
   usbMIDI.setHandleNoteOn(midi_note_on);
   usbMIDI.setHandleNoteOff(midi_note_off);
 
-  usbMIDI.setHandleSysEx(midi_usb_sysex);
+  //usbMIDI.setHandleSysEx(midi_usb_sysex);
   MIDI.setHandleControlChange(midi_handle_cc);
 
-  usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
+  //usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
 }
 
 void midi_handle_cc(uint8_t channel, uint8_t number, uint8_t value) {

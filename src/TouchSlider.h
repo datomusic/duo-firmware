@@ -115,9 +115,9 @@ public:
       numTouches &= ~1UL;
     }
 
-    uint16_t bottomBits = numTouches & B1111;
+    uint16_t bottomBits = numTouches & 0B1111;
 
-    if(!touchDetected && bottomBits == B1111) {
+    if(!touchDetected && bottomBits == 0B1111) {
       touchDetected = 1;
       _sliderValue = (db - da);
       if (tTouchCallback != 0) {

@@ -1,43 +1,6 @@
 #ifndef Synth_h
 #define Synth_h
 
-// #include <Wire.h>
-
-/*
-  Begin <Audio.h>
-  We're replicating stuff from PJRC's <Audio.h> here, excluding the Audio libraries we don't need
-*/
-#if TEENSYDUINO < 120
-#error "Teensyduino version 1.20 or later is required to compile the Audio library."
-#endif
-#ifdef __AVR__
-#error "The Audio Library only works with Teensy 3.X.  Teensy 2.0 is unsupported."
-#endif
-
-#include <DMAChannel.h>
-#if !defined(DMACHANNEL_HAS_BEGIN) || !defined(DMACHANNEL_HAS_BOOLEAN_CTOR)
-#error "You need to update DMAChannel.h & DMAChannel.cpp"
-#error "https://github.com/PaulStoffregen/cores/blob/master/teensy3/DMAChannel.h"
-#error "https://github.com/PaulStoffregen/cores/blob/master/teensy3/DMAChannel.cpp"
-#endif
-
-// When changing multiple audio object settings that must update at
-// the same time, these functions allow the audio library interrupt
-// to be disabled.  For example, you may wish to begin playing a note
-// in response to reading an analog sensor.  If you have "velocity"
-// information, you might start the sample playing and also adjust
-// the gain of a mixer channel.  Use AudioNoInterrupts() first, then
-// make both changes to the 2 separate objects.  Then allow the audio
-// library to update with AudioInterrupts().  Both changes will happen
-// at the same time, because AudioNoInterrupts() prevents any updates
-// while you make changes.
-//
-#define AudioNoInterrupts() (NVIC_DISABLE_IRQ(IRQ_SOFTWARE))
-#define AudioInterrupts()   (NVIC_ENABLE_IRQ(IRQ_SOFTWARE))
-
-// include all the library headers, so a sketch can use a single
-// #include <Audio.h> to get the whole library
-//
 #include <analyze_peak.h>
 #include <effect_bitcrusher.h>
 #include <effect_delay.h>
@@ -45,8 +8,7 @@
 #include "effect_custom_envelope.h"
 #include <effect_multiply.h>
 #include <filter_variable.h>
-#include <input_adc.h>
-#include <output_dac.h>
+#include "output_mqs.h"
 #include <mixer.h>
 #include <synth_waveform.h>
 #include <synth_dc.h>
@@ -69,7 +31,7 @@ AudioMixer4              mixer_delay;     //xy=728.0999755859375,279.10000610351
 AudioMixer4              mixer_output;         //xy=861.1000061035156,100
 AudioEffectFade          pop_suppressor;          //xy=1062,292
 AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
-AudioOutputAnalog        dac1;           //xy=988.1000061035156,100
+AudioOutputMQS        dac1;           //xy=988.1000061035156,100
 AudioSynthNoiseWhite     hat_noise1;
 AudioSynthSimpleDrum     kick_drum1;
 AudioEffectCustomEnvelope hat_envelope1;
@@ -167,9 +129,9 @@ void audio_init() {
     EXTERNAL = 3.3V supply voltage
     */
   #ifdef SUPER_LOUD_MODE
-    dac1.analogReference(EXTERNAL);
+    //dac1.analogReference(EXTERNAL);
   #else
-    dac1.analogReference(INTERNAL);
+    //dac1.analogReference(INTERNAL);
   #endif
 }
 

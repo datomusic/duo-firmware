@@ -64,7 +64,7 @@ void led_init() {
   FastLED.setCorrection(CORRECTION_SK6812);
 
   // We're going to do a loopback test first to determine brightness
-  attachInterrupt(LED_CLK, led_data_received, CHANGE);
+  //attachInterrupt(LED_CLK, led_data_received, CHANGE);
   FastLED.clear();
   physical_leds[NUM_LEDS] = CRGB(0xff6805);
   FastLED.show();
@@ -86,9 +86,9 @@ void led_init() {
   delay(500);
 
   for(int i = 0; i < 10; i++) {
-    analogWrite(ENV_LED,i*8);
-    analogWrite(FILTER_LED,i*8);
-    analogWrite(OSC_LED,i*8);
+    //analogWrite(ENV_LED,i*8);
+    //analogWrite(FILTER_LED,i*8);
+    //analogWrite(OSC_LED,i*8);
 
     physical_leds[i+9] = COLORS[SCALE[i]%24];
     delay(20);
