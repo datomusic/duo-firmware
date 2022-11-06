@@ -40,7 +40,7 @@ class TempoHandler
     }
     void update() {
       // Determine which source is selected for tempo
-      if(digitalRead(SYNC_DETECT)) {
+      if(Sync::jackDetected()) {
         if(_source != TEMPO_SOURCE_SYNC) {
           _source = TEMPO_SOURCE_SYNC;
         }
