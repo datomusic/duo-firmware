@@ -54,7 +54,7 @@ void sequencer_init() {
 }
 
 void sequencer_restart() {
-  /* MIDI.sendRealTime(midi::Start); */
+  MIDI.sendRealTime(midi::Start);
   delay(1);
   current_step = SEQUENCER_NUM_STEPS - 1;
   tempo_handler.midi_clock_reset();
@@ -76,7 +76,7 @@ void sequencer_reset_clock() {
 }
 
 void sequencer_start() {
-  /* MIDI.sendRealTime(midi::Continue); */
+  MIDI.sendRealTime(midi::Continue);
   usbMIDI.sendRealTime(midi::Continue);
   tempo_handler.midi_clock_reset();
   sequencer_is_running = true;
@@ -86,9 +86,9 @@ void sequencer_stop() {
   if(sequencer_is_running) {
 
     usbMIDI.sendControlChange(123,0,MIDI_CHANNEL);
-    /* MIDI.sendControlChange(123,0,MIDI_CHANNEL); */
+    MIDI.sendControlChange(123,0,MIDI_CHANNEL);
     usbMIDI.sendRealTime(midi::Stop);
-    /* MIDI.sendRealTime(midi::Stop); */
+    MIDI.sendRealTime(midi::Stop);
 
     sequencer_is_running = false;
     sequencer_untrigger_note();
