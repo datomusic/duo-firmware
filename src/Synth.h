@@ -56,9 +56,9 @@ AudioConnection          patchCord22(hat_filter_hp, 2, hat_filter_bp, 0);
 AudioConnection          patchCord23(hat_filter_bp, 1, hat_mixer, 0);
 AudioConnection          patchCord24(hat_snappy, 0, hat_mixer, 1);
 AudioConnection          patchCord25(hat_mixer, 0, mixer_delay, 3);
-/* AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2); */
-/* AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3); */
-/* AudioConnection          patchCord14(mixer_output, pop_suppressor); */
+AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
+AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
+AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
 // GUItool: end automatically generated code
 
