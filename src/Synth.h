@@ -8,7 +8,6 @@
 #include "effect_custom_envelope.h"
 #include <effect_multiply.h>
 #include <filter_variable.h>
-#include "output_mqs.h"
 #include <mixer.h>
 #include <synth_waveform.h>
 #include <synth_dc.h>
@@ -31,7 +30,6 @@ AudioMixer4              mixer_delay;     //xy=728.0999755859375,279.10000610351
 AudioMixer4              mixer_output;         //xy=861.1000061035156,100
 AudioEffectFade          pop_suppressor;          //xy=1062,292
 AudioAnalyzePeak         peak2;          //xy=987.1000061035156,151
-AudioOutputMQS        dac1;           //xy=988.1000061035156,100
 AudioSynthNoiseWhite     hat_noise1;
 AudioSynthSimpleDrum     kick_drum1;
 AudioEffectCustomEnvelope hat_envelope1;
@@ -62,7 +60,6 @@ AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
 AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
 AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
-AudioConnection          patchCord16(pop_suppressor, dac1);
 // GUItool: end automatically generated code
 
 #define MAIN_GAIN 0.8
