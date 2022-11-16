@@ -68,7 +68,7 @@ class TempoHandler
       }
 
       if(syncStart >= TEMPO_SYNC_PULSE_MS) {
-        digitalWrite(SYNC_OUT_PIN, LOW);
+        Sync::write(LOW);
       }
     }
     void midi_clock_received() {
@@ -109,7 +109,7 @@ class TempoHandler
     }
     void update_sync() {
       static uint8_t _sync_pin_previous_value = 1;
-      uint8_t _sync_pin_value = digitalRead(SYNC_IN);
+      uint8_t _sync_pin_value = Sync::read();
 
       if(_sync_pin_previous_value && !_sync_pin_value) {
         _tempo_interval = (micros() - _previous_sync_time) / TEMPO_SYNC_DIVIDER;
@@ -165,7 +165,7 @@ class TempoHandler
         _clock = 0;
       }
       if((_clock % TEMPO_SYNC_DIVIDER) == 0) {
-        digitalWrite(SYNC_OUT_PIN, HIGH);
+        Sync::write(HIGH);
         syncStart = 0;
       } 
       if (tTempoCallback != 0) {
