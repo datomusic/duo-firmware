@@ -62,7 +62,7 @@ AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
 // GUItool: end automatically generated code
 
-#define MAIN_GAIN 0.8
+#define MAIN_GAIN 1.2
 #define DELAY_GAIN 0.6
 #define KICK_GAIN 0.8
 #define HAT_GAIN 0.9
@@ -75,9 +75,9 @@ void audio_init() {
   AudioMemory(128); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
-  osc_saw.begin(0.4, 110, WAVEFORM_SAWTOOTH);
+  osc_saw.begin(0.4, 110, WAVEFORM_BANDLIMIT_SAWTOOTH);
   osc_pulse.pulseWidth(0.5);
-  osc_pulse.begin(0.4, 220, WAVEFORM_PULSE);
+  osc_pulse.begin(0.4, 220, WAVEFORM_BANDLIMIT_PULSE);
   
   // Mixer mixes the oscillators - don't add up to more than 0.8 or the output will clip
   mixer1.gain(0, 0.4); // OSC1
@@ -154,7 +154,7 @@ void synth_update() {
     osc_saw.amplitude(0.4);
   }
   osc_pulse.frequency(osc_pulse_frequency);
-  osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,1000,100)/1000.0);
+  osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,500,950)/1000.);
 
   filter1.frequency((synth.filter/2)+30);
   filter1.resonance(map(synth.resonance,0,1023,70,320)/100.0); // 0.7-3.2 range
