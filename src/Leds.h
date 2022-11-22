@@ -66,7 +66,7 @@ void led_init() {
   // We're going to do a loopback test first to determine brightness
   //attachInterrupt(LED_CLK, led_data_received, CHANGE);
   FastLED.clear();
-  physical_leds[NUM_LEDS] = CRGB(0xff6805);
+  physical_leds[NUM_LEDS-1] = CRGB(0xff6805);
   FastLED.show();
   
   FastLED.clear();
