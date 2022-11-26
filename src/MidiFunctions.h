@@ -71,7 +71,7 @@ void midi_print_firmware_version();
 void midi_print_serial_number();
 void midi_print_identity();
 float midi_note_to_frequency(int x);
-void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete);
+void midi_usb_sysex(byte *data, unsigned length);
 
 synth_parameters midi_parameters;
 
@@ -156,7 +156,7 @@ void midi_init() {
   usbMIDI.setHandleNoteOn(midi_note_on);
   usbMIDI.setHandleNoteOff(midi_note_off);
 
-  //usbMIDI.setHandleSysEx(midi_usb_sysex);
+  usbMIDI.setHandleSysEx(midi_usb_sysex);
   MIDI.setHandleControlChange(midi_handle_cc);
 
   //usbMIDI.setHandleRealTimeSystem(midi_handle_realtime);
@@ -202,7 +202,7 @@ void midi_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {
   note_stack.NoteOff(note);
 }
 
-void midi_usb_sysex(const uint8_t *data, uint16_t length, bool complete) {
+void midi_usb_sysex(byte *data, unsigned length) {
 
   if(data[1] == SYSEX_DATO_ID && data[2] == SYSEX_DUO_ID) {
     switch(data[3]) {
