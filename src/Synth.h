@@ -153,7 +153,7 @@ void synth_update() {
   } else {
     osc_saw.amplitude(0.4);
   }
-  osc_pulse.frequency(osc_pulse_frequency);
+  osc_pulse.frequency(osc_pulse_frequency/2);
   osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,500,950)/1000.);
 
   filter1.frequency((synth.filter/2)+30);
