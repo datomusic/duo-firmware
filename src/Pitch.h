@@ -33,7 +33,7 @@ void pitch_update() {
 
 float detune(int note, int amount) { // amount goes from 0-1023
   if (amount > 850) {
-    return midi_note_to_frequency(note) * (amount+9000)/10240.;
+    return midi_note_to_frequency(note) * (amount+9000)/10240.f;
   }
   if (amount > 680) {
     return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[0]);
@@ -47,7 +47,7 @@ float detune(int note, int amount) { // amount goes from 0-1023
   if (amount > 200) {
     return midi_note_to_frequency(note - DETUNE_OFFSET_SEMITONES[3]);
   }
-  return midi_note_to_frequency(note - 12) * ( 20000 - amount )/20000.;
+  return midi_note_to_frequency(note - 12) * ( 20000 - amount )/20000.f;
 }
 
 #endif

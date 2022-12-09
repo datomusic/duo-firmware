@@ -62,43 +62,42 @@ AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
 // GUItool: end automatically generated code
 
-#define MAIN_GAIN 1.2
-#define DELAY_GAIN 0.6
-#define KICK_GAIN 0.8
-#define HAT_GAIN 0.9
+#define DELAY_GAIN 0.6f
+#define KICK_GAIN 0.8f
+#define HAT_GAIN 0.9f
 
 void audio_init();
-void audio_volume(uint8_t volume);
+void audio_volume(int volume);
 void synth_update();
 
 void audio_init() {
   AudioMemory(128); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
-  osc_saw.begin(0.4, 110, WAVEFORM_BANDLIMIT_SAWTOOTH);
-  osc_pulse.pulseWidth(0.5);
-  osc_pulse.begin(0.4, 220, WAVEFORM_BANDLIMIT_PULSE);
+  osc_saw.begin(0.4f, 110, WAVEFORM_BANDLIMIT_SAWTOOTH);
+  osc_pulse.pulseWidth(0.5f);
+  osc_pulse.begin(0.4f, 220, WAVEFORM_BANDLIMIT_PULSE);
   
   // Mixer mixes the oscillators - don't add up to more than 0.8 or the output will clip
-  mixer1.gain(0, 0.4); // OSC1
-  mixer1.gain(1, 0.4); // OSC2
+  mixer1.gain(0, 0.4f); // OSC1
+  mixer1.gain(1, 0.4f); // OSC2
 
   // Filter
-  filter1.resonance(0.7); // range 0.7-5.0
+  filter1.resonance(0.7f); // range 0.7-5.0
   filter1.frequency(400);
   filter1.octaveControl(4);
 
   // Amp envelope
   envelope1.attack(2);
   envelope1.decay(0);
-  envelope1.sustain(1.0);
+  envelope1.sustain(1.0f);
   envelope1.release(400);
 
   // Filter envelope
   dc1.amplitude(1.0); // Filter env needs an input signal
   envelope2.attack(15);
   envelope2.decay(0);
-  envelope2.sustain(1.0);
+  envelope2.sustain(1.0f);
   envelope2.release(300);
 
   // Bitcrusher - set to audio samplerate and max bitrate
@@ -106,8 +105,8 @@ void audio_init() {
   bitcrusher1.sampleRate(44100);
 
   delay1.delay(0, 440); // Delay time
-  mixer_delay.gain(0, 0.0); // Delay input
-  mixer_delay.gain(1, 0.4); // Delay feedback
+  mixer_delay.gain(0, 0.0f); // Delay input
+  mixer_delay.gain(1, 0.4f); // Delay feedback
 
   mixer_output.gain(0, MAIN_GAIN);
   mixer_output.gain(1, DELAY_GAIN); // Delay output
@@ -132,43 +131,49 @@ void audio_init() {
   #endif
 }
 
-void audio_volume(int volume) {
-  mixer_output.gain(0, (volume/1023.)*MAIN_GAIN);
-  mixer_output.gain(1, (volume/1023.)*DELAY_GAIN);
-
-  mixer_output.gain(2, (volume/2048.)*KICK_GAIN+0.5);
-  mixer_output.gain(3, (volume/2048.)*HAT_GAIN+0.5);
+inline void audio_volume(int volume) {
+  mixer_output.gain(0, (volume/(1023.f/MAIN_GAIN)));
+  mixer_output.gain(1, (volume/(1023.f/DELAY_GAIN)));
+  mixer_output.gain(2, ((volume+512)/(2048.f/KICK_GAIN)));
+  mixer_output.gain(3, ((volume+512)/(2048.f/HAT_GAIN)));
 }
 
 void synth_update() {
+
+  float osc_saw_amplitude = 0.4f;
+
+  if(synth.detune > 850) {
+    osc_saw_amplitude = map(synth.detune,850,1023,400,0) / 1000.0f;
+  } else if(synth.detune < 200) {
+    osc_saw_amplitude = map(synth.detune,0,200,200,400) / 1000.0f;
+  }
+
+  float bitcrusher_samplerate = HIGH_SAMPLE_RATE;
+  if(synth.crush) {
+    bitcrusher_samplerate = LOW_SAMPLE_RATE;
+  }
+
+  float osc_pulse_pulseWidth = map(synth.pulseWidth,0,1023,500,950)/1000.0f;
+  float filter_resonance = map(synth.resonance,0,1023,70,320)/100.0f;
+  
   // Audio interrupts have to be off to apply settings
   AudioNoInterrupts();
 
   osc_saw.frequency(osc_saw_frequency);
-
-  if(synth.detune > 850) {
-    osc_saw.amplitude(map(synth.detune,850,1023,400,0)/1000.);
-  } else if(synth.detune < 200) {
-    osc_saw.amplitude(map(synth.detune,0,200,200,400)/1000.);
-  } else {
-    osc_saw.amplitude(0.4);
-  }
+  osc_saw.amplitude(osc_saw_amplitude);
+  
   osc_pulse.frequency(osc_pulse_frequency/2);
-  osc_pulse.pulseWidth(map(synth.pulseWidth,0,1023,500,950)/1000.);
+  osc_pulse.pulseWidth(osc_pulse_pulseWidth);
 
   filter1.frequency((synth.filter/2)+30);
-  filter1.resonance(map(synth.resonance,0,1023,70,320)/100.0); // 0.7-3.2 range
+  filter1.resonance(filter_resonance); // 0.7-3.2 range
 
   envelope1.release(((synth.release*synth.release) >> 11)+30);
 
-  if(!synth.crush) {
-    bitcrusher1.sampleRate(HIGH_SAMPLE_RATE);
-  } else {
-    bitcrusher1.sampleRate(LOW_SAMPLE_RATE);
-  }
+  bitcrusher1.sampleRate(bitcrusher_samplerate);
 
   audio_volume(synth.amplitude);
-
+  
   AudioInterrupts(); 
 }
 #endif

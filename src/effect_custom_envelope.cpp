@@ -1,10 +1,10 @@
 #include "./effect_custom_envelope.h"
 
-static const int SAMPLES_PER_MSEC = (AUDIO_SAMPLE_RATE_EXACT/1000.0);
+static const int SAMPLES_PER_MSEC = (AUDIO_SAMPLE_RATE_EXACT/1000.0f);
 
 int milliseconds2count(float milliseconds) {
-  if (milliseconds < 0.0){
-    milliseconds = 0.0;
+  if (milliseconds < 0.0f){
+    milliseconds = 0.0f;
   }
   return static_cast<int>(milliseconds*SAMPLES_PER_MSEC);
 }

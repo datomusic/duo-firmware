@@ -3,6 +3,14 @@
 
 #include <FastLED.h>
 
+#define PIN_LED_1            GPIO_08
+#define PIN_LED_2            GPIO_05
+#define PIN_LED_3            GPIO_01
+
+#define ENV_LED              PIN_LED_3
+#define OSC_LED              PIN_LED_1
+#define FILTER_LED           PIN_LED_2
+
 #define COLOR_ORDER GRB
 
 #define LED_TYPE SK6812
@@ -87,7 +95,7 @@ void led_init() {
 
   for(int i = 0; i < 10; i++) {
     //analogWrite(ENV_LED,i*8);
-    analogWrite(FILTER_LED,i*8);
+    // analogWrite(FILTER_LED,i*8);
     //analogWrite(OSC_LED,i*8);
 
     physical_leds[i+9] = COLORS[SCALE[i]%24];
@@ -138,7 +146,7 @@ void led_update() {
   FastLED.show();
   // analogWrite(ENV_LED, (peak1.read()*127.0f));
   analogWrite(FILTER_LED, 1 + ((synth.filter*synth.filter) >> 13));
-  // analogWrite(OSC_LED, 128 - ((synth.pulseWidth*synth.pulseWidth)>>13));
+  analogWrite(OSC_LED, 128 - ((synth.pulseWidth*synth.pulseWidth)>>13));
 }
 
 #endif
