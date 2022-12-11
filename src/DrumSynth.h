@@ -18,49 +18,6 @@ void hat_noteoff();
 void kickEvent(uint8_t event, int value);
 void hatEvent(uint8_t event, int value);
 
-#define TOUCHEVENT_TOUCH 1
-#define TOUCHEVENT_RELEASE 2
-
-TouchSlider kickSlider(TOUCH3, TOUCH4);
-TouchSlider slider2(TOUCH1, TOUCH2);
-
-void kickEvent(uint8_t event, int value) {
-
-  int val = constrain(value+63,0,127);
-
-  switch(event) {
-    case TOUCHEVENT_TOUCH:
-      kick_noteon(val);
-      break;
-    case TOUCHEVENT_RELEASE:
-      kick_noteoff();
-      break;
-  }
-}
-
-void hatEvent(uint8_t event, int value) {
-  int val = constrain(value+63,0,127);
-
-  switch(event) {
-    case TOUCHEVENT_TOUCH:
-      hat_noteon(val);
-      break;
-    case TOUCHEVENT_RELEASE:
-      hat_noteoff();
-      break;
-  }
-}
-
-
-void touch_init() {
-  kickSlider.a.setThreshold(30);
-  kickSlider.b.setThreshold(30);
-  kickSlider.setHandleTouchEvent(kickEvent);
-  slider2.a.setThreshold(30);
-  slider2.b.setThreshold(30);
-  slider2.setHandleTouchEvent(hatEvent);
-}
-
 
 void drum_init() {
   // HI-HAT ->
@@ -77,18 +34,6 @@ void drum_init() {
   kick_drum1.length(kick_duration);
   kick_drum1.frequency(60);
   kick_drum1.pitchMod(4.0);
-}
-
-void drum_read() {
-  kickSlider.update(millis());
-  slider2.update(millis());
-  
-  if(millis() > kick_on_time + kick_duration) {
-    kick_noteoff();
-  }
-  if(millis() > hat_on_time + hat_duration) {
-    hat_noteoff();
-  }
 }
 
 void kick_noteon(uint8_t velocity) {
