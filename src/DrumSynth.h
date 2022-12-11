@@ -18,6 +18,7 @@ void hat_noteoff();
 void kickEvent(uint8_t event, int value);
 void hatEvent(uint8_t event, int value);
 
+
 void drum_init() {
   // HI-HAT ->
   hat_envelope1.attack(2.0f);
@@ -33,16 +34,6 @@ void drum_init() {
   kick_drum1.length(kick_duration);
   kick_drum1.frequency(60);
   kick_drum1.pitchMod(4.0f);
-}
-
-void drum_read() {
-  
-  if(millis() > kick_on_time + kick_duration) {
-    kick_noteoff();
-  }
-  if(millis() > hat_on_time + hat_duration) {
-    hat_noteoff();
-  }
 }
 
 void kick_noteon(uint8_t velocity) {
