@@ -62,16 +62,12 @@ AudioConnection          patchCord14(mixer_output, pop_suppressor);
 AudioConnection          patchCord15(mixer_output, peak2);
 // GUItool: end automatically generated code
 
-#define DELAY_GAIN 0.6f
-#define KICK_GAIN 0.8f
-#define HAT_GAIN 0.9f
-
 void audio_init();
 void audio_volume(int volume);
 void synth_update();
 
 void audio_init() {
-  AudioMemory(128); // 260 bytes per block, 2.9ms per block
+  AudioMemory(160); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
   osc_saw.begin(0.4f, 110, WAVEFORM_BANDLIMIT_SAWTOOTH);
@@ -132,10 +128,19 @@ void audio_init() {
 }
 
 inline void audio_volume(int volume) {
-  mixer_output.gain(0, (volume/(1023.f/MAIN_GAIN)));
-  mixer_output.gain(1, (volume/(1023.f/DELAY_GAIN)));
-  mixer_output.gain(2, ((volume+512)/(2048.f/KICK_GAIN)));
-  mixer_output.gain(3, ((volume+512)/(2048.f/HAT_GAIN)));
+  static const int LOW_VOLUME_THRESHOLD = 3;
+
+  if(volume < LOW_VOLUME_THRESHOLD) {
+    mixer_output.gain(0,0);
+    mixer_output.gain(1,0);
+    mixer_output.gain(2,0);
+    mixer_output.gain(3,0);
+  } else {
+    mixer_output.gain(0, (volume/(1023.f/MAIN_GAIN)));
+    mixer_output.gain(1, (volume/(1023.f/DELAY_GAIN)));
+    mixer_output.gain(2, ((volume+512)/(2048.f/KICK_GAIN)));
+    mixer_output.gain(3, ((volume+512)/(2048.f/HAT_GAIN)));
+  }
 }
 
 void synth_update() {
