@@ -42,7 +42,7 @@ class TempoHandler
     }
     void update() {
       // Determine which source is selected for tempo
-      if(Sync::jackDetected()) {
+      if((pinRead(SYNC_DETECT_PIN))) {
         if(_source != TEMPO_SOURCE_SYNC) {
           _source = TEMPO_SOURCE_SYNC;
         }
@@ -139,7 +139,7 @@ class TempoHandler
 
     void update_internal() {
       int potvalue = synth.speed;
-      int tbpm = 240; // 2 x beats per minute
+      float tbpm = 240.0f; // 2 x beats per minute
 
       if(potvalue < 128) {
         tbpm = map(potvalue,0,128,60,120);
@@ -150,7 +150,7 @@ class TempoHandler
       }
       _tempo_interval = 5000000/tbpm;
       
-      if((micros() - _previous_clock_time) > _tempo_interval)  {
+      if((micros() - _previous_clock_time) > (unsigned long)_tempo_interval)  {
         _previous_clock_time = micros();
         trigger();
       }

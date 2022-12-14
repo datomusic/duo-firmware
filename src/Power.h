@@ -71,7 +71,9 @@ void power_off() {
  */
 void amp_update() {
   if(peak_update_time > peak_interval) {
-
+    
+    peak_update_time = 0;
+  
     audio_peak_values <<= 1;
     
     if(peak2.available()) {

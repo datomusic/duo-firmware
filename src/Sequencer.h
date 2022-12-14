@@ -111,7 +111,7 @@ void sequencer_tick_clock() {
   }
 
   if(!tempo_handler.is_clock_source_internal()) {
-    int potvalue = potRead(TEMPO_POT);
+    int potvalue = synth.speed;
     if(potvalue > 900) {
       sequencer_divider /= 2;
     } else if(potvalue < 127) {
@@ -171,6 +171,7 @@ void sequencer_reset() {
 }
 
 void sequencer_update() {
+  gate_length_msec = map(synth.gateLength,0,1023,10,200);
   tempo_handler.update();
 
   if(!note_is_done_playing && millis() >= note_off_time && note_is_triggered) { 

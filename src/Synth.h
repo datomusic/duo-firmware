@@ -128,7 +128,7 @@ void audio_init() {
 }
 
 inline void audio_volume(int volume) {
-  static const int LOW_VOLUME_THRESHOLD = 3;
+  static const int LOW_VOLUME_THRESHOLD = 5;
 
   if(volume < LOW_VOLUME_THRESHOLD) {
     mixer_output.gain(0,0);
