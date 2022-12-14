@@ -18,42 +18,6 @@ void hat_noteoff();
 void kickEvent(uint8_t event, int value);
 void hatEvent(uint8_t event, int value);
 
-#define TOUCHEVENT_TOUCH 1
-#define TOUCHEVENT_RELEASE 2
-
-void kickEvent(uint8_t event, int value) {
-
-  int val = constrain(value+63,0,127);
-
-  switch(event) {
-    case TOUCHEVENT_TOUCH:
-      kick_noteon(val);
-      break;
-    case TOUCHEVENT_RELEASE:
-      kick_noteoff();
-      break;
-  }
-}
-
-void hatEvent(uint8_t event, int value) {
-  int val = constrain(value+63,0,127);
-
-  switch(event) {
-    case TOUCHEVENT_TOUCH:
-      hat_noteon(val);
-      break;
-    case TOUCHEVENT_RELEASE:
-      hat_noteoff();
-      break;
-  }
-}
-
-
-void touch_init() {
-
-}
-
-
 void drum_init() {
   // HI-HAT ->
   hat_envelope1.attack(2.0f);
