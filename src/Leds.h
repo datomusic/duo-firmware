@@ -91,7 +91,15 @@ void led_init() {
   physical_leds[MIDI_CHANNEL+8] = COLORS[SCALE[MIDI_CHANNEL-1]%24];
 
   FastLED.show();
-  delay(500);
+  delay(100);
+  FastLED.show();
+  delay(100);
+  FastLED.show();
+  delay(100);
+  FastLED.show();
+  delay(100);
+  FastLED.show();
+  delay(100);
 
   for(int i = 0; i < 10; i++) {
     analogWrite(ENV_LED,i*8);
