@@ -98,6 +98,7 @@ class TempoHandler
     uint32_t _tempo_interval;
     bool _midi_clock_block = false;
     uint32_t _previous_midi_clock = 0;
+    uint32_t _previous_internal_clock = 0;
     bool _midi_clock_received_flag = 0;
     uint16_t _clock = 0;
     uint16_t _ppqn = 24;
@@ -138,19 +139,9 @@ class TempoHandler
     }
 
     void update_internal() {
-      int potvalue = synth.speed;
-      float tbpm = 240.0f; // 2 x beats per minute
-
-      if(potvalue < 128) {
-        tbpm = map(potvalue,0,128,60,120);
-      } else if(potvalue < 895) {
-        tbpm = map(potvalue, 128,895,120,400);
-      } else {
-        tbpm = map(potvalue, 895,1023,400,1200);
-      }
-      _tempo_interval = 5000000/tbpm;
-      
-      if((micros() - _previous_clock_time) > (unsigned long)_tempo_interval)  {
+      unsigned long internal_clock = InterruptTimer::getInterruptCount();
+      if(internal_clock != _previous_internal_clock) {
+        _previous_internal_clock = internal_clock;
         _previous_clock_time = micros();
         trigger();
       }

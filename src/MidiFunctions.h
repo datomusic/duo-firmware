@@ -152,6 +152,7 @@ void midi_init() {
   MIDI.setHandleNoteOff(midi_note_off);
 
   MIDI.setHandleClock(midi_handle_clock);
+  usbMIDI.setHandleClock(midi_handle_clock);
 
   usbMIDI.setHandleNoteOn(midi_note_on);
   usbMIDI.setHandleNoteOff(midi_note_off);
