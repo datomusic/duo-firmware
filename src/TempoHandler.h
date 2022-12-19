@@ -31,6 +31,10 @@
 class TempoHandler 
 {
   public:
+    TempoHandler(){
+      last_millis = millis();
+    }
+
     inline void setHandleTempoEvent(void (*fptr)()) {
       tTempoCallback = fptr;
     }
@@ -101,6 +105,9 @@ class TempoHandler
     bool _midi_clock_received_flag = 0;
     uint16_t _clock = 0;
     uint16_t _ppqn = 24;
+    uint32_t accum = 0;
+    uint32_t last_millis = 0;
+
 
     void update_midi() { 
       if(midi_clock != _previous_midi_clock) {
@@ -139,7 +146,7 @@ class TempoHandler
 
     void update_internal() {
       int potvalue = synth.speed;
-      float tbpm = 240.0f; // 2 x beats per minute
+      float tbpm = 240; // 2 x beats per minute
 
       if(potvalue < 128) {
         tbpm = map(potvalue,0,128,60,120);
@@ -149,8 +156,16 @@ class TempoHandler
         tbpm = map(potvalue, 895,1023,400,1200);
       }
       _tempo_interval = 5000000/tbpm;
+
+      const auto cur = millis();
+      // Multiply by 100 as a scaling factor for millis_per_beat
+      // and a factor of 8 to match original Duo
+      accum += (cur - last_millis)*800;
+      last_millis = cur;
       
-      if((micros() - _previous_clock_time) > (unsigned long)_tempo_interval)  {
+      const uint32_t scaled_millis_per_beat = 6000000 / (tbpm);
+      if(accum >= scaled_millis_per_beat)  {
+        accum -= scaled_millis_per_beat;
         _previous_clock_time = micros();
         trigger();
       }
