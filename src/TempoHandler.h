@@ -159,8 +159,8 @@ class TempoHandler
 
       const auto cur = millis();
       // Multiply by 100 as a scaling factor for millis_per_beat
-      // and a factor of 8 to match original Duo
-      accum += (cur - last_millis)*800;
+      // and a factor of 10 to match original Duo
+      accum += (cur - last_millis)*1000;
       last_millis = cur;
       
       const uint32_t scaled_millis_per_beat = 6000000 / (tbpm);
