@@ -164,7 +164,7 @@ class TempoHandler
       last_millis = cur;
       
       const uint32_t scaled_millis_per_beat = 6000000 / (tbpm);
-      if(accum >= scaled_millis_per_beat)  {
+      while(accum >= scaled_millis_per_beat)  {
         accum -= scaled_millis_per_beat;
         _previous_clock_time = micros();
         trigger();
