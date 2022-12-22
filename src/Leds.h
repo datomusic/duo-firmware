@@ -96,8 +96,6 @@ void led_init() {
   delay(100);
   FastLED.show();
   delay(100);
-  FastLED.show();
-  delay(100);
 
   for(int i = 0; i < 10; i++) {
     analogWrite(ENV_LED,i*8);

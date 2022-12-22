@@ -38,7 +38,7 @@ struct LinearEnvelope{
   // Returns an incremenet value that should be applied to curVal
   // 'subdivisionCount' times to reach next value.
   inline int step(){
-      int curInc;
+      int curInc = 0;
       int oldVal = curVal;
       switch(state){
         case Idle:
