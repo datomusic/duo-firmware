@@ -31,6 +31,10 @@
 class TempoHandler 
 {
   public:
+    TempoHandler(){
+      last_millis = millis();
+    }
+
     inline void setHandleTempoEvent(void (*fptr)()) {
       tTempoCallback = fptr;
     }
@@ -98,10 +102,12 @@ class TempoHandler
     uint32_t _tempo_interval;
     bool _midi_clock_block = false;
     uint32_t _previous_midi_clock = 0;
-    uint32_t _previous_internal_clock = 0;
     bool _midi_clock_received_flag = 0;
     uint16_t _clock = 0;
     uint16_t _ppqn = 24;
+    uint32_t accum = 0;
+    uint32_t last_millis = 0;
+
 
     void update_midi() { 
       if(midi_clock != _previous_midi_clock) {
@@ -138,10 +144,28 @@ class TempoHandler
       _sync_pin_previous_value = _sync_pin_value;
     }
 
+    #define BPM_TO_MILLIS(bpm) (2500000 / bpm)
     void update_internal() {
-      unsigned long internal_clock = InterruptTimer::getInterruptCount();
-      if(internal_clock != _previous_internal_clock) {
-        _previous_internal_clock = internal_clock;
+      int potvalue = synth.speed;
+      uint32_t scaled_millis_per_beat; // 2 x beats per minute
+
+      if(potvalue < 128) {
+        scaled_millis_per_beat = map(potvalue,0,128,BPM_TO_MILLIS(30),BPM_TO_MILLIS(60));
+      } else if(potvalue < 895) {
+        scaled_millis_per_beat = map(potvalue, 128,895,BPM_TO_MILLIS(60),BPM_TO_MILLIS(200));
+      } else {
+        // For Toon: 603 BPM in gives 600 BPM out
+        scaled_millis_per_beat = map(potvalue, 895,1023,BPM_TO_MILLIS(200),BPM_TO_MILLIS(603));
+      }
+
+      const auto cur = millis();
+      // Multiply by 100 as a scaling factor for millis_per_beat
+      // and a factor of 10 to match original Duo
+      accum += (cur - last_millis)*1000;
+      last_millis = cur;
+      
+      while(accum >= scaled_millis_per_beat)  {
+        accum -= scaled_millis_per_beat;
         _previous_clock_time = micros();
         trigger();
       }

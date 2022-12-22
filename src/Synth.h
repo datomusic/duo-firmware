@@ -25,6 +25,7 @@ AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
 AudioEffectCustomEnvelope envelope1;      //xy=560.1000061035156,81
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
+AudioEffectFade          delay_fader;         //xy=712.0999755859375,174.10000610351562
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
 AudioMixer4              mixer_delay;     //xy=728.0999755859375,279.1000061035156
 AudioMixer4              mixer_output;         //xy=861.1000061035156,100
@@ -49,7 +50,9 @@ AudioConnection          patchCord9(delay1, 0, mixer_output, 1);
 AudioConnection          patchCord10(delay1, 0, mixer_delay, 1);
 AudioConnection          patchCord11(bitcrusher1, 0, mixer_output, 0);
 AudioConnection          patchCord12(bitcrusher1, 0, mixer_delay, 0);
-AudioConnection          patchCord13(mixer_delay, delay1);
+// AudioConnection          patchCord13(mixer_delay, delay1);
+AudioConnection          patchCord13(mixer_delay, delay_fader);
+AudioConnection          patchCord14(delay_fader, delay1);
 AudioConnection          patchCord20(hat_noise1, hat_envelope1);
 AudioConnection          patchCord21(hat_envelope1, 0, hat_filter_hp, 0);
 AudioConnection          patchCord22(hat_filter_hp, 2, hat_filter_bp, 0);
@@ -58,8 +61,8 @@ AudioConnection          patchCord24(hat_snappy, 0, hat_mixer, 1);
 AudioConnection          patchCord25(hat_mixer, 0, mixer_delay, 3);
 AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
 AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
-AudioConnection          patchCord14(mixer_output, pop_suppressor);
-AudioConnection          patchCord15(mixer_output, peak2);
+AudioConnection          patchCord28(mixer_output, pop_suppressor);
+AudioConnection          patchCord29(mixer_output, peak2);
 // GUItool: end automatically generated code
 
 void audio_init();
