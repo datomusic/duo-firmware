@@ -155,7 +155,6 @@ class TempoHandler
       } else {
         tbpm = map(potvalue, 895,1023,400,1200);
       }
-      _tempo_interval = 5000000/tbpm;
 
       const auto cur = millis();
       // Multiply by 100 as a scaling factor for millis_per_beat
@@ -163,7 +162,7 @@ class TempoHandler
       accum += (cur - last_millis)*1000;
       last_millis = cur;
       
-      const uint32_t scaled_millis_per_beat = 6000000 / (tbpm);
+      const uint32_t scaled_millis_per_beat = 5000000 / (tbpm);
       while(accum >= scaled_millis_per_beat)  {
         accum -= scaled_millis_per_beat;
         _previous_clock_time = micros();
