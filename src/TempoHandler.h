@@ -144,16 +144,17 @@ class TempoHandler
       _sync_pin_previous_value = _sync_pin_value;
     }
 
+    #define BPM_TO_MILLIS(bpm) (5000000 / bpm)
     void update_internal() {
       int potvalue = synth.speed;
-      float tbpm = 240; // 2 x beats per minute
+      uint32_t scaled_millis_per_beat; // 2 x beats per minute
 
       if(potvalue < 128) {
-        tbpm = map(potvalue,0,128,60,120);
+        scaled_millis_per_beat = map(potvalue,0,128,BPM_TO_MILLIS(60),BPM_TO_MILLIS(120));
       } else if(potvalue < 895) {
-        tbpm = map(potvalue, 128,895,120,400);
+        scaled_millis_per_beat = map(potvalue, 128,895,BPM_TO_MILLIS(120),BPM_TO_MILLIS(400));
       } else {
-        tbpm = map(potvalue, 895,1023,400,1200);
+        scaled_millis_per_beat = map(potvalue, 895,1023,BPM_TO_MILLIS(400),BPM_TO_MILLIS(1200));
       }
 
       const auto cur = millis();
@@ -162,7 +163,6 @@ class TempoHandler
       accum += (cur - last_millis)*1000;
       last_millis = cur;
       
-      const uint32_t scaled_millis_per_beat = 5000000 / (tbpm);
       while(accum >= scaled_millis_per_beat)  {
         accum -= scaled_millis_per_beat;
         _previous_clock_time = micros();
