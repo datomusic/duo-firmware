@@ -15,7 +15,7 @@ void pitch_update();
 
 // Constant rate glide
 void pitch_update() {
-  detune_amount = potRead(OSC_DETUNE_POT);
+  detune_amount = synth.detune;
   float osc_saw_target_frequency = detune(osc_pulse_midi_note,detune_amount);
 
   const float GLIDE_COEFFICIENT = 0.3f;
