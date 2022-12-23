@@ -72,10 +72,8 @@ void audio_volume(int volume);
 void synth_update();
 
 void audio_init() {
+  // assume AudioNoInterrupts
   AudioMemory(160); // 260 bytes per block, 2.9ms per block
-
-  // Oscillators
-
   
   // Mixer mixes the oscillators - don't add up to more than 0.8 or the output will clip
   #if defined(__MIMXRT1011__)
@@ -139,10 +137,11 @@ void audio_init() {
   #else
     //dac1.analogReference(INTERNAL);
   #endif
+  delay_fader.fadeOut(0);
 }
 
 inline void audio_volume(int volume) {
-  static const int LOW_VOLUME_THRESHOLD = 5;
+  static const int LOW_VOLUME_THRESHOLD = 4;
 
   if(volume < LOW_VOLUME_THRESHOLD) {
     mixer_output.gain(0,0);
