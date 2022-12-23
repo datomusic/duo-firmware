@@ -137,7 +137,6 @@ void audio_init() {
   #else
     //dac1.analogReference(INTERNAL);
   #endif
-  delay_fader.fadeOut(0);
 }
 
 inline void audio_volume(int volume) {
