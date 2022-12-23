@@ -25,7 +25,8 @@ AudioFilterStateVariable filter1;        //xy=403.1000061035156,91
 AudioEffectCustomEnvelope envelope1;      //xy=560.1000061035156,81
 AudioAnalyzePeak         peak1;          //xy=705.1000061035156,37
 AudioEffectDelay         delay1;         //xy=712.0999755859375,174.10000610351562
-AudioEffectFade          delay_fader;         //xy=712.0999755859375,174.10000610351562
+AudioFilterStateVariable delay_filter;         //xy=712.0999755859375,174.10000610351562
+AudioEffectFade          delay_fader;
 AudioEffectBitcrusher    bitcrusher1;    //xy=718.1000061035156,81
 AudioMixer4              mixer_delay;     //xy=728.0999755859375,279.1000061035156
 AudioMixer4              mixer_output;         //xy=861.1000061035156,100
@@ -46,23 +47,24 @@ AudioConnection          patchCord5(mixer1, 0, filter1, 0);
 AudioConnection          patchCord6(filter1, 0, envelope1, 0);
 AudioConnection          patchCord7(envelope1, peak1);
 AudioConnection          patchCord8(envelope1, bitcrusher1);
-AudioConnection          patchCord9(delay1, 0, mixer_output, 1);
-AudioConnection          patchCord10(delay1, 0, mixer_delay, 1);
-AudioConnection          patchCord11(bitcrusher1, 0, mixer_output, 0);
-AudioConnection          patchCord12(bitcrusher1, 0, mixer_delay, 0);
+AudioConnection          patchCord9(delay1, delay_fader);
+AudioConnection          patchCord10(delay_fader, 0, mixer_output, 1);
+AudioConnection          patchCord11(delay1, 0, mixer_delay, 1);
+AudioConnection          patchCord12(bitcrusher1, 0, mixer_output, 0);
+AudioConnection          patchCord13(bitcrusher1, 0, mixer_delay, 0);
 // AudioConnection          patchCord13(mixer_delay, delay1);
-AudioConnection          patchCord13(mixer_delay, delay_fader);
-AudioConnection          patchCord14(delay_fader, delay1);
-AudioConnection          patchCord20(hat_noise1, hat_envelope1);
-AudioConnection          patchCord21(hat_envelope1, 0, hat_filter_hp, 0);
-AudioConnection          patchCord22(hat_filter_hp, 2, hat_filter_bp, 0);
-AudioConnection          patchCord23(hat_filter_bp, 1, hat_mixer, 0);
-AudioConnection          patchCord24(hat_snappy, 0, hat_mixer, 1);
-AudioConnection          patchCord25(hat_mixer, 0, mixer_delay, 3);
-AudioConnection          patchCord26(kick_drum1, 0, mixer_output, 2);
-AudioConnection          patchCord27(hat_mixer, 0, mixer_output, 3);
-AudioConnection          patchCord28(mixer_output, pop_suppressor);
-AudioConnection          patchCord29(mixer_output, peak2);
+AudioConnection          patchCord14(mixer_delay, delay_filter);
+AudioConnection          patchCord15(delay_filter, 2, delay1, 0);
+AudioConnection          patchCord21(hat_noise1, hat_envelope1);
+AudioConnection          patchCord22(hat_envelope1, 0, hat_filter_hp, 0);
+AudioConnection          patchCord23(hat_filter_hp, 2, hat_filter_bp, 0);
+AudioConnection          patchCord24(hat_filter_bp, 1, hat_mixer, 0);
+AudioConnection          patchCord25(hat_snappy, 0, hat_mixer, 1);
+AudioConnection          patchCord26(hat_mixer, 0, mixer_delay, 3);
+AudioConnection          patchCord27(kick_drum1, 0, mixer_output, 2);
+AudioConnection          patchCord28(hat_mixer, 0, mixer_output, 3);
+AudioConnection          patchCord29(mixer_output, pop_suppressor);
+AudioConnection          patchCord30(mixer_output, peak2);
 // GUItool: end automatically generated code
 
 void audio_init();
@@ -73,12 +75,20 @@ void audio_init() {
   AudioMemory(160); // 260 bytes per block, 2.9ms per block
 
   // Oscillators
-  osc_saw.begin(0.4f, 110, WAVEFORM_BANDLIMIT_SAWTOOTH);
-  osc_pulse.pulseWidth(0.5f);
-  osc_pulse.begin(0.4f, 220, WAVEFORM_BANDLIMIT_PULSE);
+
   
   // Mixer mixes the oscillators - don't add up to more than 0.8 or the output will clip
-  mixer1.gain(0, 0.4f); // OSC1
+  #if defined(__MIMXRT1011__)
+  mixer1.gain(0, 0.2f); // OSC1
+  osc_saw.begin(0.4f, 110, WAVEFORM_BANDLIMIT_SAWTOOTH);
+  osc_pulse.pulseWidth(0.5f);
+  osc_pulse.begin(.5f, 220, WAVEFORM_BANDLIMIT_PULSE);
+  #else
+  osc_saw.begin(0.4f, 110, WAVEFORM_SAWTOOTH);
+  osc_pulse.pulseWidth(0.5f);
+  osc_pulse.begin(.4f, 220, WAVEFORM_PULSE);
+  mixer1.gain(0, 0.4f);
+  #endif
   mixer1.gain(1, 0.4f); // OSC2
 
   // Filter
@@ -104,6 +114,7 @@ void audio_init() {
   bitcrusher1.sampleRate(44100);
 
   delay1.delay(0, 440); // Delay time
+  delay_filter.frequency(200); // High pass filter in feedback
   mixer_delay.gain(0, 0.0f); // Delay input
   mixer_delay.gain(1, 0.4f); // Delay feedback
 
