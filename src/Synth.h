@@ -111,7 +111,7 @@ void audio_init() {
   bitcrusher1.bits(16);
   bitcrusher1.sampleRate(44100);
 
-  delay1.delay(0, 440); // Delay time
+  delay1.delay(0, 400); // Delay time
   delay_filter.frequency(200); // High pass filter in feedback
   mixer_delay.gain(0, 0.0f); // Delay input
   mixer_delay.gain(1, 0.4f); // Delay feedback
