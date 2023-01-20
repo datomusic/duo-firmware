@@ -68,7 +68,7 @@ void led_data_received() {
 void led_init() {
   FastLED.addLeds<LED_TYPE, LED_DATA, COLOR_ORDER>(physical_leds, NUM_LEDS);
   
-  FastLED.setBrightness(SK6812_BRIGHTNESS); 
+  FastLED.setBrightness(SK6805_BRIGHTNESS); 
   FastLED.setCorrection(CORRECTION_SK6812);
 
   // We're going to do a loopback test first to determine brightness

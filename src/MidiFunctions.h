@@ -230,13 +230,13 @@ void midi_usb_sysex(byte *data, unsigned length) {
   }
 }
 
-void midi_set_channel(uint8_t channel) {
+RAMFUNCTION_SECTION_CODE(void midi_set_channel(uint8_t channel)) {
   if(channel > 0 && channel <= 16) {
     MIDI_CHANNEL = channel;
   }
 }
 
-uint8_t midi_get_channel() {
+RAMFUNCTION_SECTION_CODE(uint8_t midi_get_channel()) {
   return MIDI_CHANNEL;
 }
 
