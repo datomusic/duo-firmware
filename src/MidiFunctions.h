@@ -38,6 +38,7 @@
 #define SYSEX_FIRMWARE_VERSION 0x01
 #define SYSEX_SERIAL_NUMBER 0x02
 #define SYSEX_REBOOT_BOOTLOADER 0x0B
+#define SYSEX_RESET_TRANSPOSE 0x0C
 #define SYSEX_SELFTEST 0x0A
 
 const float MIDI_NOTE_FREQUENCY[127] = {
@@ -215,6 +216,9 @@ void midi_usb_sysex(byte *data, unsigned length) {
         break;
       case SYSEX_SELFTEST:
         // enter_selftest();
+        break;
+      case SYSEX_RESET_TRANSPOSE:
+        transpose = 0;
         break;
       case SYSEX_REBOOT_BOOTLOADER:
         enter_dfu();
