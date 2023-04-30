@@ -5,7 +5,7 @@
 #include <effect_bitcrusher.h>
 #include <effect_delay.h>
 #include <effect_fade.h>
-#include "effect_custom_envelope.h"
+#include "firmware/effect_custom_envelope.h"
 #include <effect_multiply.h>
 #include <filter_variable.h>
 #include <mixer.h>
