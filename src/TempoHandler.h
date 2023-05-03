@@ -20,8 +20,6 @@
 #ifndef TempoHandler_h
 #define TempoHandler_h
 
-#include "elapsedMillis.h"
-
 #define TEMPO_SOURCE_INTERNAL 0
 #define TEMPO_SOURCE_MIDI     1
 #define TEMPO_SOURCE_SYNC     2
