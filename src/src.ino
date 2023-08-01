@@ -283,7 +283,6 @@ void keys_scan() {
                   } else {
                     step_enable[k-STEP_1] = !step_enable[k-STEP_1];
                   }
-                  if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
                   step_velocity[k-STEP_1] = INITIAL_VELOCITY;
                 } else if (k == BTN_SEQ2) {
                   if(!sequencer_is_running) {
@@ -412,9 +411,6 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     usbMIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
     envelope1.noteOn();
     envelope2.noteOn();
-  } else {
-    leds((current_step+random_offset)%SEQUENCER_NUM_STEPS) = LED_WHITE;
-
   }
 }
 
@@ -424,9 +420,6 @@ void note_off() {
     usbMIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
     envelope1.noteOff();
     envelope2.noteOff();
-    if(!step_enable[current_step]) {
-      leds(current_step) = CRGB::Black;
-    }
     note_is_playing = 0;
   } 
 }
