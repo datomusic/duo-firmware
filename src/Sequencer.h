@@ -133,6 +133,10 @@ void sequencer_advance_without_play() {
   }
   current_step++;
   current_step%=SEQUENCER_NUM_STEPS;
+  if (step_enable[current_step] == 2) {
+    current_step++;
+    current_step%=SEQUENCER_NUM_STEPS;
+  }
 
   if (!next_step_is_random && !random_flag) {
     random_offset = 0;

@@ -276,7 +276,7 @@ void keys_scan() {
                     if (key_up == 1) {key_up = 3;}
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
-                  step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
+                  step_enable[k-STEP_1] = !step_enable[k-STEP_1];
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
                   step_velocity[k-STEP_1] = INITIAL_VELOCITY;
                 } else if (k == BTN_SEQ2) {
@@ -303,6 +303,9 @@ void keys_scan() {
                   if(in_setup) {
                     midi_set_channel((k - KEYB_0) + 1);
                   }
+                } else if (k <= STEP_8 && k >= STEP_1) {
+                  step_enable[k-STEP_1] = 2;
+                  leds(k-STEP_1) = CRGB(57, 64, 37);
                 } else if (k == SEQ_START) {
                   #ifdef DEV_MODE
                     sequencer_stop();

@@ -99,8 +99,10 @@ void led_init() {
 // Updates the LED colour and brightness to match the stored sequence
 void led_update() {
   for (int l = 0; l < SEQUENCER_NUM_STEPS; l++) {
-    if (step_enable[l]) {
+    if (step_enable[l] == 1) {
       leds(l) = COLORS[step_note[l]%24];
+    } else if (step_enable[l] == 2) {
+      leds(l) = CRGB(57, 64, 37); // skip step
     } else {
       leds(l) = CRGB::Black;
     }
