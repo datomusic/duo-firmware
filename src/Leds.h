@@ -11,7 +11,7 @@
 #define LED_WHITE CRGB(230,255,150)
 
 #define leds(A) physical_leds[led_order[A]]
-#define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
+// #define next_step ((current_step+1)%SEQUENCER_NUM_STEPS)
 
 CRGB physical_leds[NUM_LEDS];
 #define led_play physical_leds[0]

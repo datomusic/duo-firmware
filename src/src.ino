@@ -51,6 +51,7 @@ int gate_length_msec = 40;
 uint32_t sequencer_clock = 0;
 // Sequencer settings
 uint8_t current_step;
+uint8_t next_step;
 int tempo = 0;
 uint8_t set_key = 9;
 float osc_saw_frequency = 0.;
@@ -276,7 +277,12 @@ void keys_scan() {
                     if (key_up == 1) {key_up = 3;}
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
-                  step_enable[k-STEP_1] = !step_enable[k-STEP_1];
+                  if (step_enable[k-STEP_1] == 2) {
+                    step_enable[k-STEP_1] = 1;
+                    num_steps_used++;
+                  } else {
+                    step_enable[k-STEP_1] = !step_enable[k-STEP_1];
+                  }
                   if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
                   step_velocity[k-STEP_1] = INITIAL_VELOCITY;
                 } else if (k == BTN_SEQ2) {
@@ -304,8 +310,17 @@ void keys_scan() {
                     midi_set_channel((k - KEYB_0) + 1);
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
-                  step_enable[k-STEP_1] = 2;
-                  leds(k-STEP_1) = CRGB(57, 64, 37);
+                  // skip step
+                  if (step_enable[k-STEP_1] != 2 && num_steps_used > 1) {
+                    step_enable[k-STEP_1] = 2;
+                    num_steps_used--;
+                    // in case the skipped step is the next step,
+                    // advance next_step until the next used step
+                    for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+                      if (step_enable[next_step] != 2) break;
+                      next_step = (next_step + 1) % SEQUENCER_NUM_STEPS;
+                    }
+                  }
                 } else if (k == SEQ_START) {
                   #ifdef DEV_MODE
                     sequencer_stop();
