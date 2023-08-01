@@ -422,11 +422,10 @@ void note_off() {
   if (note_is_playing) {
     MIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
     usbMIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
+    envelope1.noteOff();
+    envelope2.noteOff();
     if(!step_enable[current_step]) {
       leds(current_step) = CRGB::Black;
-    } else {
-      envelope1.noteOff();
-      envelope2.noteOff();
     }
     note_is_playing = 0;
   } 
