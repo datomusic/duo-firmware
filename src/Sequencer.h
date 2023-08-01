@@ -208,7 +208,8 @@ static void sequencer_trigger_note() {
 
   step_velocity[current_step] = INITIAL_VELOCITY;
 
-  note_on(step_note[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]+transpose, step_velocity[((current_step+random_offset)%SEQUENCER_NUM_STEPS)], step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]);
+  uint8_t step = ((current_step+random_offset)%SEQUENCER_NUM_STEPS);
+  note_on(step_note[step]+transpose, step_velocity[step], step_enable[step]);
 }
 
 static void sequencer_untrigger_note() {
