@@ -13,6 +13,7 @@ const uint8_t SEQUENCER_NUM_STEPS = 8;
 uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
 uint8_t step_enable[] = { 1,0,1,1,1,1,0,1 };
 uint8_t step_velocity[] = { 100,100,100,100,100,100,100,100 };
+uint8_t step_delay[] = { 0,0,0,0,0,0,0,0 };
 uint8_t num_steps_used = SEQUENCER_NUM_STEPS;
 
 void sequencer_init();
@@ -122,8 +123,14 @@ void sequencer_tick_clock() {
     }
   }
 
-  if(sequencer_is_running && (sequencer_clock % sequencer_divider)==0) {
-    sequencer_advance();
+  if(sequencer_is_running) {
+    if ((sequencer_clock % sequencer_divider) == 0) {
+      sequencer_advance_without_play();
+    }
+    if ((sequencer_clock % sequencer_divider) == step_delay[current_step] * sequencer_divider / 6) {
+      // deliberately keep the rythm when random is pressed
+      sequencer_trigger_note();
+    }
   } 
   sequencer_clock++;
 }

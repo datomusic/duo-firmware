@@ -65,6 +65,7 @@ int transpose = 0;
 int key_down = 0;
 int key_up = 0;
 uint8_t key_note[10] = { 0 };
+uint8_t stepkeys = 0;
 bool next_step_is_random = false;
 int tempo_interval;
 bool random_flag = 0;
@@ -280,15 +281,31 @@ void keys_scan() {
                   if (step_enable[k-STEP_1] == 2) {
                     step_enable[k-STEP_1] = 1;
                     num_steps_used++;
+                    step_delay[k-STEP_1] = 0;
+                  } else if (step_enable[k-STEP_1] == 0) {
+                    step_enable[k-STEP_1] = 1;
+                    step_delay[k-STEP_1] = 0;
                   } else {
-                    step_enable[k-STEP_1] = !step_enable[k-STEP_1];
+                    step_enable[k-STEP_1] = 0;
                   }
                   step_velocity[k-STEP_1] = INITIAL_VELOCITY;
+                  stepkeys |= 1<<(k-STEP_1);
                 } else if (k == BTN_SEQ2) {
-                  if(!sequencer_is_running) {
-                    sequencer_advance();
+                  // if step keys are pressed add a delay to those steps
+                  if (stepkeys) {
+                    for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+                      if (stepkeys & 1<<i) {
+                        step_delay[i] = !step_delay[i] * 2; // delay in range 0-5
+                        // step_delay[i] = (step_delay[i] + 1) % 6; // delay in range 0-5
+                        step_enable[i] = 1;
+                      }
+                    }
+                  } else {
+                    if(!sequencer_is_running) {
+                      sequencer_advance();
+                    }
+                    double_speed = true;
                   }
-                  double_speed = true;
                 } else if (k == BTN_DOWN) {
                   key_down = 1;
                 } else if (k == BTN_UP) {
@@ -340,6 +357,8 @@ void keys_scan() {
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   keyboard_unset_note(key_note[k - KEYB_0]);
+                } else if (k <= STEP_8 && k >= STEP_1) {
+                  stepkeys &= ~(1<<(k-STEP_1));
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {
