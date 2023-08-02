@@ -106,35 +106,35 @@ void led_update() {
     } else {
       leds(l) = CRGB::Black;
     }
-     
-    if(note_is_playing) {
-      leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = LED_WHITE;
-    } else {
-      if(!step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]) {
-        leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = CRGB::Black;
-      }
+  }
 
-      if(!sequencer_is_running) {
-        if(((sequencer_clock % 24) < 12)) {
-          if(step_enable[next_step]) {
-            leds(next_step) = COLORS[step_note[next_step]%24];
-          } else {
-            leds(next_step) = CRGB::Black;
-          }
-          led_play = LED_WHITE;
-          led_play.fadeLightBy((sequencer_clock % 12)*16);
+  if(note_is_playing) {
+    leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = LED_WHITE;
+  } else {
+    if(!step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]) {
+      leds(((current_step+random_offset)%SEQUENCER_NUM_STEPS)) = CRGB::Black;
+    }
+
+    if(!sequencer_is_running) {
+      if(((sequencer_clock % 24) < 12)) {
+        if(step_enable[next_step]) {
+          leds(next_step) = COLORS[step_note[next_step]%24];
         } else {
-          led_play = CRGB::Black;
-          if(step_enable[next_step]) {
-            leds(next_step) = blend(LED_WHITE, COLORS[step_note[next_step]%24], (sequencer_clock % 12)*16);
-          } else {
-            leds(next_step) = LED_WHITE;
-            leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
-          }
+          leds(next_step) = CRGB::Black;
         }
-      } else {
         led_play = LED_WHITE;
+        led_play.fadeLightBy((sequencer_clock % 12)*16);
+      } else {
+        led_play = CRGB::Black;
+        if(step_enable[next_step]) {
+          leds(next_step) = blend(LED_WHITE, COLORS[step_note[next_step]%24], (sequencer_clock % 12)*16);
+        } else {
+          leds(next_step) = LED_WHITE;
+          leds(next_step) = leds(next_step).fadeLightBy((sequencer_clock % 12)*16);
+        }
       }
+    } else {
+      led_play = LED_WHITE;
     }
   }
   FastLED.show();
