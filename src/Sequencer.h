@@ -14,6 +14,7 @@ uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
 uint8_t step_enable[] = { 1,0,1,1,1,1,0,1 };
 uint8_t step_velocity[] = { 100,100,100,100,100,100,100,100 };
 uint8_t step_delay[] = { 0,0,0,0,0,0,0,0 };
+uint8_t step_random[] = { 0,0,0,0,0,0,0,0 };
 uint8_t num_steps_used = SEQUENCER_NUM_STEPS;
 
 void sequencer_init();
@@ -153,9 +154,7 @@ void sequencer_advance_without_play() {
   current_step = next_step;
   update_next_step();
 
-  if (!next_step_is_random && !random_flag) {
-    random_offset = 0;
-  } else {
+  if (next_step_is_random || random_flag || step_random[current_step]) {
     random_flag = false;
     random_offset = random(num_steps_used);
     // select random step from the used steps
@@ -168,6 +167,8 @@ void sequencer_advance_without_play() {
         }
       }
     }
+  } else {
+    random_offset = 0;
   }
 
   // Sample keys
@@ -185,7 +186,8 @@ void sequencer_advance_without_play() {
       arpeggio_index++;
     }
     step_enable[current_step] = 1;
-    step_velocity[current_step] = INITIAL_VELOCITY; 
+    step_velocity[current_step] = INITIAL_VELOCITY;
+    step_random[current_step] = 0;
   }
 }
 

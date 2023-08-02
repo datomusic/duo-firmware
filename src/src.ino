@@ -282,9 +282,11 @@ void keys_scan() {
                     step_enable[k-STEP_1] = 1;
                     num_steps_used++;
                     step_delay[k-STEP_1] = 0;
+                    step_random[k-STEP_1] = 0;
                   } else if (step_enable[k-STEP_1] == 0) {
                     step_enable[k-STEP_1] = 1;
                     step_delay[k-STEP_1] = 0;
+                    step_random[k-STEP_1] = 0;
                   } else {
                     step_enable[k-STEP_1] = 0;
                   }
@@ -311,11 +313,21 @@ void keys_scan() {
                 } else if (k == BTN_UP) {
                   key_up = 1;
                 } else if (k == BTN_SEQ1) {
-                  next_step_is_random = true;
-                  if(!sequencer_is_running) {
-                    sequencer_advance();
+                  // if step keys are pressed set those steps to random
+                  if (stepkeys) {
+                    for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+                      if (stepkeys & 1<<i) {
+                        step_random[i] = !step_random[i];
+                        step_enable[i] = 1;
+                      }
+                    }
+                  } else {
+                    next_step_is_random = true;
+                    if(!sequencer_is_running) {
+                      sequencer_advance();
+                    }
+                    random_flag = true;
                   }
-                  random_flag = true;
                 } else if (k == SEQ_START) {
                   sequencer_toggle_start();
                 }
