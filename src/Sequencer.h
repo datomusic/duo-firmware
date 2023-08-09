@@ -13,6 +13,9 @@ const uint8_t SEQUENCER_NUM_STEPS = 8;
 uint8_t step_note[] = { 1,0,6,9,0,4,0,5 };
 uint8_t step_enable[] = { 1,0,1,1,1,1,0,1 };
 uint8_t step_velocity[] = { 100,100,100,100,100,100,100,100 };
+uint8_t step_delay[] = { 0,0,0,0,0,0,0,0 };
+uint8_t step_random[] = { 0,0,0,0,0,0,0,0 };
+uint8_t num_steps_used = SEQUENCER_NUM_STEPS;
 
 void sequencer_init();
 void sequencer_restart();
@@ -51,12 +54,14 @@ void sequencer_init() {
   tempo_handler.setPPQN(PULSES_PER_QUARTER_NOTE);
   sequencer_stop();
   current_step = SEQUENCER_NUM_STEPS - 1;
+  next_step = 0;
 }
 
 void sequencer_restart() {
   MIDI.sendRealTime(midi::Start);
   delay(1);
   current_step = SEQUENCER_NUM_STEPS - 1;
+  next_step = 0;
   tempo_handler.midi_clock_reset();
   sequencer_is_running = true;
   sequencer_clock = 0;
@@ -119,10 +124,24 @@ void sequencer_tick_clock() {
     }
   }
 
-  if(sequencer_is_running && (sequencer_clock % sequencer_divider)==0) {
-    sequencer_advance();
+  if(sequencer_is_running) {
+    if ((sequencer_clock % sequencer_divider) == 0) {
+      sequencer_advance_without_play();
+    }
+    if ((sequencer_clock % sequencer_divider) == step_delay[current_step] * sequencer_divider / 6) {
+      // deliberately keep the rythm when random is pressed
+      sequencer_trigger_note();
+    }
   } 
   sequencer_clock++;
+}
+
+void update_next_step() {
+  next_step = current_step;
+  for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+    next_step = (next_step + 1) % SEQUENCER_NUM_STEPS;
+    if (step_enable[next_step] != 2) break;
+  }
 }
 
 void sequencer_advance_without_play() {
@@ -131,15 +150,25 @@ void sequencer_advance_without_play() {
   if(!note_is_done_playing) {
     sequencer_untrigger_note();
   }
-  current_step++;
-  current_step%=SEQUENCER_NUM_STEPS;
+  // update_next_step();
+  current_step = next_step;
+  update_next_step();
 
-  if (!next_step_is_random && !random_flag) {
-    random_offset = 0;
-  } else {
+  if (next_step_is_random || random_flag || step_random[current_step]) {
     random_flag = false;
-    random_offset = random(1,(SEQUENCER_NUM_STEPS - 2));
-    //current_step = ((current_step + random(2, SEQUENCER_NUM_STEPS))%SEQUENCER_NUM_STEPS);
+    random_offset = random(num_steps_used);
+    // select random step from the used steps
+    for(int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+      if (step_enable[(current_step + i) % SEQUENCER_NUM_STEPS] != 2) {
+        random_offset--;
+        if (random_offset < 0) {
+          random_offset = i;
+          break;
+        }
+      }
+    }
+  } else {
+    random_offset = 0;
   }
 
   // Sample keys
@@ -157,7 +186,8 @@ void sequencer_advance_without_play() {
       arpeggio_index++;
     }
     step_enable[current_step] = 1;
-    step_velocity[current_step] = INITIAL_VELOCITY; 
+    step_velocity[current_step] = INITIAL_VELOCITY;
+    step_random[current_step] = 0;
   }
 }
 
@@ -167,7 +197,8 @@ void sequencer_advance() {
 }
 
 void sequencer_reset() {
-  current_step = SEQUENCER_NUM_STEPS;
+  current_step = SEQUENCER_NUM_STEPS - 1;
+  next_step = 0;
 }
 
 void sequencer_update() {
@@ -186,7 +217,8 @@ static void sequencer_trigger_note() {
 
   step_velocity[current_step] = INITIAL_VELOCITY;
 
-  note_on(step_note[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]+transpose, step_velocity[((current_step+random_offset)%SEQUENCER_NUM_STEPS)], step_enable[((current_step+random_offset)%SEQUENCER_NUM_STEPS)]);
+  uint8_t step = ((current_step+random_offset)%SEQUENCER_NUM_STEPS);
+  note_on(step_note[step]+transpose, step_velocity[step], step_enable[step]);
 }
 
 static void sequencer_untrigger_note() {

@@ -51,6 +51,7 @@ int gate_length_msec = 40;
 uint32_t sequencer_clock = 0;
 // Sequencer settings
 uint8_t current_step;
+uint8_t next_step;
 int tempo = 0;
 uint8_t set_key = 9;
 float osc_saw_frequency = 0.;
@@ -61,6 +62,10 @@ uint8_t osc_pulse_midi_note = 0;
 uint8_t note_is_playing = 0;
 bool note_is_triggered = false;
 int transpose = 0;
+int key_down = 0;
+int key_up = 0;
+uint8_t key_note[10] = { 0 };
+uint8_t stepkeys = 0;
 bool next_step_is_random = false;
 int tempo_interval;
 bool random_flag = 0;
@@ -264,30 +269,65 @@ void keys_scan() {
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   if(in_setup) {
                     midi_set_channel((k - KEYB_0) + 1);
+                  } else if (key_down && key_up) {
+                    transpose = SCALE[k - KEYB_0] - 61;
                   } else {
-                    keyboard_set_note(SCALE[k - KEYB_0]);
+                    key_note[k - KEYB_0] = SCALE[k - KEYB_0] - (key_down&1) + (key_up&1);
+                    keyboard_set_note(key_note[k - KEYB_0]);
+                    if (key_down == 1) {key_down = 3;}
+                    if (key_up == 1) {key_up = 3;}
                   }
                 } else if (k <= STEP_8 && k >= STEP_1) {
-                  step_enable[k-STEP_1] = 1-step_enable[k-STEP_1];
-                  if(!step_enable[k-STEP_1]) { leds(k-STEP_1) = CRGB::Black; }
+                  if (step_enable[k-STEP_1] == 2) {
+                    step_enable[k-STEP_1] = 1;
+                    num_steps_used++;
+                    step_delay[k-STEP_1] = 0;
+                    step_random[k-STEP_1] = 0;
+                  } else if (step_enable[k-STEP_1] == 0) {
+                    step_enable[k-STEP_1] = 1;
+                    step_delay[k-STEP_1] = 0;
+                    step_random[k-STEP_1] = 0;
+                  } else {
+                    step_enable[k-STEP_1] = 0;
+                  }
                   step_velocity[k-STEP_1] = INITIAL_VELOCITY;
+                  stepkeys |= 1<<(k-STEP_1);
                 } else if (k == BTN_SEQ2) {
-                  if(!sequencer_is_running) {
-                    sequencer_advance();
+                  // if step keys are pressed add a delay to those steps
+                  if (stepkeys) {
+                    for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+                      if (stepkeys & 1<<i) {
+                        step_delay[i] = !step_delay[i] * 2; // delay in range 0-5
+                        // step_delay[i] = (step_delay[i] + 1) % 6; // delay in range 0-5
+                        step_enable[i] = 1;
+                      }
+                    }
+                  } else {
+                    if(!sequencer_is_running) {
+                      sequencer_advance();
+                    }
+                    double_speed = true;
                   }
-                  double_speed = true;
                 } else if (k == BTN_DOWN) {
-                  transpose--;
-                  if(transpose<-12){transpose = -24;}
+                  key_down = 1;
                 } else if (k == BTN_UP) {
-                  transpose++;
-                  if(transpose>12){transpose = 24;}
+                  key_up = 1;
                 } else if (k == BTN_SEQ1) {
-                  next_step_is_random = true;
-                  if(!sequencer_is_running) {
-                    sequencer_advance();
+                  // if step keys are pressed set those steps to random
+                  if (stepkeys) {
+                    for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+                      if (stepkeys & 1<<i) {
+                        step_random[i] = !step_random[i];
+                        step_enable[i] = 1;
+                      }
+                    }
+                  } else {
+                    next_step_is_random = true;
+                    if(!sequencer_is_running) {
+                      sequencer_advance();
+                    }
+                    random_flag = true;
                   }
-                  random_flag = true;
                 } else if (k == SEQ_START) {
                   sequencer_toggle_start();
                 }
@@ -296,6 +336,18 @@ void keys_scan() {
                 if (k <= KEYB_9 && k >= KEYB_0) {
                   if(in_setup) {
                     midi_set_channel((k - KEYB_0) + 1);
+                  }
+                } else if (k <= STEP_8 && k >= STEP_1) {
+                  // skip step
+                  if (step_enable[k-STEP_1] != 2 && num_steps_used > 1) {
+                    step_enable[k-STEP_1] = 2;
+                    num_steps_used--;
+                    // in case the skipped step is the next step,
+                    // advance next_step until the next used step
+                    for (int i = 0; i < SEQUENCER_NUM_STEPS; i++) {
+                      if (step_enable[next_step] != 2) break;
+                      next_step = (next_step + 1) % SEQUENCER_NUM_STEPS;
+                    }
                   }
                 } else if (k == SEQ_START) {
                   #ifdef DEV_MODE
@@ -316,15 +368,23 @@ void keys_scan() {
                 break;
             case RELEASED:
                 if (k <= KEYB_9 && k >= KEYB_0) {
-                  keyboard_unset_note(SCALE[k - KEYB_0]);
+                  keyboard_unset_note(key_note[k - KEYB_0]);
+                } else if (k <= STEP_8 && k >= STEP_1) {
+                  stepkeys &= ~(1<<(k-STEP_1));
                 } else if (k == BTN_SEQ2) {
                   double_speed = false;
                 } else if (k == BTN_DOWN) {
-                  if(transpose<-12){transpose = -12;}
-                  if(transpose>12){transpose = 12;}
+                  if (key_down == 1) {
+                    transpose--;
+                    if (transpose < -12) {transpose = -12;}
+                  }
+                  key_down = 0;
                 } else if (k == BTN_UP) {
-                  if(transpose<-12){transpose = -12;}
-                  if(transpose>12){transpose = 12;}
+                  if (key_up == 1) {
+                    transpose++;
+                    if (transpose > 12) {transpose = 12;}
+                  }
+                  key_up = 0;
                 } else if (k == BTN_SEQ1) {
                   next_step_is_random = false;
                   random_flag = false;
@@ -382,9 +442,6 @@ void note_on(uint8_t midi_note, uint8_t velocity, bool enabled) {
     usbMIDI.sendNoteOn(midi_note, velocity, MIDI_CHANNEL);
     envelope1.noteOn();
     envelope2.noteOn();
-  } else {
-    leds((current_step+random_offset)%SEQUENCER_NUM_STEPS) = LED_WHITE;
-
   }
 }
 
@@ -392,12 +449,8 @@ void note_off() {
   if (note_is_playing) {
     MIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
     usbMIDI.sendNoteOff(note_is_playing, 0, MIDI_CHANNEL);
-    if(!step_enable[current_step]) {
-      leds(current_step) = CRGB::Black;
-    } else {
-      envelope1.noteOff();
-      envelope2.noteOff();
-    }
+    envelope1.noteOff();
+    envelope2.noteOff();
     note_is_playing = 0;
   } 
 }
