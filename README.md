@@ -1,6 +1,9 @@
 # Dato DUO
 The Dato DUO is a musical instrument that is designed to be played by two people. 
 
+# Discontinued firmware
+This repository is no longer updated. Go to https://github.com/datomusic/duo-imxrt for firmware for newer Dato DUO's.
+
 The firmware is open source, although changing it is not recommended for beginners. Steps below are tested on Mac OS X. We're welcoming contributors who want to help us get this working on other platforms.
 
 ## Firmware/software
